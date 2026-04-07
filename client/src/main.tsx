@@ -6,7 +6,12 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { getStoredTheme, applyTheme } from "./lib/themes";
 import "./index.css";
+
+// Initialize theme on app start
+const storedTheme = getStoredTheme();
+applyTheme(storedTheme);
 
 const queryClient = new QueryClient();
 

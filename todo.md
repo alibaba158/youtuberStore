@@ -44,3 +44,11 @@
 - [x] Vitest: product router tests
 - [x] Vitest: cart router tests
 - [x] Vitest: admin guard tests
+
+## Theme System (NEW)
+- [x] Add theme field to users table
+- [x] Create 5 theme color palettes (default, green-gold, red-cream, teal-brown, pink-gray)
+- [x] Build AccountPage with theme selector
+- [x] Add theme switching and persistence (localStorage + database)
+- [x] Add account settings link to Navbar user menu
+- [x] Initialize theme on app startup

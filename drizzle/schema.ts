@@ -19,10 +19,12 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  theme: varchar("theme", { length: 32 }).default("default").notNull(),
 });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+export type ThemeType = "default" | "green-gold" | "red-cream" | "teal-brown" | "pink-gray";
 
 export const categories = mysqlTable("categories", {
   id: int("id").autoincrement().primaryKey(),

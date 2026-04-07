@@ -50,8 +50,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link href="/">
-            <span className="text-xl font-black tracking-tight text-foreground hover:text-accent transition-colors cursor-pointer">
-              חנות<span className="text-accent">.</span>
+            <span className="text-xl font-black tracking-tight text-foreground hover:text-accent transition-colors cursor-pointer" style={{color: '#000000'}}>
+              חנות<span className="text-accent" style={{color: '#4f4f4f'}}></span>
             </span>
           </Link>
 
@@ -120,6 +120,14 @@ export default function Navbar() {
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/account">
+                      <span className="flex items-center gap-2 cursor-pointer w-full">
+                        <User className="w-4 h-4" />
+                        הגדרות חשבון
+                      </span>
+                    </Link>
+                  </DropdownMenuItem>
                   {user?.role === "admin" && (
                     <>
                       <DropdownMenuItem asChild>

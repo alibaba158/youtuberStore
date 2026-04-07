@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { getDb } from "./db";
+import { users } from "../drizzle/schema";
 import {
   getAllCategories,
   getCategoryBySlug,
@@ -203,6 +206,17 @@ export const appRouter = router({
       await clearCart(ctx.user.id);
       return { success: true };
     }),
+  }),
+
+  user: router({
+    updateTheme: protectedProcedure
+      .input(z.object({ theme: z.string().min(1) }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await db.update(users).set({ theme: input.theme }).where(eq(users.id, ctx.user.id));
+        return { success: true };
+      }),
   }),
 });
 
