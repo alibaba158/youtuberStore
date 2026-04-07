@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, Package, Tag, BarChart3,
-  ArrowRight, Save, X, AlertTriangle, Star, Eye, EyeOff
+  ArrowRight, Save, X, AlertTriangle, Star, Eye, EyeOff, Upload, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -39,6 +39,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+// ─── Image Upload Button ─────────────────────────────────────────────────────
+
+function ImageUploadButton({ onImageUrl }: { onImageUrl: (url: string) => void }) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      // Convert file to base64 data URL
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        onImageUrl(dataUrl);
+        toast.success("התמונה הועלתה בהצלחה!");
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error("שגיאה בהעלאת התמונה");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        id="image-upload"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={isUploading}
+        onClick={() => document.getElementById("image-upload")?.click()}
+        className="gap-1.5 shrink-0"
+      >
+        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+        {isUploading ? "מעלה..." : "בחר תמונה"}
+      </Button>
+    </>
+  );
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -369,8 +419,18 @@ function ProductFormFields({
           <Textarea placeholder="תיאור המוצר..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
         </div>
         <div className="col-span-2 space-y-1.5">
-          <Label>כתובת תמונה (URL)</Label>
-          <Input placeholder="https://..." value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
+          <Label>תמונה</Label>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input placeholder="https://..." value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
+              <ImageUploadButton onImageUrl={(url) => setForm({ ...form, imageUrl: url })} />
+            </div>
+            {form.imageUrl && (
+              <div className="w-full h-32 rounded-lg overflow-hidden bg-muted border border-border">
+                <img src={form.imageUrl} alt="preview" className="w-full h-full object-cover" />
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex items-center justify-between col-span-2 bg-muted/50 rounded-lg p-3">
           <div className="flex items-center gap-2">

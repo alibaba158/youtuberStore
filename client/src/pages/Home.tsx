@@ -61,9 +61,11 @@ function EmptyCategoryCard({ index }: { index: number }) {
 export default function Home() {
   const { data: categories, isLoading: catsLoading } = trpc.categories.list.useQuery();
   const { data: featured, isLoading: featLoading } = trpc.products.featured.useQuery();
+  const { data: allProducts, isLoading: productsLoading } = trpc.products.list.useQuery();
 
   const showEmptyCategories = !catsLoading && (!categories || categories.length === 0);
   const showEmptyFeatured = !featLoading && (!featured || featured.length === 0);
+  const showEmptyProducts = !productsLoading && (!allProducts || allProducts.length === 0);
 
   return (
     <div className="min-h-screen">
@@ -150,22 +152,50 @@ export default function Home() {
       </section>
 
       {/* Featured Products Section */}
-      <section id="products" className="py-16 bg-muted/30">
+      {featured && featured.length > 0 && (
+        <section className="py-16 bg-muted/30">
+          <div className="container">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p className="text-sm font-medium text-accent mb-1">מוצרים</p>
+                <h2 className="text-2xl md:text-3xl font-black text-foreground">מוצרים מומלצים</h2>
+              </div>
+            </div>
+
+            {featLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+                {featured!.map((product, i) => (
+                  <ProductCard key={product.id} product={product} index={i} />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* All Active Products Section */}
+      <section id="products" className="py-16">
         <div className="container">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <p className="text-sm font-medium text-accent mb-1">מוצרים</p>
-              <h2 className="text-2xl md:text-3xl font-black text-foreground">מוצרים מומלצים</h2>
+              <p className="text-sm font-medium text-accent mb-1">כל המוצרים</p>
+              <h2 className="text-2xl md:text-3xl font-black text-foreground">חפש את המוצר שלך</h2>
             </div>
           </div>
 
-          {featLoading ? (
+          {productsLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
               {Array.from({ length: 8 }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
               ))}
             </div>
-          ) : showEmptyFeatured ? (
+          ) : showEmptyProducts ? (
             <div className="py-20 text-center">
               <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-5">
                 <Package className="w-10 h-10 text-muted-foreground/40" />
@@ -175,7 +205,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {featured!.map((product, i) => (
+              {allProducts!.map((product, i) => (
                 <ProductCard key={product.id} product={product} index={i} />
               ))}
             </div>
