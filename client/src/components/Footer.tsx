@@ -54,7 +54,7 @@ export default function Footer() {
             © {new Date().getFullYear()} חנות יוטיובר. כל הזכויות שמורות.
           </p>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
-            נבנה עם <Heart className="w-3 h-3 text-accent fill-accent" />
+            נבנה על ידי sqbrawlstars <Heart className="w-3 h-3 text-accent fill-accent" />
           </p>
         </div>
       </div>
