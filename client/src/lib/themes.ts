@@ -14,13 +14,13 @@ export interface ThemeConfig {
 export const themes: Record<ThemeType, ThemeConfig> = {
   default: {
     name: "default",
-    label: "שחור וכתום",
-    primary: "oklch(0.22 0.03 260)",
-    accent: "oklch(0.68 0.14 45)",
+    label: "צהוב וירוק",
+    primary: "oklch(0.80 0.20 85)",
+    accent: "oklch(0.45 0.15 145)",
     background: "oklch(0.98 0.004 85)",
-    foreground: "oklch(0.18 0.01 260)",
+    foreground: "oklch(0.18 0.01 145)",
     muted: "oklch(0.95 0.006 85)",
-    mutedForeground: "oklch(0.52 0.015 260)",
+    mutedForeground: "oklch(0.52 0.015 145)",
   },
   "green-gold": {
     name: "green-gold",
@@ -84,4 +84,9 @@ export function getStoredTheme(): ThemeType {
     return stored as ThemeType;
   }
   return "default";
+}
+
+export function initializeTheme() {
+  const theme = getStoredTheme();
+  applyTheme(theme);
 }
