@@ -74,6 +74,8 @@ export default function AuthPage() {
                   <Input
                     dir="rtl"
                     placeholder="שם מלא"
+                    autoComplete="name"
+                    maxLength={80}
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                   />
@@ -82,6 +84,10 @@ export default function AuthPage() {
                   dir="ltr"
                   type="email"
                   placeholder="name@example.com"
+                  autoComplete="email"
+                  inputMode="email"
+                  maxLength={254}
+                  spellCheck={false}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                 />
@@ -89,6 +95,10 @@ export default function AuthPage() {
                   dir="ltr"
                   type="password"
                   placeholder="Password"
+                  autoComplete={mode === "signIn" ? "current-password" : "new-password"}
+                  minLength={12}
+                  maxLength={128}
+                  spellCheck={false}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                 />

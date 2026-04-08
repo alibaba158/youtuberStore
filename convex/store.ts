@@ -1,6 +1,17 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import {
+  normalizeCartQuantity,
+  normalizeDisplayName,
+  normalizeOptionalText,
+  normalizePrice,
+  normalizeSafeImageUrl,
+  normalizeSlug,
+  normalizeSortOrder,
+  normalizeStock,
+  normalizeTheme,
+} from "./security";
 
 const categoryInput = {
   name: v.string(),
@@ -118,6 +129,87 @@ async function getProductOrThrow(ctx: any, productId: any) {
   return product;
 }
 
+function sanitizeCategoryInput(args: {
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  sortOrder: number;
+}) {
+  return {
+    name: normalizeDisplayName(args.name),
+    slug: normalizeSlug(args.slug),
+    description: normalizeOptionalText(args.description, "Description", 500),
+    imageUrl: normalizeSafeImageUrl(args.imageUrl),
+    sortOrder: normalizeSortOrder(args.sortOrder),
+  };
+}
+
+function sanitizeCategoryPatch(args: {
+  name?: string;
+  slug?: string;
+  description?: string;
+  imageUrl?: string;
+  sortOrder?: number;
+}) {
+  return {
+    name:
+      args.name === undefined ? undefined : normalizeDisplayName(args.name),
+    slug: args.slug === undefined ? undefined : normalizeSlug(args.slug),
+    description: normalizeOptionalText(args.description, "Description", 500),
+    imageUrl: normalizeSafeImageUrl(args.imageUrl),
+    sortOrder:
+      args.sortOrder === undefined
+        ? undefined
+        : normalizeSortOrder(args.sortOrder),
+  };
+}
+
+function sanitizeProductInput(args: {
+  name: string;
+  description?: string;
+  price: string;
+  imageUrl?: string;
+  categoryId?: any;
+  stock: number;
+  isActive: boolean;
+  isFeatured: boolean;
+}) {
+  return {
+    name: normalizeDisplayName(args.name),
+    description: normalizeOptionalText(args.description, "Description", 2_000),
+    price: normalizePrice(args.price),
+    imageUrl: normalizeSafeImageUrl(args.imageUrl),
+    categoryId: args.categoryId,
+    stock: normalizeStock(args.stock),
+    isActive: args.isActive,
+    isFeatured: args.isFeatured,
+  };
+}
+
+function sanitizeProductPatch(args: {
+  name?: string;
+  description?: string;
+  price?: string;
+  imageUrl?: string;
+  categoryId?: any;
+  stock?: number;
+  isActive?: boolean;
+  isFeatured?: boolean;
+}) {
+  return {
+    name:
+      args.name === undefined ? undefined : normalizeDisplayName(args.name),
+    description: normalizeOptionalText(args.description, "Description", 2_000),
+    price: args.price === undefined ? undefined : normalizePrice(args.price),
+    imageUrl: normalizeSafeImageUrl(args.imageUrl),
+    categoryId: args.categoryId,
+    stock: args.stock === undefined ? undefined : normalizeStock(args.stock),
+    isActive: args.isActive,
+    isFeatured: args.isFeatured,
+  };
+}
+
 export const currentUser = query({
   args: {},
   handler: async (ctx) => {
@@ -147,8 +239,11 @@ export const categoryBySlug = query({
 export const listProducts = query({
   args: { adminView: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
-    const viewer = await getViewer(ctx);
-    const adminView = Boolean(args.adminView && viewer?.user.role === "admin");
+    let adminView = false;
+    if (args.adminView) {
+      const viewer = await getViewer(ctx);
+      adminView = viewer?.user.role === "admin";
+    }
     const products = await ctx.db.query("products").collect();
 
     return products
@@ -170,34 +265,120 @@ export const featuredProducts = query({
 export const productById = query({
   args: { id: v.id("products") },
   handler: async (ctx, args) => {
-    const viewer = await getViewer(ctx);
     const product = await ctx.db.get(args.id);
     if (!product) {
       return null;
     }
-    if (!product.isActive && viewer?.user.role !== "admin") {
-      return null;
+    if (!product.isActive) {
+      const viewer = await getViewer(ctx);
+      if (viewer?.user.role !== "admin") {
+        return null;
+      }
     }
     return product;
   },
 });
 
-export const productsByCategory = query({
+export const homePageData = query({
+  args: {},
+  handler: async (ctx) => {
+    const categories = await ctx.db.query("categories").collect();
+    const products = await ctx.db.query("products").collect();
+    const activeProducts = products
+      .filter((product) => product.isActive)
+      .sort((a, b) => b.createdAt - a.createdAt);
+
+    return {
+      categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
+      featured: activeProducts
+        .filter((product) => product.isFeatured)
+        .sort((a, b) => b.updatedAt - a.updatedAt),
+      allProducts: activeProducts,
+    };
+  },
+});
+
+export const navData = query({
+  args: {},
+  handler: async (ctx) => {
+    const categories = await ctx.db.query("categories").collect();
+    const viewer = await getViewer(ctx);
+
+    let cartCount = 0;
+    if (viewer) {
+      const items = await ctx.db
+        .query("cartItems")
+        .withIndex("by_userId", (q) => q.eq("userId", viewer.authUser._id))
+        .collect();
+      cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    return {
+      categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
+      cartCount,
+    };
+  },
+});
+
+export const categoryPageData = query({
   args: {
-    categoryId: v.id("categories"),
+    slug: v.string(),
     adminView: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const viewer = await getViewer(ctx);
-    const adminView = Boolean(args.adminView && viewer?.user.role === "admin");
+    const category = await ctx.db
+      .query("categories")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .unique();
+
+    if (!category) {
+      return null;
+    }
+
+    let adminView = false;
+    if (args.adminView) {
+      const viewer = await getViewer(ctx);
+      adminView = viewer?.user.role === "admin";
+    }
+
     const products = await ctx.db
       .query("products")
-      .withIndex("by_categoryId", (q) => q.eq("categoryId", args.categoryId))
+      .withIndex("by_categoryId", (q) => q.eq("categoryId", category._id))
       .collect();
 
-    return products
-      .filter((product) => adminView || product.isActive)
-      .sort((a, b) => b.createdAt - a.createdAt);
+    return {
+      category,
+      products: products
+        .filter((product) => adminView || product.isActive)
+        .sort((a, b) => b.createdAt - a.createdAt),
+    };
+  },
+});
+
+export const adminPageData = query({
+  args: {},
+  handler: async (ctx) => {
+    const viewer = await getViewer(ctx);
+    if (viewer?.user.role !== "admin") {
+      return null;
+    }
+    const categories = await ctx.db.query("categories").collect();
+    const products = await ctx.db.query("products").collect();
+
+    return {
+      categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
+      products: products.sort((a, b) => b.createdAt - a.createdAt),
+      stats: {
+        totalProducts: products.length,
+        activeProducts: products.filter((product) => product.isActive).length,
+        outOfStock: products.filter((product) => product.stock === 0).length,
+        lowStock: products.filter(
+          (product) => product.stock > 0 && product.stock <= 5,
+        ).length,
+        totalCategories: categories.length,
+        lowStockProducts: products.filter((product) => product.stock <= 5),
+      },
+    };
   },
 });
 
@@ -242,7 +423,7 @@ export const updateTheme = mutation({
       viewer.authUser.email,
     );
     await ctx.db.patch(profile._id, {
-      theme: args.theme,
+      theme: normalizeTheme(args.theme),
       updatedAt: Date.now(),
     });
     return true;
@@ -256,9 +437,10 @@ export const addToCart = mutation({
   },
   handler: async (ctx, args) => {
     const viewer = await requireViewer(ctx);
+    const quantity = normalizeCartQuantity(args.quantity);
     const product = await getProductOrThrow(ctx, args.productId);
 
-    if (!product.isActive || product.stock < args.quantity) {
+    if (!product.isActive || product.stock < quantity) {
       throw new Error("Insufficient stock");
     }
 
@@ -269,7 +451,7 @@ export const addToCart = mutation({
       )
       .unique();
 
-    const nextQuantity = (existing?.quantity ?? 0) + args.quantity;
+    const nextQuantity = (existing?.quantity ?? 0) + quantity;
     if (product.stock < nextQuantity) {
       throw new Error("Insufficient stock");
     }
@@ -285,7 +467,7 @@ export const addToCart = mutation({
     return ctx.db.insert("cartItems", {
       userId: viewer.authUser._id,
       productId: args.productId,
-      quantity: args.quantity,
+      quantity,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -314,14 +496,15 @@ export const updateCartItem = mutation({
       await ctx.db.delete(existing._id);
       return null;
     }
+    const quantity = normalizeCartQuantity(args.quantity);
 
     const product = await getProductOrThrow(ctx, args.productId);
-    if (product.stock < args.quantity) {
+    if (product.stock < quantity) {
       throw new Error("Insufficient stock");
     }
 
     await ctx.db.patch(existing._id, {
-      quantity: args.quantity,
+      quantity,
       updatedAt: Date.now(),
     });
 
@@ -366,7 +549,7 @@ export const createCategory = mutation({
   args: categoryInput,
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
-    return ctx.db.insert("categories", args);
+    return ctx.db.insert("categories", sanitizeCategoryInput(args));
   },
 });
 
@@ -383,7 +566,7 @@ export const updateCategory = mutation({
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
-    await ctx.db.patch(args.id, args.data);
+    await ctx.db.patch(args.id, sanitizeCategoryPatch(args.data));
     return true;
   },
 });
@@ -401,8 +584,9 @@ export const createProduct = mutation({
   args: productInput,
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    const sanitized = sanitizeProductInput(args);
     return ctx.db.insert("products", {
-      ...args,
+      ...sanitized,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -425,8 +609,9 @@ export const updateProduct = mutation({
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    const sanitized = sanitizeProductPatch(args.data);
     await ctx.db.patch(args.id, {
-      ...args.data,
+      ...sanitized,
       updatedAt: Date.now(),
     });
     return true;
@@ -441,7 +626,7 @@ export const updateProductStock = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
     await ctx.db.patch(args.id, {
-      stock: args.stock,
+      stock: normalizeStock(args.stock),
       updatedAt: Date.now(),
     });
     return true;

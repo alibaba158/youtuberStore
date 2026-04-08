@@ -54,9 +54,10 @@ function CategoryCard({
 }
 
 export default function Home() {
-  const categories = useQuery(api.store.listCategories);
-  const featured = useQuery(api.store.featuredProducts);
-  const allProducts = useQuery(api.store.listProducts, {});
+  const data = useQuery(api.store.homePageData);
+  const categories = data?.categories;
+  const featured = data?.featured;
+  const allProducts = data?.allProducts;
 
   const categoriesLoading = categories === undefined;
   const featuredLoading = featured === undefined;

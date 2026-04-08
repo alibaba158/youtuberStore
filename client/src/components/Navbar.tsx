@@ -29,9 +29,9 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
-  const categories = useQuery(api.store.listCategories) ?? [];
-  const cartItems = useQuery(api.store.cartItems, isAuthenticated ? {} : "skip") ?? [];
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const navData = useQuery(api.store.navData);
+  const categories = navData?.categories ?? [];
+  const cartCount = isAuthenticated ? (navData?.cartCount ?? 0) : 0;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);

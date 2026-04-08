@@ -106,9 +106,10 @@ function CategoryEditor({
 
 export default function AdminPage() {
   const { user, loading, isAuthenticated } = useAuth();
-  const categories = useQuery(api.store.listCategories) ?? [];
-  const products = useQuery(api.store.listProducts, { adminView: true }) ?? [];
-  const stats = useQuery(api.store.storeStats);
+  const adminData = useQuery(api.store.adminPageData);
+  const categories = adminData?.categories ?? [];
+  const products = adminData?.products ?? [];
+  const stats = adminData?.stats;
   const createProduct = useMutation(api.store.createProduct);
   const updateProduct = useMutation(api.store.updateProduct);
   const deleteProduct = useMutation(api.store.deleteProduct);

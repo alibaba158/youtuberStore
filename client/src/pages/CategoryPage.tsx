@@ -6,13 +6,14 @@ import { api } from "../../../convex/_generated/api";
 
 export default function CategoryPage() {
   const params = useParams<{ slug: string }>();
-  const category = useQuery(api.store.categoryBySlug, params.slug ? { slug: params.slug } : "skip");
-  const products = useQuery(
-    api.store.productsByCategory,
-    category ? { categoryId: category._id } : "skip",
+  const data = useQuery(
+    api.store.categoryPageData,
+    params.slug ? { slug: params.slug } : "skip",
   );
+  const category = data?.category;
+  const products = data?.products;
 
-  if (category === undefined) {
+  if (data === undefined) {
     return (
       <div className="container py-12">
         <div className="mb-2 h-8 w-48 rounded skeleton" />
