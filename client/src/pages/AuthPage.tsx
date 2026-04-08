@@ -48,7 +48,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="container py-20">
+    <div className="container py-16">
       <div className="mx-auto max-w-md">
         <Card className="p-8 md:p-10 shadow-xl border-border/60 bg-card/80 backdrop-blur-sm">
           <Tabs
@@ -57,8 +57,8 @@ export default function AuthPage() {
             onValueChange={(value) => setMode(value as AuthMode)}
           >
             <TabsList className="mb-8 grid grid-cols-2 bg-secondary/50 p-1 rounded-xl">
-              <TabsTrigger value="signIn" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all">כניסה</TabsTrigger>
-              <TabsTrigger value="signUp" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all">הרשמה</TabsTrigger>
+              <TabsTrigger value="signIn" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all font-semibold">כניסה</TabsTrigger>
+              <TabsTrigger value="signUp" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all font-semibold">הרשמה</TabsTrigger>
             </TabsList>
 
             <TabsContent value={mode} className="mt-0">

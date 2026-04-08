@@ -77,22 +77,22 @@ export default function Home() {
         </div>
         <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
-        <div className="container relative py-28 md:py-36">
+        <div className="container relative py-24 md:py-32">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-3xl"
           >
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-5 py-2.5 backdrop-blur-sm shadow-lg">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-5 py-2.5 backdrop-blur-sm shadow-lg">
               <Sparkles className="h-4 w-4 text-accent" />
               <span className="text-sm font-semibold text-white/95">חנות פשוטה יותר, מבוססת Convex</span>
             </div>
-            <h1 className="mb-6 text-5xl font-black leading-tight md:text-6xl lg:text-7xl tracking-tight">
+            <h1 className="mb-6 text-4xl font-black leading-tight md:text-5xl lg:text-6xl tracking-tight">
               המוצרים הכי
               <span className="block bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">טובים בשבילך</span>
             </h1>
-            <p className="mb-10 max-w-xl text-lg leading-relaxed text-white/85 md:text-xl">
+            <p className="mb-8 max-w-xl text-lg leading-relaxed text-white/85 md:text-xl">
               חוויית חנות נקייה יותר עם קטלוג, עגלה, משתמשים וניהול מלאי, בלי שכבת Manus ובלי שרת Express נפרד.
             </p>
             <div className="flex flex-wrap gap-4">
@@ -121,11 +121,11 @@ export default function Home() {
         />
       </section>
 
-      <section id="categories" className="py-24">
+      <section id="categories" className="py-20">
         <div className="container">
-          <div className="mb-12 flex items-end justify-between">
+          <div className="mb-10 flex items-end justify-between">
             <div>
-              <p className="mb-2.5 text-sm font-bold uppercase tracking-wider text-accent">קטגוריות</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">קטגוריות</p>
               <h2 className="text-3xl font-black text-foreground md:text-4xl tracking-tight">עיין לפי קטגוריה</h2>
             </div>
           </div>
@@ -152,10 +152,10 @@ export default function Home() {
       </section>
 
       {featured && featured.length > 0 ? (
-        <section className="bg-gradient-to-b from-muted/40 to-transparent py-24">
+        <section className="bg-gradient-to-b from-muted/40 to-transparent py-20">
           <div className="container">
-            <div className="mb-12">
-              <p className="mb-2.5 text-sm font-bold uppercase tracking-wider text-accent">מוצרים</p>
+            <div className="mb-10">
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">מוצרים</p>
               <h2 className="text-3xl font-black text-foreground md:text-4xl tracking-tight">מוצרים מומלצים</h2>
             </div>
 
@@ -176,10 +176,10 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section id="products" className="py-24">
+      <section id="products" className="py-20">
         <div className="container">
-          <div className="mb-12">
-            <p className="mb-2.5 text-sm font-bold uppercase tracking-wider text-accent">כל המוצרים</p>
+          <div className="mb-10">
+            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">כל המוצרים</p>
             <h2 className="text-3xl font-black text-foreground md:text-4xl tracking-tight">חפש את המוצר שלך</h2>
           </div>
 
