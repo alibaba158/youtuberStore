@@ -1,29 +1,26 @@
+import { useQuery } from "convex/react";
 import { useParams, Link } from "wouter";
 import { ArrowRight, Package } from "lucide-react";
-import { trpc } from "@/lib/trpc";
 import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
+import { api } from "../../../convex/_generated/api";
 
 export default function CategoryPage() {
   const params = useParams<{ slug: string }>();
-  const slug = params.slug;
-
-  const { data: category, isLoading: catLoading } = trpc.categories.bySlug.useQuery(
-    { slug: slug! },
-    { enabled: !!slug }
+  const category = useQuery(api.store.categoryBySlug, params.slug ? { slug: params.slug } : "skip");
+  const products = useQuery(
+    api.store.productsByCategory,
+    category ? { categoryId: category._id } : "skip",
   );
 
-  const { data: products, isLoading: prodsLoading } = trpc.products.byCategory.useQuery(
-    { categoryId: category?.id ?? 0 },
-    { enabled: !!category?.id }
-  );
-
-  if (catLoading) {
+  if (category === undefined) {
     return (
       <div className="container py-12">
-        <div className="h-8 skeleton rounded w-48 mb-2" />
-        <div className="h-4 skeleton rounded w-64 mb-10" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-          {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+        <div className="mb-2 h-8 w-48 rounded skeleton" />
+        <div className="mb-10 h-4 w-64 rounded skeleton" />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <ProductCardSkeleton key={index} />
+          ))}
         </div>
       </div>
     );
@@ -32,9 +29,9 @@ export default function CategoryPage() {
   if (!category) {
     return (
       <div className="container py-20 text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-3">הקטגוריה לא נמצאה</h2>
+        <h2 className="mb-3 text-2xl font-bold text-foreground">הקטגוריה לא נמצאה</h2>
         <Link href="/">
-          <span className="text-accent hover:underline cursor-pointer">חזרה לדף הבית</span>
+          <span className="cursor-pointer text-accent hover:underline">חזרה לדף הבית</span>
         </Link>
       </div>
     );
@@ -42,42 +39,42 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Category Header */}
-      <div className="bg-white border-b border-border">
+      <div className="border-b border-border bg-white">
         <div className="container py-8">
           <Link href="/">
-            <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-4">
-              <ArrowRight className="w-4 h-4" />
+            <span className="mb-4 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <ArrowRight className="h-4 w-4" />
               חזרה לדף הבית
             </span>
           </Link>
-          <h1 className="text-2xl md:text-3xl font-black text-foreground">{category.name}</h1>
-          {category.description && (
-            <p className="text-muted-foreground mt-2 max-w-xl">{category.description}</p>
-          )}
+          <h1 className="text-2xl font-black text-foreground md:text-3xl">{category.name}</h1>
+          {category.description ? (
+            <p className="mt-2 max-w-xl text-muted-foreground">{category.description}</p>
+          ) : null}
         </div>
       </div>
 
-      {/* Products Grid */}
       <div className="container py-10">
-        {prodsLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-            {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+        {products === undefined ? (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
           </div>
-        ) : !products || products.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className="py-20 text-center">
-            <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-5">
-              <Package className="w-10 h-10 text-muted-foreground/40" />
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+              <Package className="h-10 w-10 text-muted-foreground/40" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">אין מוצרים בקטגוריה זו</h3>
-            <p className="text-muted-foreground text-sm">מוצרים חדשים יתווספו בקרוב</p>
+            <h3 className="mb-2 text-lg font-semibold text-foreground">אין מוצרים בקטגוריה זו</h3>
+            <p className="text-sm text-muted-foreground">מוצרים חדשים יתווספו בקרוב</p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground mb-6">{products.length} מוצרים</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {products.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} />
+            <p className="mb-6 text-sm text-muted-foreground">{products.length} מוצרים</p>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {products.map((product, index) => (
+                <ProductCard key={product._id} product={product} index={index} />
               ))}
             </div>
           </>

@@ -2,52 +2,55 @@ import { Link } from "wouter";
 import { ShoppingCart, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
+import { useMutation } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { api } from "../../../convex/_generated/api";
+import { Doc } from "../../../convex/_generated/dataModel";
 
-type Product = {
-  id: number;
-  name: string;
-  description?: string | null;
-  price: string;
-  imageUrl?: string | null;
-  stock: number;
-  isActive: boolean;
-  isFeatured: boolean;
-};
+type Product = Doc<"products">;
 
 function StockBadge({ stock }: { stock: number }) {
-  if (stock === 0) return <span className="stock-out text-xs px-2 py-0.5 rounded-full font-medium">אזל המלאי</span>;
-  if (stock <= 5) return <span className="stock-low text-xs px-2 py-0.5 rounded-full font-medium">נותרו {stock} יחידות</span>;
-  return <span className="stock-in text-xs px-2 py-0.5 rounded-full font-medium">במלאי</span>;
+  if (stock === 0) {
+    return <span className="stock-out rounded-full px-2 py-0.5 text-xs font-medium">אזל המלאי</span>;
+  }
+  if (stock <= 5) {
+    return <span className="stock-low rounded-full px-2 py-0.5 text-xs font-medium">נותרו {stock} יחידות</span>;
+  }
+  return <span className="stock-in rounded-full px-2 py-0.5 text-xs font-medium">במלאי</span>;
 }
 
-export default function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
+export default function ProductCard({
+  product,
+  index = 0,
+}: {
+  product: Product;
+  index?: number;
+}) {
   const { isAuthenticated } = useAuth();
-  const utils = trpc.useUtils();
+  const addToCart = useMutation(api.store.addToCart);
 
-  const addToCart = trpc.cart.add.useMutation({
-    onSuccess: () => {
-      utils.cart.get.invalidate();
-      toast.success("המוצר נוסף לעגלה!");
-    },
-    onError: (err) => {
-      toast.error(err.message || "שגיאה בהוספה לעגלה");
-    },
-  });
+  const handleAddToCart = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
     }
-    if (product.stock === 0) return;
-    addToCart.mutate({ productId: product.id, quantity: 1 });
+
+    if (product.stock === 0) {
+      return;
+    }
+
+    try {
+      await addToCart({ productId: product._id, quantity: 1 });
+      toast.success("המוצר נוסף לעגלה");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "שגיאה בהוספה לעגלה");
+    }
   };
 
   const price = parseFloat(product.price);
@@ -58,40 +61,38 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.07 }}
     >
-      <Link href={`/product/${product.id}`}>
-        <div className="group bg-card rounded-xl border border-border overflow-hidden hover-lift cursor-pointer">
-          {/* Image */}
-          <div className="relative aspect-square bg-muted overflow-hidden">
+      <Link href={`/product/${product._id}`}>
+        <div className="group cursor-pointer overflow-hidden rounded-xl border border-border bg-card hover-lift">
+          <div className="relative aspect-square overflow-hidden bg-muted">
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
                 alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-12 h-12 text-muted-foreground/30" />
+              <div className="flex h-full w-full items-center justify-center">
+                <Package className="h-12 w-12 text-muted-foreground/30" />
               </div>
             )}
-            {product.isFeatured && (
-              <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground border-0 text-xs font-semibold">
+            {product.isFeatured ? (
+              <Badge className="absolute right-3 top-3 border-0 bg-accent text-xs font-semibold text-accent-foreground">
                 מומלץ
               </Badge>
-            )}
+            ) : null}
           </div>
 
-          {/* Content */}
           <div className="p-4">
-            <h3 className="font-semibold text-foreground text-sm leading-snug line-clamp-2 mb-1">
+            <h3 className="mb-1 line-clamp-2 text-sm font-semibold leading-snug text-foreground">
               {product.name}
             </h3>
-            {product.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+            {product.description ? (
+              <p className="mb-3 line-clamp-2 text-xs text-muted-foreground">
                 {product.description}
               </p>
-            )}
+            ) : null}
 
-            <div className="flex items-center justify-between gap-2 mt-3">
+            <div className="mt-3 flex items-center justify-between gap-2">
               <div>
                 <p className="text-lg font-bold text-foreground">₪{price.toFixed(2)}</p>
                 <StockBadge stock={product.stock} />
@@ -99,11 +100,11 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
               <Button
                 size="sm"
                 variant={product.stock === 0 ? "outline" : "default"}
-                disabled={product.stock === 0 || addToCart.isPending}
-                onClick={handleAddToCart}
+                disabled={product.stock === 0}
+                onClick={(event) => void handleAddToCart(event)}
                 className="shrink-0 gap-1.5"
               >
-                <ShoppingCart className="w-3.5 h-3.5" />
+                <ShoppingCart className="h-3.5 w-3.5" />
                 {product.stock === 0 ? "אזל" : "הוסף"}
               </Button>
             </div>
@@ -116,15 +117,15 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
 
 export function ProductCardSkeleton() {
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="aspect-square skeleton" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 skeleton rounded w-3/4" />
-        <div className="h-3 skeleton rounded w-full" />
-        <div className="h-3 skeleton rounded w-2/3" />
-        <div className="flex justify-between items-center mt-2">
-          <div className="h-6 skeleton rounded w-16" />
-          <div className="h-8 skeleton rounded w-20" />
+      <div className="space-y-3 p-4">
+        <div className="h-4 w-3/4 rounded skeleton" />
+        <div className="h-3 w-full rounded skeleton" />
+        <div className="h-3 w-2/3 rounded skeleton" />
+        <div className="mt-2 flex items-center justify-between">
+          <div className="h-6 w-16 rounded skeleton" />
+          <div className="h-8 w-20 rounded skeleton" />
         </div>
       </div>
     </div>

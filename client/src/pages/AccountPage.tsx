@@ -3,25 +3,18 @@ import { Link } from "wouter";
 import { LogOut, ArrowRight, Palette, User, Mail, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
+import { useMutation } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { themes, type ThemeType, applyTheme } from "@/lib/themes";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { api } from "../../../convex/_generated/api";
 
 export default function AccountPage() {
   const { user, logout, isAuthenticated, loading } = useAuth();
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>("default");
-  const utils = trpc.useUtils();
-
-  const updateTheme = trpc.user.updateTheme.useMutation({
-    onSuccess: () => {
-      utils.auth.me.invalidate();
-      toast.success("התמה עודכנה בהצלחה!");
-    },
-    onError: (err: any) => toast.error(err?.message || "שגיאה בעדכון התמה"),
-  });
+  const updateTheme = useMutation(api.store.updateTheme);
 
   useEffect(() => {
     if (user?.theme) {
@@ -30,17 +23,23 @@ export default function AccountPage() {
     }
   }, [user?.theme]);
 
-  const handleThemeChange = (theme: ThemeType) => {
+  const handleThemeChange = async (theme: ThemeType) => {
     setSelectedTheme(theme);
     applyTheme(theme);
-    updateTheme.mutate({ theme });
+
+    try {
+      await updateTheme({ theme });
+      toast.success("התמה עודכנה בהצלחה");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "שגיאה בעדכון התמה");
+    }
   };
 
   if (loading || !user) {
     return (
       <div className="container py-12">
-        <div className="h-8 skeleton rounded w-48 mb-8" />
-        <div className="h-64 skeleton rounded-xl" />
+        <div className="mb-8 h-8 w-48 rounded skeleton" />
+        <div className="h-64 rounded-xl skeleton" />
       </div>
     );
   }
@@ -48,11 +47,11 @@ export default function AccountPage() {
   if (!isAuthenticated) {
     return (
       <div className="container py-20 text-center">
-        <h2 className="text-2xl font-black text-foreground mb-3">נדרשת כניסה לחשבון</h2>
-        <p className="text-muted-foreground mb-6">כדי לצפות בהגדרות החשבון שלך, יש להתחבר תחילה.</p>
+        <h2 className="mb-3 text-2xl font-black text-foreground">נדרשת כניסה לחשבון</h2>
+        <p className="mb-6 text-muted-foreground">כדי לצפות בהגדרות החשבון שלך צריך להתחבר קודם.</p>
         <Link href="/">
           <Button className="gap-2">
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="h-4 w-4" />
             חזרה לדף הבית
           </Button>
         </Link>
@@ -63,18 +62,16 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-muted/20">
       <div className="container py-8">
-        {/* Header */}
         <Link href="/">
-          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-8">
-            <ArrowRight className="w-4 h-4" />
+          <span className="mb-8 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <ArrowRight className="h-4 w-4" />
             חזרה לחנות
           </span>
         </Link>
 
-        <h1 className="text-2xl md:text-3xl font-black text-foreground mb-8">הגדרות החשבון</h1>
+        <h1 className="mb-8 text-2xl font-black text-foreground md:text-3xl">הגדרות החשבון</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Card */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -82,29 +79,27 @@ export default function AccountPage() {
             className="lg:col-span-1"
           >
             <Card className="p-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
-                  <User className="w-8 h-8 text-accent" />
+              <div className="mb-6 flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/20">
+                  <User className="h-8 w-8 text-accent" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-foreground truncate">{user.name}</p>
-                  {user.role === "admin" && (
-                    <Badge className="mt-1 bg-accent/20 text-accent border-accent/30">
-                      מנהל
-                    </Badge>
-                  )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold text-foreground">{user.name}</p>
+                  {user.role === "admin" ? (
+                    <Badge className="mt-1 border-accent/30 bg-accent/20 text-accent">מנהל</Badge>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="space-y-3 mb-6">
-                {user.email && (
+              <div className="mb-6 space-y-3">
+                {user.email ? (
                   <div className="flex items-center gap-2 text-sm">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground truncate">{user.email}</span>
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="truncate text-muted-foreground">{user.email}</span>
                   </div>
-                )}
+                ) : null}
                 <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">
                     הצטרף: {new Date(user.createdAt).toLocaleDateString("he-IL")}
                   </span>
@@ -114,14 +109,14 @@ export default function AccountPage() {
               <Button
                 variant="outline"
                 className="w-full gap-2 text-destructive hover:text-destructive"
-                onClick={logout}
+                onClick={() => void logout()}
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="h-4 w-4" />
                 התנתקות
               </Button>
             </Card>
 
-            {user.role === "admin" && (
+            {user.role === "admin" ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -130,15 +125,14 @@ export default function AccountPage() {
               >
                 <Link href="/admin">
                   <Button className="w-full gap-2">
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="h-4 w-4" />
                     פאנל ניהול
                   </Button>
                 </Link>
               </motion.div>
-            )}
+            ) : null}
           </motion.div>
 
-          {/* Theme Selector */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -146,49 +140,36 @@ export default function AccountPage() {
             className="lg:col-span-2"
           >
             <Card className="p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Palette className="w-5 h-5 text-accent" />
+              <div className="mb-6 flex items-center gap-2">
+                <Palette className="h-5 w-5 text-accent" />
                 <h2 className="text-lg font-bold text-foreground">בחר תמה</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {Object.entries(themes).map(([key, theme]) => (
                   <motion.button
                     key={key}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => handleThemeChange(key as ThemeType)}
-                    className={`relative p-4 rounded-xl border-2 transition-all ${
+                    onClick={() => void handleThemeChange(key as ThemeType)}
+                    className={`relative rounded-xl border-2 p-4 transition-all ${
                       selectedTheme === key
                         ? "border-accent bg-accent/5"
                         : "border-border hover:border-accent/50"
                     }`}
                   >
-                    {/* Color Preview */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <div
-                        className="w-6 h-6 rounded-full border border-border"
-                        style={{ backgroundColor: theme.primary }}
-                      />
-                      <div
-                        className="w-6 h-6 rounded-full border border-border"
-                        style={{ backgroundColor: theme.accent }}
-                      />
+                    <div className="mb-3 flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-full border border-border" style={{ backgroundColor: theme.primary }} />
+                      <div className="h-6 w-6 rounded-full border border-border" style={{ backgroundColor: theme.accent }} />
                     </div>
-
-                    <p className="font-semibold text-foreground text-sm text-right">
-                      {theme.label}
-                    </p>
-
-                    {selectedTheme === key && (
-                      <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-accent" />
-                    )}
+                    <p className="text-right text-sm font-semibold text-foreground">{theme.label}</p>
+                    {selectedTheme === key ? <div className="absolute left-2 top-2 h-2 w-2 rounded-full bg-accent" /> : null}
                   </motion.button>
                 ))}
               </div>
 
-              <p className="text-xs text-muted-foreground mt-6">
-                התמה שלך תישמר ותחול על כל הדפים שלך.
+              <p className="mt-6 text-xs text-muted-foreground">
+                הבחירה נשמרת בפרופיל המשתמש ב-Convex ומוחלת על כל הדפים.
               </p>
             </Card>
           </motion.div>

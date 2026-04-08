@@ -1,1 +1,0 @@
-ALTER TABLE `users` ADD `theme` varchar(32) DEFAULT 'default' NOT NULL;

@@ -3,59 +3,57 @@ import { useParams, Link } from "wouter";
 import { ArrowRight, ShoppingCart, Package, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
+import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
+import { api } from "../../../convex/_generated/api";
 
 function StockBadge({ stock }: { stock: number }) {
-  if (stock === 0) return <span className="stock-out text-sm px-3 py-1 rounded-full font-medium">אזל המלאי</span>;
-  if (stock <= 5) return <span className="stock-low text-sm px-3 py-1 rounded-full font-medium">נותרו {stock} יחידות בלבד</span>;
-  return <span className="stock-in text-sm px-3 py-1 rounded-full font-medium">במלאי</span>;
+  if (stock === 0) {
+    return <span className="stock-out rounded-full px-3 py-1 text-sm font-medium">אזל המלאי</span>;
+  }
+  if (stock <= 5) {
+    return <span className="stock-low rounded-full px-3 py-1 text-sm font-medium">נותרו {stock} יחידות בלבד</span>;
+  }
+  return <span className="stock-in rounded-full px-3 py-1 text-sm font-medium">במלאי</span>;
 }
 
 export default function ProductPage() {
   const params = useParams<{ id: string }>();
-  const productId = parseInt(params.id ?? "0");
   const [quantity, setQuantity] = useState(1);
   const { isAuthenticated } = useAuth();
-  const utils = trpc.useUtils();
+  const product = useQuery(api.store.productById, params.id ? { id: params.id as never } : "skip");
+  const addToCart = useMutation(api.store.addToCart);
 
-  const { data: product, isLoading } = trpc.products.byId.useQuery(
-    { id: productId },
-    { enabled: !!productId }
-  );
-
-  const addToCart = trpc.cart.add.useMutation({
-    onSuccess: () => {
-      utils.cart.get.invalidate();
-      toast.success(`${product?.name} נוסף לעגלה!`);
-    },
-    onError: (err) => {
-      toast.error(err.message || "שגיאה בהוספה לעגלה");
-    },
-  });
-
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
     }
-    if (!product || product.stock === 0) return;
-    addToCart.mutate({ productId: product.id, quantity });
+    if (!product || product.stock === 0) {
+      return;
+    }
+
+    try {
+      await addToCart({ productId: product._id, quantity });
+      toast.success(`${product.name} נוסף לעגלה`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "שגיאה בהוספה לעגלה");
+    }
   };
 
-  if (isLoading) {
+  if (product === undefined) {
     return (
       <div className="container py-12">
-        <div className="h-4 skeleton rounded w-48 mb-8" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="aspect-square skeleton rounded-2xl" />
+        <div className="mb-8 h-4 w-48 rounded skeleton" />
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+          <div className="aspect-square rounded-2xl skeleton" />
           <div className="space-y-4">
-            <div className="h-8 skeleton rounded w-3/4" />
-            <div className="h-4 skeleton rounded w-full" />
-            <div className="h-4 skeleton rounded w-2/3" />
-            <div className="h-10 skeleton rounded w-32 mt-6" />
+            <div className="h-8 w-3/4 rounded skeleton" />
+            <div className="h-4 w-full rounded skeleton" />
+            <div className="h-4 w-2/3 rounded skeleton" />
+            <div className="mt-6 h-10 w-32 rounded skeleton" />
           </div>
         </div>
       </div>
@@ -65,8 +63,10 @@ export default function ProductPage() {
   if (!product) {
     return (
       <div className="container py-20 text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-3">המוצר לא נמצא</h2>
-        <Link href="/"><span className="text-accent hover:underline cursor-pointer">חזרה לדף הבית</span></Link>
+        <h2 className="mb-3 text-2xl font-bold text-foreground">המוצר לא נמצא</h2>
+        <Link href="/">
+          <span className="cursor-pointer text-accent hover:underline">חזרה לדף הבית</span>
+        </Link>
       </div>
     );
   }
@@ -76,98 +76,82 @@ export default function ProductPage() {
   return (
     <div className="min-h-screen">
       <div className="container py-8">
-        {/* Breadcrumb */}
         <Link href="/">
-          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-8">
-            <ArrowRight className="w-4 h-4" />
+          <span className="mb-8 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <ArrowRight className="h-4 w-4" />
             חזרה לחנות
           </span>
         </Link>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-          {/* Product Image */}
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:gap-16">
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             className="relative"
           >
-            <div className="aspect-square rounded-2xl overflow-hidden bg-muted border border-border">
+            <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
               {product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
+                <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Package className="w-20 h-20 text-muted-foreground/30" />
+                <div className="flex h-full w-full items-center justify-center">
+                  <Package className="h-20 w-20 text-muted-foreground/30" />
                 </div>
               )}
             </div>
           </motion.div>
 
-          {/* Product Info */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex flex-col"
           >
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <h1 className="text-2xl md:text-3xl font-black text-foreground leading-tight">
+            <div className="mb-3 flex items-start justify-between gap-4">
+              <h1 className="text-2xl font-black leading-tight text-foreground md:text-3xl">
                 {product.name}
               </h1>
-              {product.isFeatured && (
-                <span className="shrink-0 bg-accent/15 text-accent text-xs font-semibold px-3 py-1 rounded-full border border-accent/30">
+              {product.isFeatured ? (
+                <span className="shrink-0 rounded-full border border-accent/30 bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">
                   מומלץ
                 </span>
-              )}
+              ) : null}
             </div>
 
             <div className="mb-4">
               <StockBadge stock={product.stock} />
             </div>
 
-            {product.description && (
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                {product.description}
-              </p>
-            )}
+            {product.description ? (
+              <p className="mb-6 leading-relaxed text-muted-foreground">{product.description}</p>
+            ) : null}
 
             <div className="mt-auto">
-              <p className="text-3xl font-black text-foreground mb-6">
-                ₪{price.toFixed(2)}
-              </p>
+              <p className="mb-6 text-3xl font-black text-foreground">₪{price.toFixed(2)}</p>
 
-              {product.stock > 0 && (
-                <div className="flex items-center gap-3 mb-5">
+              {product.stock > 0 ? (
+                <div className="mb-5 flex items-center gap-3">
                   <span className="text-sm font-medium text-foreground">כמות:</span>
-                  <div className="flex items-center gap-2 border border-border rounded-lg overflow-hidden">
+                  <div className="flex items-center gap-2 overflow-hidden rounded-lg border border-border">
                     <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-9 h-9 flex items-center justify-center hover:bg-muted transition-colors"
+                      onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                      className="flex h-9 w-9 items-center justify-center transition-colors hover:bg-muted"
                     >
-                      <Minus className="w-3.5 h-3.5" />
+                      <Minus className="h-3.5 w-3.5" />
                     </button>
                     <span className="w-10 text-center text-sm font-semibold">{quantity}</span>
                     <button
-                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                      className="w-9 h-9 flex items-center justify-center hover:bg-muted transition-colors"
+                      onClick={() => setQuantity((value) => Math.min(product.stock, value + 1))}
+                      className="flex h-9 w-9 items-center justify-center transition-colors hover:bg-muted"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
-              )}
+              ) : null}
 
-              <Button
-                size="lg"
-                className="w-full gap-2 font-semibold text-base"
-                disabled={product.stock === 0 || addToCart.isPending}
-                onClick={handleAddToCart}
-              >
-                <ShoppingCart className="w-5 h-5" />
+              <Button size="lg" className="w-full gap-2 text-base font-semibold" disabled={product.stock === 0} onClick={() => void handleAddToCart()}>
+                <ShoppingCart className="h-5 w-5" />
                 {product.stock === 0 ? "אזל המלאי" : "הוסף לעגלה"}
               </Button>
             </div>

@@ -1,208 +1,177 @@
 import { Link } from "wouter";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, LogIn } from "lucide-react";
+import {
+  ShoppingCart,
+  Trash2,
+  Plus,
+  Minus,
+  ArrowRight,
+  Package,
+  LogIn,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
+import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { api } from "../../../convex/_generated/api";
 
 export default function CartPage() {
   const { isAuthenticated } = useAuth();
-  const utils = trpc.useUtils();
-
-  const { data: cartItems, isLoading } = trpc.cart.get.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  const updateItem = trpc.cart.update.useMutation({
-    onSuccess: () => utils.cart.get.invalidate(),
-    onError: (err) => toast.error(err.message || "שגיאה בעדכון"),
-  });
-
-  const removeItem = trpc.cart.remove.useMutation({
-    onSuccess: () => {
-      utils.cart.get.invalidate();
-      toast.success("המוצר הוסר מהעגלה");
-    },
-    onError: () => toast.error("שגיאה בהסרה"),
-  });
-
-  const clearCart = trpc.cart.clear.useMutation({
-    onSuccess: () => {
-      utils.cart.get.invalidate();
-      toast.success("העגלה רוקנה");
-    },
-  });
+  const cartItems = useQuery(api.store.cartItems, isAuthenticated ? {} : "skip");
+  const updateItem = useMutation(api.store.updateCartItem);
+  const removeItem = useMutation(api.store.removeCartItem);
+  const clearCart = useMutation(api.store.clearCart);
 
   if (!isAuthenticated) {
     return (
       <div className="container py-20 text-center">
-        <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-5">
-          <LogIn className="w-10 h-10 text-muted-foreground/40" />
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+          <LogIn className="h-10 w-10 text-muted-foreground/40" />
         </div>
-        <h2 className="text-2xl font-black text-foreground mb-3">נדרשת כניסה לחשבון</h2>
-        <p className="text-muted-foreground mb-6">כדי לצפות בעגלת הקניות שלך, יש להתחבר תחילה.</p>
-        <Button
-          size="lg"
-          className="gap-2"
-          onClick={() => (window.location.href = getLoginUrl())}
-        >
-          <LogIn className="w-4 h-4" />
+        <h2 className="mb-3 text-2xl font-black text-foreground">נדרשת כניסה לחשבון</h2>
+        <p className="mb-6 text-muted-foreground">כדי לצפות בעגלת הקניות שלך צריך להתחבר קודם.</p>
+        <Button size="lg" className="gap-2" onClick={() => (window.location.href = getLoginUrl())}>
+          <LogIn className="h-4 w-4" />
           כניסה לחשבון
         </Button>
       </div>
     );
   }
 
-  if (isLoading) {
+  if (cartItems === undefined) {
     return (
       <div className="container py-12">
-        <div className="h-8 skeleton rounded w-48 mb-8" />
+        <div className="mb-8 h-8 w-48 rounded skeleton" />
         <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 skeleton rounded-xl" />
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-24 rounded-xl skeleton" />
           ))}
         </div>
       </div>
     );
   }
 
-  const isEmpty = !cartItems || cartItems.length === 0;
-
-  const subtotal = cartItems?.reduce((sum, item) => {
+  const isEmpty = cartItems.length === 0;
+  const subtotal = cartItems.reduce((sum, item) => {
     const price = parseFloat(item.product?.price ?? "0");
     return sum + price * item.quantity;
-  }, 0) ?? 0;
+  }, 0);
 
   return (
     <div className="min-h-screen">
       <div className="container py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div>
             <Link href="/">
-              <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-2">
-                <ArrowRight className="w-4 h-4" />
+              <span className="mb-2 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                <ArrowRight className="h-4 w-4" />
                 המשך קנייה
               </span>
             </Link>
-            <h1 className="text-2xl md:text-3xl font-black text-foreground flex items-center gap-3">
-              <ShoppingCart className="w-7 h-7" />
+            <h1 className="flex items-center gap-3 text-2xl font-black text-foreground md:text-3xl">
+              <ShoppingCart className="h-7 w-7" />
               עגלת הקניות
-              {!isEmpty && (
+              {!isEmpty ? (
                 <span className="text-lg font-medium text-muted-foreground">
-                  ({cartItems!.length} פריטים)
+                  ({cartItems.length} פריטים)
                 </span>
-              )}
+              ) : null}
             </h1>
           </div>
-          {!isEmpty && (
+          {!isEmpty ? (
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-destructive gap-1.5"
-              onClick={() => clearCart.mutate()}
-              disabled={clearCart.isPending}
+              className="gap-1.5 text-muted-foreground hover:text-destructive"
+              onClick={() =>
+                void clearCart().then(() => toast.success("העגלה רוקנה"))
+              }
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
               נקה עגלה
             </Button>
-          )}
+          ) : null}
         </div>
 
         {isEmpty ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="py-20 text-center"
-          >
-            <div className="w-24 h-24 rounded-full bg-muted mx-auto flex items-center justify-center mb-6">
-              <Package className="w-12 h-12 text-muted-foreground/40" />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-20 text-center">
+            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-muted">
+              <Package className="h-12 w-12 text-muted-foreground/40" />
             </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">העגלה ריקה</h3>
-            <p className="text-muted-foreground mb-8">עדיין לא הוספת מוצרים לעגלה</p>
+            <h3 className="mb-2 text-xl font-bold text-foreground">העגלה ריקה</h3>
+            <p className="mb-8 text-muted-foreground">עדיין לא הוספת מוצרים לעגלה</p>
             <Link href="/">
               <Button size="lg" className="gap-2">
-                <ShoppingCart className="w-4 h-4" />
+                <ShoppingCart className="h-4 w-4" />
                 לקנייה עכשיו
               </Button>
             </Link>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-3">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="space-y-3 lg:col-span-2">
               <AnimatePresence mode="popLayout">
-                {cartItems!.map((item) => {
+                {cartItems.map((item) => {
                   const price = parseFloat(item.product?.price ?? "0");
                   return (
                     <motion.div
-                      key={item.id}
+                      key={item._id}
                       layout
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -20, height: 0 }}
                       transition={{ duration: 0.25 }}
-                      className="bg-card rounded-xl border border-border p-4 flex gap-4"
+                      className="flex gap-4 rounded-xl border border-border bg-card p-4"
                     >
-                      {/* Image */}
                       <Link href={`/product/${item.productId}`}>
-                        <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0 cursor-pointer">
+                        <div className="h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted">
                           {item.product?.imageUrl ? (
-                            <img
-                              src={item.product.imageUrl}
-                              alt={item.product.name}
-                              className="w-full h-full object-cover"
-                            />
+                            <img src={item.product.imageUrl} alt={item.product.name} className="h-full w-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package className="w-8 h-8 text-muted-foreground/30" />
+                            <div className="flex h-full w-full items-center justify-center">
+                              <Package className="h-8 w-8 text-muted-foreground/30" />
                             </div>
                           )}
                         </div>
                       </Link>
 
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <Link href={`/product/${item.productId}`}>
-                          <h3 className="font-semibold text-foreground text-sm leading-snug hover:text-accent transition-colors cursor-pointer line-clamp-2">
+                          <h3 className="line-clamp-2 cursor-pointer text-sm font-semibold leading-snug text-foreground transition-colors hover:text-accent">
                             {item.product?.name}
                           </h3>
                         </Link>
-                        <p className="text-sm font-bold text-foreground mt-1">
-                          ₪{price.toFixed(2)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          סה"כ: ₪{(price * item.quantity).toFixed(2)}
-                        </p>
+                        <p className="mt-1 text-sm font-bold text-foreground">₪{price.toFixed(2)}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">סה"כ: ₪{(price * item.quantity).toFixed(2)}</p>
                       </div>
 
-                      {/* Quantity & Remove */}
-                      <div className="flex flex-col items-end justify-between shrink-0">
+                      <div className="flex shrink-0 flex-col items-end justify-between">
                         <button
-                          onClick={() => removeItem.mutate({ productId: item.productId })}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                          disabled={removeItem.isPending}
+                          onClick={() =>
+                            void removeItem({ productId: item.productId }).then(() =>
+                              toast.success("המוצר הוסר מהעגלה"),
+                            )
+                          }
+                          className="p-1 text-muted-foreground transition-colors hover:text-destructive"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
-                        <div className="flex items-center gap-1.5 border border-border rounded-lg overflow-hidden">
+                        <div className="flex items-center gap-1.5 overflow-hidden rounded-lg border border-border">
                           <button
-                            onClick={() => updateItem.mutate({ productId: item.productId, quantity: item.quantity - 1 })}
-                            className="w-7 h-7 flex items-center justify-center hover:bg-muted transition-colors"
-                            disabled={updateItem.isPending}
+                            onClick={() => void updateItem({ productId: item.productId, quantity: item.quantity - 1 })}
+                            className="flex h-7 w-7 items-center justify-center transition-colors hover:bg-muted"
                           >
-                            <Minus className="w-3 h-3" />
+                            <Minus className="h-3 w-3" />
                           </button>
                           <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
                           <button
-                            onClick={() => updateItem.mutate({ productId: item.productId, quantity: item.quantity + 1 })}
-                            className="w-7 h-7 flex items-center justify-center hover:bg-muted transition-colors"
-                            disabled={updateItem.isPending || item.quantity >= (item.product?.stock ?? 0)}
+                            onClick={() => void updateItem({ productId: item.productId, quantity: item.quantity + 1 })}
+                            className="flex h-7 w-7 items-center justify-center transition-colors hover:bg-muted"
+                            disabled={item.quantity >= (item.product?.stock ?? 0)}
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="h-3 w-3" />
                           </button>
                         </div>
                       </div>
@@ -212,35 +181,32 @@ export default function CartPage() {
               </AnimatePresence>
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-card rounded-xl border border-border p-6 sticky top-24">
-                <h2 className="text-lg font-bold text-foreground mb-5">סיכום הזמנה</h2>
+              <div className="sticky top-24 rounded-xl border border-border bg-card p-6">
+                <h2 className="mb-5 text-lg font-bold text-foreground">סיכום הזמנה</h2>
                 <div className="space-y-3">
-                  {cartItems!.map((item) => {
+                  {cartItems.map((item) => {
                     const price = parseFloat(item.product?.price ?? "0");
                     return (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground line-clamp-1 flex-1 ml-2">
+                      <div key={item._id} className="flex justify-between text-sm">
+                        <span className="ml-2 line-clamp-1 flex-1 text-muted-foreground">
                           {item.product?.name} × {item.quantity}
                         </span>
-                        <span className="font-medium shrink-0">₪{(price * item.quantity).toFixed(2)}</span>
+                        <span className="shrink-0 font-medium">₪{(price * item.quantity).toFixed(2)}</span>
                       </div>
                     );
                   })}
                 </div>
                 <Separator className="my-4" />
-                <div className="flex justify-between items-center mb-6">
-                  <span className="font-bold text-foreground text-lg">סה"כ</span>
-                  <span className="font-black text-foreground text-xl">₪{subtotal.toFixed(2)}</span>
+                <div className="mb-6 flex items-center justify-between">
+                  <span className="text-lg font-bold text-foreground">סה"כ</span>
+                  <span className="text-xl font-black text-foreground">₪{subtotal.toFixed(2)}</span>
                 </div>
-                <Button size="lg" className="w-full font-semibold text-base gap-2">
-                  <ShoppingCart className="w-5 h-5" />
+                <Button size="lg" className="w-full gap-2 text-base font-semibold">
+                  <ShoppingCart className="h-5 w-5" />
                   לתשלום
                 </Button>
-                <p className="text-xs text-muted-foreground text-center mt-3">
-                  משלוח מהיר לכל הארץ
-                </p>
+                <p className="mt-3 text-center text-xs text-muted-foreground">משלוח מהיר לכל הארץ</p>
               </div>
             </div>
           </div>

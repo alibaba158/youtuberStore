@@ -1,11 +1,24 @@
 import { Link } from "wouter";
 import { ArrowLeft, Sparkles, Package } from "lucide-react";
 import { motion } from "framer-motion";
-import { trpc } from "@/lib/trpc";
+import { useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
 import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
+import { api } from "../../../convex/_generated/api";
 
-function CategoryCard({ category, index }: { category: { id: number; name: string; slug: string; description?: string | null; imageUrl?: string | null }; index: number }) {
+function CategoryCard({
+  category,
+  index,
+}: {
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    imageUrl?: string;
+  };
+  index: number;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -13,24 +26,26 @@ function CategoryCard({ category, index }: { category: { id: number; name: strin
       transition={{ duration: 0.4, delay: index * 0.08 }}
     >
       <Link href={`/category/${category.slug}`}>
-        <div className="group relative bg-card rounded-xl border border-border overflow-hidden hover-lift cursor-pointer aspect-[4/3]">
+        <div className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-xl border border-border bg-card hover-lift">
           {category.imageUrl ? (
             <img
               src={category.imageUrl}
               alt={category.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-secondary to-muted flex items-center justify-center">
-              <Package className="w-10 h-10 text-muted-foreground/40" />
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary to-muted">
+              <Package className="h-10 w-10 text-muted-foreground/40" />
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
-          <div className="absolute bottom-0 inset-x-0 p-4">
-            <h3 className="text-white font-bold text-base">{category.name}</h3>
-            {category.description && (
-              <p className="text-white/75 text-xs mt-0.5 line-clamp-1">{category.description}</p>
-            )}
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            <h3 className="text-base font-bold text-white">{category.name}</h3>
+            {category.description ? (
+              <p className="mt-0.5 line-clamp-1 text-xs text-white/75">
+                {category.description}
+              </p>
+            ) : null}
           </div>
         </div>
       </Link>
@@ -38,44 +53,26 @@ function CategoryCard({ category, index }: { category: { id: number; name: strin
   );
 }
 
-function EmptyCategoryCard({ index }: { index: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
-    >
-      <div className="group bg-card rounded-xl border-2 border-dashed border-border overflow-hidden aspect-[4/3] flex flex-col items-center justify-center gap-3 text-center p-6">
-        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-          <Package className="w-6 h-6 text-muted-foreground/50" />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">קטגוריה בקרוב</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">מוצרים חדשים בדרך</p>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 export default function Home() {
-  const { data: categories, isLoading: catsLoading } = trpc.categories.list.useQuery();
-  const { data: featured, isLoading: featLoading } = trpc.products.featured.useQuery();
-  const { data: allProducts, isLoading: productsLoading } = trpc.products.list.useQuery();
+  const categories = useQuery(api.store.listCategories);
+  const featured = useQuery(api.store.featuredProducts);
+  const allProducts = useQuery(api.store.listProducts, {});
 
-  const showEmptyCategories = !catsLoading && (!categories || categories.length === 0);
-  const showEmptyFeatured = !featLoading && (!featured || featured.length === 0);
-  const showEmptyProducts = !productsLoading && (!allProducts || allProducts.length === 0);
+  const categoriesLoading = categories === undefined;
+  const featuredLoading = featured === undefined;
+  const productsLoading = allProducts === undefined;
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 text-white">
         <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0" style={{
-            backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-            backgroundSize: "40px 40px"
-          }} />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
+              backgroundSize: "40px 40px",
+            }}
+          />
         </div>
         <div className="container relative py-20 md:py-28">
           <motion.div
@@ -84,30 +81,30 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="max-w-2xl"
           >
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-6">
-              <Sparkles className="w-3.5 h-3.5 text-accent" />
-              <span className="text-sm font-medium text-white/90">ברוכים הבאים לחנות</span>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5 text-accent" />
+              <span className="text-sm font-medium text-white/90">חנות פשוטה יותר, מבוססת Convex</span>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-5">
+            <h1 className="mb-5 text-4xl font-black leading-tight md:text-5xl lg:text-6xl">
               המוצרים הכי
               <span className="block text-accent">טובים בשבילך</span>
             </h1>
-            <p className="text-lg text-white/70 leading-relaxed mb-8 max-w-lg">
-              מוצרים איכותיים, מחירים הוגנים, ומשלוח מהיר לכל הארץ. גלה את הקולקציה שלנו.
+            <p className="mb-8 max-w-lg text-lg leading-relaxed text-white/70">
+              חוויית חנות נקייה יותר עם קטלוג, עגלה, משתמשים וניהול מלאי, בלי שכבת Manus ובלי שרת Express נפרד.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button
                 size="lg"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold gap-2"
+                className="gap-2 bg-accent font-semibold text-accent-foreground hover:bg-accent/90"
                 onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
               >
                 לקנייה עכשיו
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="h-4 w-4" />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/30 text-white bg-white/10 hover:bg-white/20 hover:text-white font-semibold"
+                className="border-white/30 bg-white/10 font-semibold text-white hover:bg-white/20 hover:text-white"
                 onClick={() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth" })}
               >
                 גלה קטגוריות
@@ -115,126 +112,92 @@ export default function Home() {
             </div>
           </motion.div>
         </div>
-        {/* Decorative bottom curve */}
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-background" style={{ clipPath: "ellipse(55% 100% at 50% 100%)" }} />
+        <div
+          className="absolute bottom-0 left-0 right-0 h-8 bg-background"
+          style={{ clipPath: "ellipse(55% 100% at 50% 100%)" }}
+        />
       </section>
 
-      {/* Categories Section */}
       <section id="categories" className="py-16">
         <div className="container">
-          <div className="flex items-end justify-between mb-8">
+          <div className="mb-8 flex items-end justify-between">
             <div>
-              <p className="text-sm font-medium text-accent mb-1">קטגוריות</p>
-              <h2 className="text-2xl md:text-3xl font-black text-foreground">עיין לפי קטגוריה</h2>
+              <p className="mb-1 text-sm font-medium text-accent">קטגוריות</p>
+              <h2 className="text-2xl font-black text-foreground md:text-3xl">עיין לפי קטגוריה</h2>
             </div>
           </div>
 
-          {catsLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-[4/3] skeleton rounded-xl" />
+          {categoriesLoading ? (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="aspect-[4/3] rounded-xl skeleton" />
               ))}
             </div>
-          ) : showEmptyCategories ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <EmptyCategoryCard key={i} index={i} />
+          ) : categories && categories.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {categories.map((category, index) => (
+                <CategoryCard key={category._id} category={category} index={index} />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {categories!.map((cat, i) => (
-                <CategoryCard key={cat.id} category={cat} index={i} />
-              ))}
+            <div className="py-20 text-center">
+              <Package className="mx-auto mb-5 h-10 w-10 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">עדיין לא נוספו קטגוריות.</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* Featured Products Section */}
-      {featured && featured.length > 0 && (
-        <section className="py-16 bg-muted/30">
+      {featured && featured.length > 0 ? (
+        <section className="bg-muted/30 py-16">
           <div className="container">
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <p className="text-sm font-medium text-accent mb-1">מוצרים</p>
-                <h2 className="text-2xl md:text-3xl font-black text-foreground">מוצרים מומלצים</h2>
-              </div>
+            <div className="mb-8">
+              <p className="mb-1 text-sm font-medium text-accent">מוצרים</p>
+              <h2 className="text-2xl font-black text-foreground md:text-3xl">מוצרים מומלצים</h2>
             </div>
 
-            {featLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
+            {featuredLoading ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <ProductCardSkeleton key={index} />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-                {featured!.map((product, i) => (
-                  <ProductCard key={product.id} product={product} index={i} />
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+                {featured.map((product, index) => (
+                  <ProductCard key={product._id} product={product} index={index} />
                 ))}
               </div>
             )}
           </div>
         </section>
-      )}
+      ) : null}
 
-      {/* All Active Products Section */}
       <section id="products" className="py-16">
         <div className="container">
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <p className="text-sm font-medium text-accent mb-1">כל המוצרים</p>
-              <h2 className="text-2xl md:text-3xl font-black text-foreground">חפש את המוצר שלך</h2>
-            </div>
+          <div className="mb-8">
+            <p className="mb-1 text-sm font-medium text-accent">כל המוצרים</p>
+            <h2 className="text-2xl font-black text-foreground md:text-3xl">חפש את המוצר שלך</h2>
           </div>
 
           {productsLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <ProductCardSkeleton key={index} />
               ))}
             </div>
-          ) : showEmptyProducts ? (
-            <div className="py-20 text-center">
-              <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-5">
-                <Package className="w-10 h-10 text-muted-foreground/40" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">אין מוצרים עדיין</h3>
-              <p className="text-muted-foreground text-sm">מוצרים חדשים יתווספו בקרוב. חזור מאוחר יותר!</p>
+          ) : allProducts && allProducts.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+              {allProducts.map((product, index) => (
+                <ProductCard key={product._id} product={product} index={index} />
+              ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {allProducts!.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} />
-              ))}
+            <div className="py-20 text-center">
+              <Package className="mx-auto mb-5 h-10 w-10 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">עדיין לא נוספו מוצרים.</p>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* CTA Banner */}
-      <section className="py-16">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="bg-foreground rounded-2xl p-8 md:p-12 text-center text-white"
-          >
-            <h2 className="text-2xl md:text-3xl font-black mb-3">מצאת משהו שאהבת?</h2>
-            <p className="text-white/70 mb-6 max-w-md mx-auto">
-              הוסף לעגלה ותהנה ממשלוח מהיר לכל הארץ
-            </p>
-            <Button
-              size="lg"
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            >
-              לקנייה עכשיו
-            </Button>
-          </motion.div>
         </div>
       </section>
     </div>

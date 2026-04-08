@@ -10,6 +10,7 @@ import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
 import AdminPage from "./pages/AdminPage";
 import AccountPage from "./pages/AccountPage";
+import AuthPage from "./pages/AuthPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/account" component={AccountPage} />
+      <Route path="/auth" component={AuthPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

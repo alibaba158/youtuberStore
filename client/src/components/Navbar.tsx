@@ -1,10 +1,18 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Menu, X, User, LogOut, Shield, ChevronDown } from "lucide-react";
+import {
+  ShoppingCart,
+  Menu,
+  X,
+  User,
+  LogOut,
+  Shield,
+  ChevronDown,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,19 +22,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { api } from "../../../convex/_generated/api";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
-
-  const { data: categories } = trpc.categories.list.useQuery();
-  const { data: cartItems } = trpc.cart.get.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  const cartCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const categories = useQuery(api.store.listCategories) ?? [];
+  const cartItems = useQuery(api.store.cartItems, isAuthenticated ? {} : "skip") ?? [];
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -42,171 +47,155 @@ export default function Navbar() {
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-border"
-          : "bg-white border-b border-border"
+          ? "border-b border-border bg-white/95 shadow-sm backdrop-blur-md"
+          : "border-b border-border bg-white"
       }`}
     >
       <div className="container">
-        <div className="flex items-center justify-between h-16 gap-4">
-          {/* Logo */}
+        <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/">
-            <span className="text-xl font-black tracking-tight text-foreground hover:text-accent transition-colors cursor-pointer" style={{color: '#000000'}}>
-              חנות<span className="text-accent" style={{color: '#4f4f4f'}}></span>
+            <span className="cursor-pointer text-xl font-black tracking-tight text-foreground transition-colors hover:text-accent">
+              SET_NAME
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden items-center gap-1 md:flex">
             <Link href="/">
-              <span className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                location === "/" ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}>
+              <span
+                className={`cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  location === "/"
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
                 ראשי
               </span>
             </Link>
 
-            {categories && categories.length > 0 && (
+            {categories.length > 0 ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <button className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
                     קטגוריות
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  {categories.map((cat) => (
-                    <DropdownMenuItem key={cat.id} asChild>
-                      <Link href={`/category/${cat.slug}`}>
-                        <span className="cursor-pointer w-full">{cat.name}</span>
+                  {categories.map((category) => (
+                    <DropdownMenuItem key={category._id} asChild>
+                      <Link href={`/category/${category.slug}`}>
+                        <span className="w-full cursor-pointer">{category.name}</span>
                       </Link>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            )}
-
-            {!categories || categories.length === 0 ? (
-              <span className="px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer">
-                קטגוריות
-              </span>
             ) : null}
           </nav>
 
-          {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Cart */}
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative cursor-pointer">
-                <ShoppingCart className="w-5 h-5" />
-                {cartCount > 0 && (
-                  <Badge className="absolute -top-1 -left-1 w-5 h-5 p-0 flex items-center justify-center text-xs bg-accent text-accent-foreground border-0 rounded-full">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 ? (
+                  <Badge className="absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-0 bg-accent p-0 text-xs text-accent-foreground">
                     {cartCount}
                   </Badge>
-                )}
+                ) : null}
               </Button>
             </Link>
 
-            {/* User */}
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="cursor-pointer">
-                    <User className="w-5 h-5" />
+                    <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-3 py-2">
-                    <p className="text-sm font-medium truncate">{user?.name || "משתמש"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    <p className="truncate text-sm font-medium">{user?.name || "משתמש"}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/account">
-                      <span className="flex items-center gap-2 cursor-pointer w-full">
-                        <User className="w-4 h-4" />
+                      <span className="flex w-full cursor-pointer items-center gap-2">
+                        <User className="h-4 w-4" />
                         הגדרות חשבון
                       </span>
                     </Link>
                   </DropdownMenuItem>
-                  {user?.role === "admin" && (
+                  {user?.role === "admin" ? (
                     <>
                       <DropdownMenuItem asChild>
                         <Link href="/admin">
-                          <span className="flex items-center gap-2 cursor-pointer w-full">
-                            <Shield className="w-4 h-4" />
-                            פאנל ניהול
+                          <span className="flex w-full cursor-pointer items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            ניהול
                           </span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
-                  )}
+                  ) : null}
                   <DropdownMenuItem
-                    onClick={() => logout()}
-                    className="text-destructive focus:text-destructive cursor-pointer"
+                    onClick={() => void logout()}
+                    className="cursor-pointer text-destructive focus:text-destructive"
                   >
-                    <LogOut className="w-4 h-4 ml-2" />
+                    <LogOut className="ml-2 h-4 w-4" />
                     התנתק
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button
-                size="sm"
-                className="text-sm font-medium"
-                onClick={() => (window.location.href = getLoginUrl())}
-              >
+              <Button size="sm" className="text-sm font-medium" onClick={() => (window.location.href = getLoginUrl())}>
                 כניסה
               </Button>
             )}
 
-            {/* Mobile menu toggle */}
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden cursor-pointer"
-              onClick={() => setMobileOpen(!mobileOpen)}
+              className="cursor-pointer md:hidden"
+              onClick={() => setMobileOpen((open) => !open)}
             >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
-        {mobileOpen && (
+        {mobileOpen ? (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden border-t border-border bg-white overflow-hidden"
+            className="overflow-hidden border-t border-border bg-white md:hidden"
           >
-            <div className="container py-4 flex flex-col gap-1">
+            <div className="container flex flex-col gap-1 py-4">
               <Link href="/">
-                <span className="block px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-secondary transition-colors cursor-pointer">
+                <span className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary">
                   ראשי
                 </span>
               </Link>
-              {categories?.map((cat) => (
-                <Link key={cat.id} href={`/category/${cat.slug}`}>
-                  <span className="block px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer">
-                    {cat.name}
+              {categories.map((category) => (
+                <Link key={category._id} href={`/category/${category.slug}`}>
+                  <span className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+                    {category.name}
                   </span>
                 </Link>
               ))}
-              {!isAuthenticated && (
-                <Button
-                  className="mt-2 w-full"
-                  onClick={() => (window.location.href = getLoginUrl())}
-                >
+              {!isAuthenticated ? (
+                <Button className="mt-2 w-full" onClick={() => (window.location.href = getLoginUrl())}>
                   כניסה
                 </Button>
-              )}
+              ) : null}
             </div>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </header>
   );
