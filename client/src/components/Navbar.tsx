@@ -54,7 +54,7 @@ export default function Navbar() {
       <div className="container">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/">
-            <span className="cursor-pointer text-xl font-black tracking-tight text-foreground transition-all duration-300 hover:text-accent hover:scale-105">
+            <span className="cursor-pointer text-xl font-black tracking-tight text-foreground transition-all duration-300 hover:text-primary hover:scale-105">
               SET_NAME
             </span>
           </Link>
