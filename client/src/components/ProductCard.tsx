@@ -77,7 +77,7 @@ export default function ProductCard({
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             {product.isFeatured ? (
-              <Badge className="absolute right-3 top-3 border-0 bg-accent/95 px-3 py-1 text-xs font-bold text-accent-foreground shadow-lg backdrop-blur-sm">
+              <Badge className="absolute right-3 top-3 border-0 bg-accent/95 px-3 py-1 text-xs font-bold text-white shadow-lg backdrop-blur-sm">
                 ✨ מומלץ
               </Badge>
             ) : null}
@@ -103,7 +103,7 @@ export default function ProductCard({
                 variant={product.stock === 0 ? "outline" : "default"}
                 disabled={product.stock === 0}
                 onClick={(event) => void handleAddToCart(event)}
-                className={`shrink-0 gap-1.5 font-semibold transition-all duration-200 ${
+                className={`shrink-0 gap-1.5 font-semibold transition-all duration-200 rounded-xl ${
                   product.stock > 0 
                     ? "hover:scale-105 hover:shadow-md" 
                     : ""

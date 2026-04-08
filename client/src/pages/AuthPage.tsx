@@ -48,28 +48,28 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="container py-16">
+    <div className="container py-20">
       <div className="mx-auto max-w-md">
-        <Card className="p-6 md:p-8">
+        <Card className="p-8 md:p-10 shadow-xl border-border/60 bg-card/80 backdrop-blur-sm">
           <Tabs
             dir="rtl"
             value={mode}
             onValueChange={(value) => setMode(value as AuthMode)}
           >
-            <TabsList className="mb-6 grid grid-cols-2">
-              <TabsTrigger value="signIn">כניסה</TabsTrigger>
-              <TabsTrigger value="signUp">הרשמה</TabsTrigger>
+            <TabsList className="mb-8 grid grid-cols-2 bg-secondary/50 p-1 rounded-xl">
+              <TabsTrigger value="signIn" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all">כניסה</TabsTrigger>
+              <TabsTrigger value="signUp" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all">הרשמה</TabsTrigger>
             </TabsList>
 
             <TabsContent value={mode} className="mt-0">
-              <div className="mb-6 text-right">
-                <h1 className="text-2xl font-black text-foreground">{title}</h1>
-                <p className="mt-2 text-sm text-muted-foreground">
+              <div className="mb-8 text-right">
+                <h1 className="text-3xl font-black text-foreground tracking-tight">{title}</h1>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                   האפליקציה כעת משתמשת ב-Convex עבור אימות, מסד הנתונים והעגלה.
                 </p>
               </div>
 
-              <form className="space-y-4" onSubmit={handleSubmit}>
+              <form className="space-y-5" onSubmit={handleSubmit}>
                 {mode === "signUp" ? (
                   <Input
                     dir="rtl"
@@ -78,6 +78,7 @@ export default function AuthPage() {
                     maxLength={80}
                     value={name}
                     onChange={(event) => setName(event.target.value)}
+                    className="h-12 rounded-xl border-border/70 focus:border-primary focus:ring-primary/20 transition-all"
                   />
                 ) : null}
                 <Input
@@ -90,6 +91,7 @@ export default function AuthPage() {
                   spellCheck={false}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                  className="h-12 rounded-xl border-border/70 focus:border-primary focus:ring-primary/20 transition-all"
                 />
                 <Input
                   dir="ltr"
@@ -101,8 +103,9 @@ export default function AuthPage() {
                   spellCheck={false}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  className="h-12 rounded-xl border-border/70 focus:border-primary focus:ring-primary/20 transition-all"
                 />
-                <Button className="w-full" disabled={submitting} type="submit">
+                <Button className="w-full h-12 text-base font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300" disabled={submitting} type="submit">
                   {submitting ? "טוען..." : mode === "signIn" ? "להתחבר" : "ליצור חשבון"}
                 </Button>
               </form>
