@@ -59,42 +59,43 @@ export default function ProductCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.07 }}
+      transition={{ duration: 0.5, delay: index * 0.06 }}
     >
-      <Link href={`/product/${product._id}`}>
-        <div className="group cursor-pointer overflow-hidden rounded-xl border border-border bg-card hover-lift">
+      <Link href={`/product/${product._id}`} className="group">
+        <div className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/40">
           <div className="relative aspect-square overflow-hidden bg-muted">
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
                 alt={product.name}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <Package className="h-12 w-12 text-muted-foreground/30" />
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary/50 to-muted">
+                <Package className="h-16 w-16 text-muted-foreground/20" />
               </div>
             )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             {product.isFeatured ? (
-              <Badge className="absolute right-3 top-3 border-0 bg-accent text-xs font-semibold text-accent-foreground">
-                מומלץ
+              <Badge className="absolute right-3 top-3 border-0 bg-accent/95 px-3 py-1 text-xs font-bold text-accent-foreground shadow-lg backdrop-blur-sm">
+                ✨ מומלץ
               </Badge>
             ) : null}
           </div>
 
           <div className="p-4">
-            <h3 className="mb-1 line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+            <h3 className="mb-1.5 line-clamp-2 text-sm font-bold leading-snug text-foreground transition-colors duration-200 group-hover:text-accent">
               {product.name}
             </h3>
             {product.description ? (
-              <p className="mb-3 line-clamp-2 text-xs text-muted-foreground">
+              <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                 {product.description}
               </p>
             ) : null}
 
             <div className="mt-3 flex items-center justify-between gap-2">
               <div>
-                <p className="text-lg font-bold text-foreground">₪{price.toFixed(2)}</p>
+                <p className="text-xl font-black text-foreground">₪{price.toFixed(2)}</p>
                 <StockBadge stock={product.stock} />
               </div>
               <Button
@@ -102,7 +103,11 @@ export default function ProductCard({
                 variant={product.stock === 0 ? "outline" : "default"}
                 disabled={product.stock === 0}
                 onClick={(event) => void handleAddToCart(event)}
-                className="shrink-0 gap-1.5"
+                className={`shrink-0 gap-1.5 font-semibold transition-all duration-200 ${
+                  product.stock > 0 
+                    ? "hover:scale-105 hover:shadow-md" 
+                    : ""
+                }`}
               >
                 <ShoppingCart className="h-3.5 w-3.5" />
                 {product.stock === 0 ? "אזל" : "הוסף"}
@@ -117,15 +122,15 @@ export default function ProductCard({
 
 export function ProductCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
       <div className="aspect-square skeleton" />
       <div className="space-y-3 p-4">
-        <div className="h-4 w-3/4 rounded skeleton" />
+        <div className="h-5 w-3/4 rounded skeleton" />
         <div className="h-3 w-full rounded skeleton" />
         <div className="h-3 w-2/3 rounded skeleton" />
         <div className="mt-2 flex items-center justify-between">
-          <div className="h-6 w-16 rounded skeleton" />
-          <div className="h-8 w-20 rounded skeleton" />
+          <div className="h-7 w-16 rounded skeleton" />
+          <div className="h-9 w-20 rounded skeleton" />
         </div>
       </div>
     </div>

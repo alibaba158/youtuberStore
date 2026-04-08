@@ -23,26 +23,26 @@ function CategoryCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
+      transition={{ duration: 0.5, delay: index * 0.07 }}
     >
-      <Link href={`/category/${category.slug}`}>
-        <div className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-xl border border-border bg-card hover-lift">
+      <Link href={`/category/${category.slug}`} className="group">
+        <div className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/40">
           {category.imageUrl ? (
             <img
               src={category.imageUrl}
               alt={category.name}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary to-muted">
-              <Package className="h-10 w-10 text-muted-foreground/40" />
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary/50 to-muted">
+              <Package className="h-14 w-14 text-muted-foreground/20" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-4">
-            <h3 className="text-base font-bold text-white">{category.name}</h3>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-90" />
+          <div className="absolute inset-x-0 bottom-0 p-5">
+            <h3 className="text-lg font-bold text-white group-hover:text-accent transition-colors">{category.name}</h3>
             {category.description ? (
-              <p className="mt-0.5 line-clamp-1 text-xs text-white/75">
+              <p className="mt-1.5 line-clamp-1 text-xs text-white/80">
                 {category.description}
               </p>
             ) : null}
@@ -65,47 +65,49 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 text-white">
-        <div className="absolute inset-0 opacity-5">
+      <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground/95 to-foreground/85 text-white">
+        <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"
             style={{
               backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-              backgroundSize: "40px 40px",
+              backgroundSize: "32px 32px",
             }}
           />
         </div>
-        <div className="container relative py-20 md:py-28">
+        <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
+        <div className="container relative py-24 md:py-32">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-2xl"
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-3xl"
           >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-sm">
-              <Sparkles className="h-3.5 w-3.5 text-accent" />
-              <span className="text-sm font-medium text-white/90">חנות פשוטה יותר, מבוססת Convex</span>
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-5 py-2 backdrop-blur-sm shadow-lg">
+              <Sparkles className="h-4 w-4 text-accent" />
+              <span className="text-sm font-semibold text-white/95">חנות פשוטה יותר, מבוססת Convex</span>
             </div>
-            <h1 className="mb-5 text-4xl font-black leading-tight md:text-5xl lg:text-6xl">
+            <h1 className="mb-6 text-5xl font-black leading-tight md:text-6xl lg:text-7xl">
               המוצרים הכי
-              <span className="block text-accent">טובים בשבילך</span>
+              <span className="block bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">טובים בשבילך</span>
             </h1>
-            <p className="mb-8 max-w-lg text-lg leading-relaxed text-white/70">
+            <p className="mb-10 max-w-xl text-lg leading-relaxed text-white/80 md:text-xl">
               חוויית חנות נקייה יותר עם קטלוג, עגלה, משתמשים וניהול מלאי, בלי שכבת Manus ובלי שרת Express נפרד.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4">
               <Button
                 size="lg"
-                className="gap-2 bg-accent font-semibold text-accent-foreground hover:bg-accent/90"
+                className="group gap-2 bg-accent font-bold text-accent-foreground shadow-lg shadow-accent/25 transition-all duration-300 hover:bg-accent/90 hover:shadow-xl hover:shadow-accent/30 hover:scale-105"
                 onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
               >
                 לקנייה עכשיו
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/30 bg-white/10 font-semibold text-white hover:bg-white/20 hover:text-white"
+                className="group border-white/30 bg-white/10 font-bold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-lg"
                 onClick={() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth" })}
               >
                 גלה קטגוריות
@@ -114,24 +116,24 @@ export default function Home() {
           </motion.div>
         </div>
         <div
-          className="absolute bottom-0 left-0 right-0 h-8 bg-background"
-          style={{ clipPath: "ellipse(55% 100% at 50% 100%)" }}
+          className="absolute bottom-0 left-0 right-0 h-16 bg-background"
+          style={{ clipPath: "ellipse(70% 100% at 50% 100%)" }}
         />
       </section>
 
-      <section id="categories" className="py-16">
+      <section id="categories" className="py-20">
         <div className="container">
-          <div className="mb-8 flex items-end justify-between">
+          <div className="mb-10 flex items-end justify-between">
             <div>
-              <p className="mb-1 text-sm font-medium text-accent">קטגוריות</p>
-              <h2 className="text-2xl font-black text-foreground md:text-3xl">עיין לפי קטגוריה</h2>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">קטגוריות</p>
+              <h2 className="text-3xl font-black text-foreground md:text-4xl">עיין לפי קטגוריה</h2>
             </div>
           </div>
 
           {categoriesLoading ? (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="aspect-[4/3] rounded-xl skeleton" />
+                <div key={index} className="aspect-[4/3] rounded-2xl skeleton" />
               ))}
             </div>
           ) : categories && categories.length > 0 ? (
@@ -142,7 +144,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="py-20 text-center">
-              <Package className="mx-auto mb-5 h-10 w-10 text-muted-foreground/40" />
+              <Package className="mx-auto mb-5 h-12 w-12 text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground">עדיין לא נוספו קטגוריות.</p>
             </div>
           )}
@@ -150,11 +152,11 @@ export default function Home() {
       </section>
 
       {featured && featured.length > 0 ? (
-        <section className="bg-muted/30 py-16">
+        <section className="bg-gradient-to-b from-muted/40 to-transparent py-20">
           <div className="container">
-            <div className="mb-8">
-              <p className="mb-1 text-sm font-medium text-accent">מוצרים</p>
-              <h2 className="text-2xl font-black text-foreground md:text-3xl">מוצרים מומלצים</h2>
+            <div className="mb-10">
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">מוצרים</p>
+              <h2 className="text-3xl font-black text-foreground md:text-4xl">מוצרים מומלצים</h2>
             </div>
 
             {featuredLoading ? (
@@ -174,11 +176,11 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section id="products" className="py-16">
+      <section id="products" className="py-20">
         <div className="container">
-          <div className="mb-8">
-            <p className="mb-1 text-sm font-medium text-accent">כל המוצרים</p>
-            <h2 className="text-2xl font-black text-foreground md:text-3xl">חפש את המוצר שלך</h2>
+          <div className="mb-10">
+            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">כל המוצרים</p>
+            <h2 className="text-3xl font-black text-foreground md:text-4xl">חפש את המוצר שלך</h2>
           </div>
 
           {productsLoading ? (
@@ -195,7 +197,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="py-20 text-center">
-              <Package className="mx-auto mb-5 h-10 w-10 text-muted-foreground/40" />
+              <Package className="mx-auto mb-5 h-12 w-12 text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground">עדיין לא נוספו מוצרים.</p>
             </div>
           )}
