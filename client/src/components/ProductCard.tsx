@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useMutation } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { addGuestCartItem } from "@/lib/guestCart";
 import { api } from "../../../convex/_generated/api";
 import { Doc } from "../../../convex/_generated/dataModel";
 
@@ -36,17 +36,16 @@ export default function ProductCard({
     event.preventDefault();
     event.stopPropagation();
 
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
-      return;
-    }
-
     if (product.stock === 0) {
       return;
     }
 
     try {
-      await addToCart({ productId: product._id, quantity: 1 });
+      if (isAuthenticated) {
+        await addToCart({ productId: product._id, quantity: 1 });
+      } else {
+        addGuestCartItem(product._id, 1, product.stock);
+      }
       toast.success("המוצר נוסף לעגלה");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "שגיאה בהוספה לעגלה");

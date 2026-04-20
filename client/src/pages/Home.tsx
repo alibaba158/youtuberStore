@@ -1,14 +1,8 @@
 import { Link } from "wouter";
 import {
   ArrowLeft,
-  CheckCircle2,
-  CreditCard,
   Package,
-  ShieldCheck,
-  Star,
-  Trophy,
   UserRound,
-  Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
@@ -48,38 +42,6 @@ const categoryMeta = {
     summary: "חשבונות לפי כמות גביעים. המלאי יתווסף בהמשך.",
   },
 } as const;
-
-const boostTabs = ["Rank Boost", "Trophy Boost", "Prestige Icon", "Brawlers Rank"];
-
-const trustItems = [
-  "Verified sellers",
-  "Fast delivery",
-  "Secure payment",
-  "Live support",
-];
-
-const processSteps = [
-  {
-    title: "Select a service",
-    text: "Choose the account or boost category that fits what you need.",
-    icon: Zap,
-  },
-  {
-    title: "Choose an offer",
-    text: "Compare available products and pick the safest match.",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Complete payment",
-    text: "Checkout is handled through a protected payment flow.",
-    icon: CreditCard,
-  },
-  {
-    title: "Rank up",
-    text: "Receive the account details or service confirmation.",
-    icon: Trophy,
-  },
-];
 
 function CategoryCard({
   category,

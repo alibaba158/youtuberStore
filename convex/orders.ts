@@ -143,7 +143,7 @@ async function buildOrderSnapshotFromItems(ctx: any, sourceItems: OrderSnapshotI
   const items = [];
   let subtotal = 0;
 
-  for (const [productId, rawQuantity] of mergedItems) {
+  for (const [productId, rawQuantity] of Array.from(mergedItems.entries())) {
     const quantity = normalizeCartQuantity(rawQuantity);
     const product = await ctx.db.get(productId);
     if (!product || !product.isActive) {
@@ -452,10 +452,11 @@ export const markOrderPaid = internalMutation({
       });
     }
 
-    if (order.userId) {
+    const orderUserId = order.userId;
+    if (orderUserId) {
       const cartItems = await ctx.db
         .query("cartItems")
-        .withIndex("by_userId", (q) => q.eq("userId", order.userId))
+        .withIndex("by_userId", (q) => q.eq("userId", orderUserId))
         .collect();
 
       for (const cartItem of cartItems) {
@@ -589,10 +590,11 @@ export const markOrderPaidFromStripe = internalMutation({
       });
     }
 
-    if (order.userId) {
+    const orderUserId = order.userId;
+    if (orderUserId) {
       const cartItems = await ctx.db
         .query("cartItems")
-        .withIndex("by_userId", (q) => q.eq("userId", order.userId))
+        .withIndex("by_userId", (q) => q.eq("userId", orderUserId))
         .collect();
 
       for (const cartItem of cartItems) {

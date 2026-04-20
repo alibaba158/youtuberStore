@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import { getGuestCartCount, onGuestCartChange } from "@/lib/guestCart";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,11 +37,12 @@ const categoryDescriptions = {
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [guestCartCount, setGuestCartCount] = useState(0);
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const navData = useQuery(api.store.navData);
   const categories = navData?.categories ?? [];
-  const cartCount = isAuthenticated ? (navData?.cartCount ?? 0) : 0;
+  const cartCount = isAuthenticated ? (navData?.cartCount ?? 0) : guestCartCount;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -51,6 +53,11 @@ export default function Navbar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [location]);
+
+  useEffect(() => {
+    setGuestCartCount(getGuestCartCount());
+    return onGuestCartChange(() => setGuestCartCount(getGuestCartCount()));
+  }, []);
 
   return (
     <header

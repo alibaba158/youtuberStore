@@ -1,58 +1,69 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import {
-  ShoppingCart,
-  Trash2,
-  Plus,
-  Minus,
-  ArrowRight,
-  Package,
-  LogIn,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Minus, Package, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  clearGuestCart,
+  getGuestCart,
+  onGuestCartChange,
+  removeGuestCartItem,
+  updateGuestCartItem,
+} from "@/lib/guestCart";
 import { api } from "../../../convex/_generated/api";
 
 export default function CartPage() {
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const [guestCart, setGuestCart] = useState(() => getGuestCart());
+  const [submittingOrder, setSubmittingOrder] = useState(false);
+
   const cartItems = useQuery(api.store.cartItems, isAuthenticated ? {} : "skip");
+  const guestProducts = useQuery(
+    api.store.productsByIds,
+    !isAuthenticated && guestCart.length > 0
+      ? { ids: guestCart.map((item) => item.productId) }
+      : "skip",
+  );
   const updateItem = useMutation(api.store.updateCartItem);
   const removeItem = useMutation(api.store.removeCartItem);
   const clearCart = useMutation(api.store.clearCart);
   const createOrderFromCart = useMutation(api.orders.createOrderFromCart);
-  const [submittingOrder, setSubmittingOrder] = useState(false);
+  const createGuestOrder = useMutation(api.orders.createGuestOrder);
 
-  if (!isAuthenticated) {
-    return (
-      <div className="container py-20 text-center">
-        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-          <LogIn className="h-10 w-10 text-muted-foreground/40" />
-        </div>
-        <h2 className="mb-3 text-2xl font-black text-foreground">
-          נדרשת כניסה לחשבון
-        </h2>
-        <p className="mb-6 text-muted-foreground">
-          כדי לצפות בעגלת הקניות שלך צריך להתחבר קודם.
-        </p>
-        <Button
-          size="lg"
-          className="gap-2"
-          onClick={() => (window.location.href = getLoginUrl())}
-        >
-          <LogIn className="h-4 w-4" />
-          כניסה לחשבון
-        </Button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    return onGuestCartChange(() => setGuestCart(getGuestCart()));
+  }, []);
 
-  if (cartItems === undefined) {
+  const visibleCartItems = useMemo(() => {
+    if (isAuthenticated) {
+      return cartItems;
+    }
+
+    if (!guestProducts) {
+      return guestCart.length > 0 ? undefined : [];
+    }
+
+    return guestCart
+      .map((item) => {
+        const product = guestProducts.find((candidate) => candidate?._id === item.productId);
+        return product
+          ? {
+              _id: item.productId,
+              productId: item.productId,
+              quantity: Math.min(item.quantity, product.stock),
+              product,
+            }
+          : null;
+      })
+      .filter((item) => item !== null);
+  }, [cartItems, guestCart, guestProducts, isAuthenticated]);
+
+  if (visibleCartItems === undefined) {
     return (
       <div className="container py-12">
         <div className="mb-8 h-8 w-48 rounded skeleton" />
@@ -65,8 +76,8 @@ export default function CartPage() {
     );
   }
 
-  const isEmpty = cartItems.length === 0;
-  const subtotal = cartItems.reduce((sum, item) => {
+  const isEmpty = visibleCartItems.length === 0;
+  const subtotal = visibleCartItems.reduce((sum, item) => {
     const price = parseFloat(item.product?.price ?? "0");
     return sum + price * item.quantity;
   }, 0);
@@ -74,15 +85,24 @@ export default function CartPage() {
   const handleCheckout = async () => {
     try {
       setSubmittingOrder(true);
-      const orderId = await createOrderFromCart({});
+      const orderId = isAuthenticated
+        ? await createOrderFromCart({})
+        : await createGuestOrder({ items: guestCart });
       setLocation(`/checkout/${orderId}`);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "לא הצלחנו ליצור הזמנה",
-      );
+      toast.error(error instanceof Error ? error.message : "לא הצלחנו ליצור הזמנה");
     } finally {
       setSubmittingOrder(false);
     }
+  };
+
+  const handleClearCart = () => {
+    if (isAuthenticated) {
+      void clearCart().then(() => toast.success("העגלה רוקנה"));
+      return;
+    }
+    clearGuestCart();
+    toast.success("העגלה רוקנה");
   };
 
   return (
@@ -101,7 +121,7 @@ export default function CartPage() {
               עגלת הקניות
               {!isEmpty ? (
                 <span className="text-lg font-medium text-muted-foreground">
-                  ({cartItems.length} פריטים)
+                  ({visibleCartItems.length} פריטים)
                 </span>
               ) : null}
             </h1>
@@ -111,9 +131,7 @@ export default function CartPage() {
               variant="ghost"
               size="sm"
               className="gap-1.5 text-muted-foreground hover:text-destructive"
-              onClick={() =>
-                void clearCart().then(() => toast.success("העגלה רוקנה"))
-              }
+              onClick={handleClearCart}
             >
               <Trash2 className="h-4 w-4" />
               נקה עגלה
@@ -130,12 +148,8 @@ export default function CartPage() {
             <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-muted">
               <Package className="h-12 w-12 text-muted-foreground/40" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-foreground">
-              העגלה ריקה
-            </h3>
-            <p className="mb-8 text-muted-foreground">
-              עדיין לא הוספת מוצרים לעגלה
-            </p>
+            <h3 className="mb-2 text-xl font-bold text-foreground">העגלה ריקה</h3>
+            <p className="mb-8 text-muted-foreground">עדיין לא הוספת מוצרים לעגלה</p>
             <Link href="/">
               <Button size="lg" className="gap-2">
                 <ShoppingCart className="h-4 w-4" />
@@ -147,7 +161,7 @@ export default function CartPage() {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="space-y-3 lg:col-span-2">
               <AnimatePresence mode="popLayout">
-                {cartItems.map((item) => {
+                {visibleCartItems.map((item) => {
                   const price = parseFloat(item.product?.price ?? "0");
                   return (
                     <motion.div
@@ -191,23 +205,36 @@ export default function CartPage() {
 
                       <div className="flex shrink-0 flex-col items-end justify-between">
                         <button
-                          onClick={() =>
-                            void removeItem({ productId: item.productId }).then(() =>
-                              toast.success("המוצר הוסר מהעגלה"),
-                            )
-                          }
+                          onClick={() => {
+                            if (isAuthenticated) {
+                              void removeItem({ productId: item.productId }).then(() =>
+                                toast.success("המוצר הוסר מהעגלה"),
+                              );
+                            } else {
+                              removeGuestCartItem(item.productId);
+                              toast.success("המוצר הוסר מהעגלה");
+                            }
+                          }}
                           className="p-1 text-muted-foreground transition-colors hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                         <div className="flex items-center gap-1.5 overflow-hidden rounded-lg border border-border">
                           <button
-                            onClick={() =>
-                              void updateItem({
-                                productId: item.productId,
-                                quantity: item.quantity - 1,
-                              })
-                            }
+                            onClick={() => {
+                              if (isAuthenticated) {
+                                void updateItem({
+                                  productId: item.productId,
+                                  quantity: item.quantity - 1,
+                                });
+                              } else {
+                                updateGuestCartItem(
+                                  item.productId,
+                                  item.quantity - 1,
+                                  item.product?.stock ?? 0,
+                                );
+                              }
+                            }}
                             className="flex h-7 w-7 items-center justify-center transition-colors hover:bg-muted"
                           >
                             <Minus className="h-3 w-3" />
@@ -216,12 +243,20 @@ export default function CartPage() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() =>
-                              void updateItem({
-                                productId: item.productId,
-                                quantity: item.quantity + 1,
-                              })
-                            }
+                            onClick={() => {
+                              if (isAuthenticated) {
+                                void updateItem({
+                                  productId: item.productId,
+                                  quantity: item.quantity + 1,
+                                });
+                              } else {
+                                updateGuestCartItem(
+                                  item.productId,
+                                  item.quantity + 1,
+                                  item.product?.stock ?? 0,
+                                );
+                              }
+                            }}
                             className="flex h-7 w-7 items-center justify-center transition-colors hover:bg-muted"
                             disabled={item.quantity >= (item.product?.stock ?? 0)}
                           >
@@ -237,11 +272,9 @@ export default function CartPage() {
 
             <div className="lg:col-span-1">
               <div className="sticky top-24 rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-bold text-foreground">
-                  סיכום הזמנה
-                </h2>
+                <h2 className="mb-5 text-lg font-bold text-foreground">סיכום הזמנה</h2>
                 <div className="space-y-3">
-                  {cartItems.map((item) => {
+                  {visibleCartItems.map((item) => {
                     const price = parseFloat(item.product?.price ?? "0");
                     return (
                       <div key={item._id} className="flex justify-between text-sm">

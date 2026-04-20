@@ -16,6 +16,7 @@ import ReceiptPage from "./pages/ReceiptPage";
 import AdminPage from "./pages/AdminPage";
 import AccountPage from "./pages/AccountPage";
 import AuthPage from "./pages/AuthPage";
+import BrawlStarsBoostingPage from "./pages/BrawlStarsBoostingPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -23,6 +24,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/brawl-stars-boosting" component={BrawlStarsBoostingPage} />
       <Route path="/category/:slug" component={CategoryPage} />
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/cart" component={CartPage} />

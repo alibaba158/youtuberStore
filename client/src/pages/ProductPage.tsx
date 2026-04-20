@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
+import { addGuestCartItem } from "@/lib/guestCart";
 import { api } from "../../../convex/_generated/api";
 
 function StockBadge({ stock }: { stock: number }) {
@@ -27,16 +27,16 @@ export default function ProductPage() {
   const addToCart = useMutation(api.store.addToCart);
 
   const handleAddToCart = async () => {
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
-      return;
-    }
     if (!product || product.stock === 0) {
       return;
     }
 
     try {
-      await addToCart({ productId: product._id, quantity });
+      if (isAuthenticated) {
+        await addToCart({ productId: product._id, quantity });
+      } else {
+        addGuestCartItem(product._id, quantity, product.stock);
+      }
       toast.success(`${product.name} נוסף לעגלה`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "שגיאה בהוספה לעגלה");

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -6,16 +5,13 @@ import {
   ExternalLink,
   LogOut,
   Mail,
-  Palette,
   ReceiptText,
   Shield,
   User,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { themes, type ThemeType, applyTheme } from "@/lib/themes";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
