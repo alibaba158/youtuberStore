@@ -65,11 +65,13 @@ export default function ProductCard({
         <div className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/40">
           <div className="relative aspect-square overflow-hidden bg-muted">
             {product.imageUrl ? (
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-              />
+              <div className="flex h-full w-full items-center justify-center p-3">
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="max-h-full max-w-full object-contain transition-transform duration-700 ease-out group-hover:scale-110"
+                />
+              </div>
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary/50 to-muted">
                 <Package className="h-16 w-16 text-muted-foreground/20" />

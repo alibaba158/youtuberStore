@@ -65,7 +65,7 @@ export default function AuthPage() {
               <div className="mb-6 text-right">
                 <h1 className="text-2xl font-black text-foreground">{title}</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  האפליקציה כעת משתמשת ב-Convex עבור אימות, מסד הנתונים והעגלה.
+                  דוגמה
                 </p>
               </div>
 

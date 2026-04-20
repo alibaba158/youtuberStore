@@ -16,6 +16,7 @@ import { api } from "../../../convex/_generated/api";
 type ProductForm = {
   name: string;
   description: string;
+  deliveryContent: string;
   price: string;
   imageUrl: string;
   categoryId: string;
@@ -32,8 +33,17 @@ type CategoryForm = {
   sortOrder: string;
 };
 
-const emptyProduct: ProductForm = { name: "", description: "", price: "", imageUrl: "", categoryId: "", stock: "0", isActive: true, isFeatured: false };
+const emptyProduct: ProductForm = { name: "", description: "", deliveryContent: "", price: "", imageUrl: "", categoryId: "", stock: "0", isActive: true, isFeatured: false };
 const emptyCategory: CategoryForm = { name: "", slug: "", description: "", imageUrl: "", sortOrder: "0" };
+
+async function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.readAsDataURL(file);
+  });
+}
 
 function ProductEditor({
   open,
@@ -52,6 +62,17 @@ function ProductEditor({
   categories: Array<{ _id: string; name: string }>;
   title: string;
 }) {
+  const handleImageSelect = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const imageUrl = await readFileAsDataUrl(file);
+      onChange({ ...value, imageUrl });
+      toast.success("Image added");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to add image");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-lg">
@@ -62,9 +83,10 @@ function ProductEditor({
             <div className="space-y-1.5"><Label>מחיר</Label><Input type="number" value={value.price} onChange={(e) => onChange({ ...value, price: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>מלאי</Label><Input type="number" value={value.stock} onChange={(e) => onChange({ ...value, stock: e.target.value })} /></div>
           </div>
-          <div className="space-y-1.5"><Label>תמונה</Label><Input value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>תמונה</Label><Input value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="Image URL or local image" /><Input type="file" accept="image/*" onChange={(e) => void handleImageSelect(e.target.files?.[0])} />{value.imageUrl ? <img src={value.imageUrl} alt="Preview" className="h-28 w-full rounded-md border border-border bg-muted object-contain" /> : null}</div>
           <div className="space-y-1.5"><Label>קטגוריה</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={value.categoryId} onChange={(e) => onChange({ ...value, categoryId: e.target.value })}><option value="">ללא</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.name}</option>)}</select></div>
           <div className="space-y-1.5"><Label>תיאור</Label><Textarea rows={4} value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Delivery content</Label><Textarea rows={4} value={value.deliveryContent} onChange={(e) => onChange({ ...value, deliveryContent: e.target.value })} /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button><Button onClick={onSubmit}>שמור</Button></DialogFooter>
       </DialogContent>
@@ -87,6 +109,17 @@ function CategoryEditor({
   onSubmit: () => void;
   title: string;
 }) {
+  const handleImageSelect = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const imageUrl = await readFileAsDataUrl(file);
+      onChange({ ...value, imageUrl });
+      toast.success("Image added");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to add image");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-md">
@@ -94,7 +127,7 @@ function CategoryEditor({
         <div className="space-y-4">
           <div className="space-y-1.5"><Label>שם</Label><Input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") })} /></div>
           <div className="space-y-1.5"><Label>Slug</Label><Input dir="ltr" value={value.slug} onChange={(e) => onChange({ ...value, slug: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>תמונה</Label><Input value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>תמונה</Label><Input value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="Image URL or local image" /><Input type="file" accept="image/*" onChange={(e) => void handleImageSelect(e.target.files?.[0])} />{value.imageUrl ? <img src={value.imageUrl} alt="Preview" className="h-28 w-full rounded-md border border-border bg-muted object-contain" /> : null}</div>
           <div className="space-y-1.5"><Label>תיאור</Label><Textarea rows={3} value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>סדר</Label><Input type="number" value={value.sortOrder} onChange={(e) => onChange({ ...value, sortOrder: e.target.value })} /></div>
         </div>
@@ -170,7 +203,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-muted/20">
       <div className="container py-8">
         <div className="mb-8"><Link href="/"><span className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowRight className="h-4 w-4" />חזרה לחנות</span></Link></div>
-        <div className="mb-8"><h1 className="text-2xl font-black text-foreground md:text-3xl">פאנל ניהול</h1><p className="mt-1 text-muted-foreground">ניהול קטלוג ומלאי דרך Convex.</p></div>
+        <div className="mb-8"><h1 className="text-2xl font-black text-foreground md:text-3xl">פאנל ניהול</h1><p className="mt-1 text-muted-foreground">ניהול קטלוג המוצרים והמלאי של החנות.</p></div>
         <Tabs defaultValue="stats" dir="rtl">
           <TabsList className="mb-6">
             <TabsTrigger value="stats" className="gap-2"><BarChart3 className="h-4 w-4" />סקירה</TabsTrigger>
@@ -197,7 +230,7 @@ export default function AdminPage() {
                 <motion.div key={product._id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
                   <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{product.name}</p><p className="text-sm text-muted-foreground">₪{parseFloat(product.price).toFixed(2)} · מלאי {product.stock}</p></div>
                   <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditProductId(product._id); setProductForm({ name: product.name, description: product.description ?? "", price: product.price, imageUrl: product.imageUrl ?? "", categoryId: product.categoryId ?? "", stock: String(product.stock), isActive: product.isActive, isFeatured: product.isFeatured }); }}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditProductId(product._id); setProductForm({ name: product.name, description: product.description ?? "", deliveryContent: product.deliveryContent ?? "", price: product.price, imageUrl: product.imageUrl ?? "", categoryId: product.categoryId ?? "", stock: String(product.stock), isActive: product.isActive, isFeatured: product.isFeatured }); }}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => void deleteProduct({ id: product._id as never }).then(() => toast.success("המוצר נמחק"))}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </motion.div>

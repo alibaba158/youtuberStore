@@ -92,7 +92,13 @@ export default function ProductPage() {
           >
             <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
               {product.imageUrl ? (
-                <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                <div className="flex h-full w-full items-center justify-center p-4">
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
                   <Package className="h-20 w-20 text-muted-foreground/30" />

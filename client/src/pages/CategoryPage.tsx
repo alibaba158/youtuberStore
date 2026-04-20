@@ -4,6 +4,26 @@ import { ArrowRight, Package } from "lucide-react";
 import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
 import { api } from "../../../convex/_generated/api";
 
+const emptyStateBySlug = {
+  accounts: {
+    title: "עדיין אין חשבונות זמינים",
+    description:
+      "כאן יופיעו חשבונות Brawl Stars ו-Roblox כשתוסיף מלאי.",
+  },
+  rank: {
+    title: "עדיין אין חשבונות ראנק זמינים",
+    description: "כאן יופיעו חשבונות לפי ראנק כשתוסיף מלאי.",
+  },
+  trophies: {
+    title: "עדיין אין חשבונות גביעים זמינים",
+    description: "כאן יופיעו חשבונות לפי כמות גביעים כשתוסיף מלאי.",
+  },
+  friends: {
+    title: "עדיין אין מוצרים בקטגוריה הזאת",
+    description: "כאן יופיעו מוצרי חברויות כשתוסיף מלאי.",
+  },
+} as const;
+
 export default function CategoryPage() {
   const params = useParams<{ slug: string }>();
   const data = useQuery(
@@ -30,13 +50,21 @@ export default function CategoryPage() {
   if (!category) {
     return (
       <div className="container py-20 text-center">
-        <h2 className="mb-3 text-2xl font-bold text-foreground">הקטגוריה לא נמצאה</h2>
+        <h2 className="mb-3 text-2xl font-bold text-foreground">
+          הקטגוריה לא נמצאה
+        </h2>
         <Link href="/">
-          <span className="cursor-pointer text-accent hover:underline">חזרה לדף הבית</span>
+          <span className="cursor-pointer text-accent hover:underline">
+            חזרה לדף הבית
+          </span>
         </Link>
       </div>
     );
   }
+
+  const emptyState =
+    emptyStateBySlug[category.slug as keyof typeof emptyStateBySlug] ??
+    emptyStateBySlug.accounts;
 
   return (
     <div className="min-h-screen">
@@ -48,9 +76,13 @@ export default function CategoryPage() {
               חזרה לדף הבית
             </span>
           </Link>
-          <h1 className="text-2xl font-black text-foreground md:text-3xl">{category.name}</h1>
+          <h1 className="text-2xl font-black text-foreground md:text-3xl">
+            {category.name}
+          </h1>
           {category.description ? (
-            <p className="mt-2 max-w-xl text-muted-foreground">{category.description}</p>
+            <p className="mt-2 max-w-xl text-muted-foreground">
+              {category.description}
+            </p>
           ) : null}
         </div>
       </div>
@@ -67,12 +99,18 @@ export default function CategoryPage() {
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
               <Package className="h-10 w-10 text-muted-foreground/40" />
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-foreground">אין מוצרים בקטגוריה זו</h3>
-            <p className="text-sm text-muted-foreground">מוצרים חדשים יתווספו בקרוב</p>
+            <h3 className="mb-2 text-lg font-semibold text-foreground">
+              {emptyState.title}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {emptyState.description}
+            </p>
           </div>
         ) : (
           <>
-            <p className="mb-6 text-sm text-muted-foreground">{products.length} מוצרים</p>
+            <p className="mb-6 text-sm text-muted-foreground">
+              {products.length} מוצרים
+            </p>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {products.map((product, index) => (
                 <ProductCard key={product._id} product={product} index={index} />

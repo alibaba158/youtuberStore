@@ -138,11 +138,14 @@ export function normalizeSafeImageUrl(value: string | undefined) {
   if (!normalized) {
     return undefined;
   }
+  if (normalized.startsWith("data:image/")) {
+    if (normalized.length > 2_000_000) {
+      fail("Image is too large");
+    }
+    return normalized;
+  }
   if (normalized.length > 4_096) {
     fail("Image URL is too long");
-  }
-  if (normalized.startsWith("data:image/")) {
-    return normalized;
   }
   try {
     const parsed = new URL(normalized);

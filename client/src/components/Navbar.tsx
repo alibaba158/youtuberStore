@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
+import brawlStarsLogo from "@/images/brawlstars_logo.png";
 import { Link, useLocation } from "wouter";
 import {
-  ShoppingCart,
-  Menu,
-  X,
-  User,
-  LogOut,
-  Shield,
   ChevronDown,
+  LogOut,
+  Menu,
+  ReceiptText,
+  Shield,
+  ShoppingCart,
+  User,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "convex/react";
@@ -23,6 +25,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { api } from "../../../convex/_generated/api";
+
+const categoryDescriptions = {
+  friends: "חברויות ב-Brawl Stars",
+  accounts: "חשבונות Brawl Stars ו-Roblox",
+  rank: "חשבונות לפי ראנק",
+  trophies: "חשבונות לפי כמות גביעים",
+} as const;
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -47,15 +56,30 @@ export default function Navbar() {
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "border-b border-border/60 bg-white/80 shadow-lg backdrop-blur-xl"
+          ? "border-b border-border/60 bg-white/85 shadow-lg backdrop-blur-xl"
           : "border-b border-transparent bg-transparent"
       }`}
     >
       <div className="container">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/">
-            <span className="cursor-pointer text-xl font-black tracking-tight text-foreground transition-all duration-300 hover:text-primary hover:scale-105">
-              SET_NAME
+            <span className="flex cursor-pointer items-center gap-3 transition-all duration-300 hover:scale-[1.02]">
+              <img
+                src={brawlStarsLogo}
+                alt="Razlo Store"
+                className="h-10 w-10 rounded-md object-contain"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+              <span className="flex flex-col leading-none">
+                <span className="text-xl font-black tracking-tight text-foreground">
+                  Razlo Store
+                </span>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Brawl Stars & Roblox
+                </span>
+              </span>
             </span>
           </Link>
 
@@ -80,22 +104,46 @@ export default function Navbar() {
                     <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 border-border/60 bg-white/95 backdrop-blur-xl">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-72 border-border/60 bg-white/95 p-2 backdrop-blur-xl"
+                >
                   {categories.map((category) => (
                     <DropdownMenuItem key={category._id} asChild>
                       <Link href={`/category/${category.slug}`}>
-                        <span className="w-full cursor-pointer">{category.name}</span>
+                        <span className="flex w-full cursor-pointer flex-col items-end gap-0.5 rounded-lg px-2 py-2 text-right">
+                          <span className="font-semibold text-foreground">
+                            {category.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {categoryDescriptions[
+                              category.slug as keyof typeof categoryDescriptions
+                            ] ?? category.description}
+                          </span>
+                        </span>
                       </Link>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
+
+            {isAuthenticated ? (
+              <Link href="/account">
+                <span className="cursor-pointer rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-secondary/70 hover:text-foreground">
+                  החשבון שלי
+                </span>
+              </Link>
+            ) : null}
           </nav>
 
           <div className="flex items-center gap-2">
             <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative cursor-pointer transition-all duration-200 hover:bg-secondary/70 hover:scale-105">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative cursor-pointer transition-all duration-200 hover:bg-secondary/70 hover:scale-105"
+              >
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 ? (
                   <Badge className="absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-0 bg-accent p-0 text-xs font-bold text-accent-foreground shadow-md">
@@ -108,21 +156,40 @@ export default function Navbar() {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="cursor-pointer transition-all duration-200 hover:bg-secondary/70 hover:scale-105">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="cursor-pointer transition-all duration-200 hover:bg-secondary/70 hover:scale-105"
+                  >
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 border-border/60 bg-white/95 backdrop-blur-xl">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 border-border/60 bg-white/95 backdrop-blur-xl"
+                >
                   <div className="px-3 py-2">
-                    <p className="truncate text-sm font-semibold">{user?.name || "משתמש"}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+                    <p className="truncate text-sm font-semibold">
+                      {user?.name || "משתמש"}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
                   </div>
                   <DropdownMenuSeparator className="bg-border/60" />
                   <DropdownMenuItem asChild>
                     <Link href="/account">
                       <span className="flex w-full cursor-pointer items-center gap-2">
                         <User className="h-4 w-4" />
-                        הגדרות חשבון
+                        החשבון וההזמנות
+                      </span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/account">
+                      <span className="flex w-full cursor-pointer items-center gap-2">
+                        <ReceiptText className="h-4 w-4" />
+                        קבלות והיסטוריה
                       </span>
                     </Link>
                   </DropdownMenuItem>
@@ -144,12 +211,16 @@ export default function Navbar() {
                     className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
                   >
                     <LogOut className="ml-2 h-4 w-4" />
-                    התנתק
+                    התנתקות
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button size="sm" className="text-sm font-semibold shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105" onClick={() => (window.location.href = getLoginUrl())}>
+              <Button
+                size="sm"
+                className="text-sm font-semibold shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                onClick={() => (window.location.href = getLoginUrl())}
+              >
                 כניסה
               </Button>
             )}
@@ -181,6 +252,11 @@ export default function Navbar() {
                   ראשי
                 </span>
               </Link>
+              <Link href="/account">
+                <span className="block cursor-pointer rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
+                  החשבון וההזמנות
+                </span>
+              </Link>
               {categories.map((category) => (
                 <Link key={category._id} href={`/category/${category.slug}`}>
                   <span className="block cursor-pointer rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground">
@@ -189,7 +265,10 @@ export default function Navbar() {
                 </Link>
               ))}
               {!isAuthenticated ? (
-                <Button className="mt-2 w-full font-semibold shadow-md" onClick={() => (window.location.href = getLoginUrl())}>
+                <Button
+                  className="mt-2 w-full font-semibold shadow-md"
+                  onClick={() => (window.location.href = getLoginUrl())}
+                >
                   כניסה
                 </Button>
               ) : null}

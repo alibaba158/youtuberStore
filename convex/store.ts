@@ -24,6 +24,7 @@ const categoryInput = {
 const productInput = {
   name: v.string(),
   description: v.optional(v.string()),
+  deliveryContent: v.optional(v.string()),
   price: v.string(),
   imageUrl: v.optional(v.string()),
   categoryId: v.optional(v.id("categories")),
@@ -31,6 +32,37 @@ const productInput = {
   isActive: v.boolean(),
   isFeatured: v.boolean(),
 };
+
+const defaultCategories = [
+  {
+    name: "חברויות",
+    slug: "friends",
+    description: "חברויות ב-Brawl Stars.",
+    imageUrl: undefined,
+    sortOrder: 0,
+  },
+  {
+    name: "חשבונות",
+    slug: "accounts",
+    description: "חשבונות Brawl Stars ו-Roblox לקנייה.",
+    imageUrl: undefined,
+    sortOrder: 1,
+  },
+  {
+    name: "ראנק",
+    slug: "rank",
+    description: "חשבונות לפי ראנק. יתווספו בהמשך.",
+    imageUrl: undefined,
+    sortOrder: 2,
+  },
+  {
+    name: "גביעים",
+    slug: "trophies",
+    description: "חשבונות לפי כמות גביעים. יתווספו בהמשך.",
+    imageUrl: undefined,
+    sortOrder: 3,
+  },
+] as const;
 
 function parseAdminEmails() {
   return new Set(
@@ -129,6 +161,17 @@ async function getProductOrThrow(ctx: any, productId: any) {
   return product;
 }
 
+function serializeProduct(product: any, includeDeliveryContent = false) {
+  if (!product) {
+    return null;
+  }
+  if (!includeDeliveryContent) {
+    const { deliveryContent: _deliveryContent, ...safeProduct } = product;
+    return safeProduct;
+  }
+  return product;
+}
+
 function sanitizeCategoryInput(args: {
   name: string;
   slug: string;
@@ -168,6 +211,7 @@ function sanitizeCategoryPatch(args: {
 function sanitizeProductInput(args: {
   name: string;
   description?: string;
+  deliveryContent?: string;
   price: string;
   imageUrl?: string;
   categoryId?: any;
@@ -178,6 +222,11 @@ function sanitizeProductInput(args: {
   return {
     name: normalizeDisplayName(args.name),
     description: normalizeOptionalText(args.description, "Description", 2_000),
+    deliveryContent: normalizeOptionalText(
+      args.deliveryContent,
+      "Delivery content",
+      5_000,
+    ),
     price: normalizePrice(args.price),
     imageUrl: normalizeSafeImageUrl(args.imageUrl),
     categoryId: args.categoryId,
@@ -190,6 +239,7 @@ function sanitizeProductInput(args: {
 function sanitizeProductPatch(args: {
   name?: string;
   description?: string;
+  deliveryContent?: string;
   price?: string;
   imageUrl?: string;
   categoryId?: any;
@@ -201,6 +251,11 @@ function sanitizeProductPatch(args: {
     name:
       args.name === undefined ? undefined : normalizeDisplayName(args.name),
     description: normalizeOptionalText(args.description, "Description", 2_000),
+    deliveryContent: normalizeOptionalText(
+      args.deliveryContent,
+      "Delivery content",
+      5_000,
+    ),
     price: args.price === undefined ? undefined : normalizePrice(args.price),
     imageUrl: normalizeSafeImageUrl(args.imageUrl),
     categoryId: args.categoryId,
@@ -248,6 +303,7 @@ export const listProducts = query({
 
     return products
       .filter((product) => adminView || product.isActive)
+      .map((product) => serializeProduct(product, adminView))
       .sort((a, b) => b.createdAt - a.createdAt);
   },
 });
@@ -258,6 +314,7 @@ export const featuredProducts = query({
     const products = await ctx.db.query("products").collect();
     return products
       .filter((product) => product.isActive && product.isFeatured)
+      .map((product) => serializeProduct(product))
       .sort((a, b) => b.updatedAt - a.updatedAt);
   },
 });
@@ -274,8 +331,21 @@ export const productById = query({
       if (viewer?.user.role !== "admin") {
         return null;
       }
+      return serializeProduct(product, true);
     }
-    return product;
+    return serializeProduct(product);
+  },
+});
+
+export const productsByIds = query({
+  args: {
+    ids: v.array(v.id("products")),
+  },
+  handler: async (ctx, args) => {
+    const products = await Promise.all(
+      args.ids.map(async (id) => serializeProduct(await ctx.db.get(id))),
+    );
+    return products.filter((product) => product && product.isActive);
   },
 });
 
@@ -292,8 +362,9 @@ export const homePageData = query({
       categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
       featured: activeProducts
         .filter((product) => product.isFeatured)
+        .map((product) => serializeProduct(product))
         .sort((a, b) => b.updatedAt - a.updatedAt),
-      allProducts: activeProducts,
+      allProducts: activeProducts.map((product) => serializeProduct(product)),
     };
   },
 });
@@ -350,6 +421,7 @@ export const categoryPageData = query({
       category,
       products: products
         .filter((product) => adminView || product.isActive)
+        .map((product) => serializeProduct(product, adminView))
         .sort((a, b) => b.createdAt - a.createdAt),
     };
   },
@@ -398,7 +470,7 @@ export const cartItems = query({
     return Promise.all(
       items.map(async (item) => ({
         ...item,
-        product: await ctx.db.get(item.productId),
+        product: serializeProduct(await ctx.db.get(item.productId)),
       })),
     );
   },
@@ -545,6 +617,22 @@ export const clearCart = mutation({
   },
 });
 
+export const ensureDefaultCategories = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const categories = await ctx.db.query("categories").collect();
+    if (categories.length > 0) {
+      return false;
+    }
+
+    for (const category of defaultCategories) {
+      await ctx.db.insert("categories", sanitizeCategoryInput(category));
+    }
+
+    return true;
+  },
+});
+
 export const createCategory = mutation({
   args: categoryInput,
   handler: async (ctx, args) => {
@@ -599,6 +687,7 @@ export const updateProduct = mutation({
     data: v.object({
       name: v.optional(v.string()),
       description: v.optional(v.string()),
+      deliveryContent: v.optional(v.string()),
       price: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
       categoryId: v.optional(v.id("categories")),

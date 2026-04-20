@@ -14,13 +14,13 @@ export interface ThemeConfig {
 export const themes: Record<ThemeType, ThemeConfig> = {
   default: {
     name: "default",
-    label: "צהוב וירוק",
-    primary: "oklch(0.80 0.20 85)",
-    accent: "oklch(0.38 0.14 145)",
-    background: "oklch(0.98 0.004 85)",
-    foreground: "oklch(0.18 0.01 145)",
-    muted: "oklch(0.95 0.006 85)",
-    mutedForeground: "oklch(0.52 0.015 145)",
+    label: "ורוד וסגול",
+    primary: "oklch(0.50 0.20 330)",
+    accent: "oklch(0.70 0.25 340)",
+    background: "oklch(0.98 0.004 330)",
+    foreground: "oklch(0.18 0.01 330)",
+    muted: "oklch(0.95 0.006 330)",
+    mutedForeground: "oklch(0.52 0.015 330)",
   },
   "green-gold": {
     name: "green-gold",
@@ -54,13 +54,13 @@ export const themes: Record<ThemeType, ThemeConfig> = {
   },
   "pink-gray": {
     name: "pink-gray",
-    label: "ורוד ואפור",
-    primary: "oklch(0.45 0.12 320)",
-    accent: "oklch(0.48 0.11 350)",
-    background: "oklch(0.98 0.004 85)",
-    foreground: "oklch(0.20 0.01 320)",
-    muted: "oklch(0.95 0.006 85)",
-    mutedForeground: "oklch(0.55 0.015 320)",
+    label: "ורוד בהיר",
+    primary: "oklch(0.55 0.18 340)",
+    accent: "oklch(0.75 0.22 350)",
+    background: "oklch(0.98 0.004 340)",
+    foreground: "oklch(0.20 0.01 340)",
+    muted: "oklch(0.95 0.006 340)",
+    mutedForeground: "oklch(0.55 0.015 340)",
   },
 };
 
@@ -83,6 +83,7 @@ export function getStoredTheme(): ThemeType {
   if (stored && stored in themes) {
     return stored as ThemeType;
   }
+  // Set pink as default
   return "default";
 }
 

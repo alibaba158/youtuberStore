@@ -9,9 +9,13 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as bit from "../bit.js";
 import type * as http from "../http.js";
+import type * as orders from "../orders.js";
 import type * as security from "../security.js";
 import type * as store from "../store.js";
+import type * as stripe from "../stripe.js";
+import type * as stripeWebhook from "../stripeWebhook.js";
 
 import type {
   ApiFromModules,
@@ -21,9 +25,13 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  bit: typeof bit;
   http: typeof http;
+  orders: typeof orders;
   security: typeof security;
   store: typeof store;
+  stripe: typeof stripe;
+  stripeWebhook: typeof stripeWebhook;
 }>;
 
 /**

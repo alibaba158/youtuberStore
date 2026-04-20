@@ -1,61 +1,61 @@
 import { Link } from "wouter";
-import { Heart } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-white mt-auto">
+    <footer className="mt-auto border-t border-border bg-white">
       <div className="container py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Brand */}
+        <div className="grid gap-8 md:grid-cols-3">
           <div>
             <Link href="/">
-              <span className="text-xl font-black tracking-tight cursor-pointer">
-                חנות<span className="text-accent">.</span>
+              <span className="cursor-pointer text-xl font-black tracking-tight text-foreground">
+                Razlo <span className="text-accent">Store</span>
               </span>
             </Link>
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              החנות הרשמית — מוצרים איכותיים עם שירות מעולה.
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              חנות לחשבונות ושירותים של Brawl Stars ו-Roblox.
             </p>
           </div>
 
-          {/* Links */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">ניווט מהיר</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">קישורים</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/">
-                  <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">ראשי</span>
+                  <span className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground">
+                    עמוד הבית
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/cart">
-                  <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">עגלת קניות</span>
+                  <span className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground">
+                    עגלה
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/account">
+                  <span className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground">
+                    החשבון שלי
+                  </span>
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Info */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">מידע</h3>
-            <ul className="space-y-2">
-              <li>
-                <span className="text-sm text-muted-foreground">משלוחים לכל הארץ</span>
-              </li>
-              <li>
-                <span className="text-sm text-muted-foreground">שירות לקוחות זמין</span>
-              </li>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">מה יש באתר</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>חשבונות Brawl Stars</li>
+              <li>חשבונות Roblox</li>
+              <li>קידום גביעים וראנק</li>
+              <li>הזמנות וקבלות</li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} חנות יוטיובר. כל הזכויות שמורות.
-          </p>
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            נבנה על ידי sqbrawlstars <Heart className="w-3 h-3 text-accent fill-accent" />
-          </p>
+        <div className="mt-8 border-t border-border pt-6 text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Razlo Store
         </div>
       </div>
     </footer>

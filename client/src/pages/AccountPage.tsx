@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { LogOut, ArrowRight, Palette, User, Mail, Calendar } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  ExternalLink,
+  LogOut,
+  Mail,
+  Palette,
+  ReceiptText,
+  Shield,
+  User,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { themes, type ThemeType, applyTheme } from "@/lib/themes";
 import { Button } from "@/components/ui/button";
@@ -11,10 +21,47 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { api } from "../../../convex/_generated/api";
 
+function statusLabel(status: string) {
+  switch (status) {
+    case "paid":
+      return "שולם";
+    case "awaiting_payment":
+      return "ממתין לתשלום";
+    case "failed":
+      return "נכשל";
+    case "canceled":
+      return "בוטל";
+    default:
+      return status;
+  }
+}
+
+function paymentLabel(status: string) {
+  switch (status) {
+    case "paid":
+      return "מאושר";
+    case "pending":
+      return "ממתין";
+    case "configuration_required":
+      return "דורש חיבור";
+    case "redirect_required":
+      return "דורש המשך";
+    case "failed":
+      return "נכשל";
+    case "expired":
+      return "פג תוקף";
+    case "canceled":
+      return "בוטל";
+    default:
+      return status;
+  }
+}
+
 export default function AccountPage() {
   const { user, logout, isAuthenticated, loading } = useAuth();
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>("default");
   const updateTheme = useMutation(api.store.updateTheme);
+  const myOrders = useQuery(api.orders.myOrders, user ? {} : "skip");
 
   useEffect(() => {
     if (user?.theme) {
@@ -29,9 +76,9 @@ export default function AccountPage() {
 
     try {
       await updateTheme({ theme });
-      toast.success("התמה עודכנה בהצלחה");
+      toast.success("הערכת עיצוב עודכנה");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "שגיאה בעדכון התמה");
+      toast.error(error instanceof Error ? error.message : "שגיאה בעדכון הערכה");
     }
   };
 
@@ -47,8 +94,12 @@ export default function AccountPage() {
   if (!isAuthenticated) {
     return (
       <div className="container py-20 text-center">
-        <h2 className="mb-3 text-2xl font-black text-foreground">נדרשת כניסה לחשבון</h2>
-        <p className="mb-6 text-muted-foreground">כדי לצפות בהגדרות החשבון שלך צריך להתחבר קודם.</p>
+        <h2 className="mb-3 text-2xl font-black text-foreground">
+          נדרשת כניסה לחשבון
+        </h2>
+        <p className="mb-6 text-muted-foreground">
+          כדי לצפות בהגדרות, הזמנות וקבלות צריך להתחבר קודם.
+        </p>
         <Link href="/">
           <Button className="gap-2">
             <ArrowRight className="h-4 w-4" />
@@ -69,14 +120,21 @@ export default function AccountPage() {
           </span>
         </Link>
 
-        <h1 className="mb-8 text-2xl font-black text-foreground md:text-3xl">הגדרות החשבון</h1>
+        <div className="mb-8">
+          <h1 className="text-2xl font-black text-foreground md:text-3xl">
+            החשבון שלי
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            ניהול פרופיל, הזמנות, תשלום וקבלות במקום אחד.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="lg:col-span-1"
+            className="space-y-6 lg:col-span-1"
           >
             <Card className="p-6">
               <div className="mb-6 flex items-center gap-4">
@@ -85,9 +143,16 @@ export default function AccountPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-foreground">{user.name}</p>
-                  {user.role === "admin" ? (
-                    <Badge className="mt-1 border-accent/30 bg-accent/20 text-accent">מנהל</Badge>
-                  ) : null}
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    <Badge className="border-border bg-muted text-foreground">
+                      לקוח
+                    </Badge>
+                    {user.role === "admin" ? (
+                      <Badge className="border-accent/30 bg-accent/20 text-accent">
+                        מנהל
+                      </Badge>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
@@ -95,13 +160,15 @@ export default function AccountPage() {
                 {user.email ? (
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="truncate text-muted-foreground">{user.email}</span>
+                    <span className="truncate text-muted-foreground">
+                      {user.email}
+                    </span>
                   </div>
                 ) : null}
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">
-                    הצטרף: {new Date(user.createdAt).toLocaleDateString("he-IL")}
+                    נרשם בתאריך {new Date(user.createdAt).toLocaleDateString("he-IL")}
                   </span>
                 </div>
               </div>
@@ -117,62 +184,145 @@ export default function AccountPage() {
             </Card>
 
             {user.role === "admin" ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                className="mt-6"
-              >
-                <Link href="/admin">
-                  <Button className="w-full gap-2">
-                    <ArrowRight className="h-4 w-4" />
-                    פאנל ניהול
-                  </Button>
-                </Link>
-              </motion.div>
+              <Link href="/admin">
+                <Button className="w-full gap-2">
+                  <Shield className="h-4 w-4" />
+                  מעבר לפאנל ניהול
+                </Button>
+              </Link>
             ) : null}
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="lg:col-span-2"
-          >
-            <Card className="p-6">
-              <div className="mb-6 flex items-center gap-2">
-                <Palette className="h-5 w-5 text-accent" />
-                <h2 className="text-lg font-bold text-foreground">בחר תמה</h2>
-              </div>
+          <div className="space-y-6 lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+            >
+              <Card className="p-6">
+                <div className="mb-6 flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-accent" />
+                  <h2 className="text-lg font-bold text-foreground">ערכת עיצוב</h2>
+                </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {Object.entries(themes).map(([key, theme]) => (
-                  <motion.button
-                    key={key}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => void handleThemeChange(key as ThemeType)}
-                    className={`relative rounded-xl border-2 p-4 transition-all ${
-                      selectedTheme === key
-                        ? "border-accent bg-accent/5"
-                        : "border-border hover:border-accent/50"
-                    }`}
-                  >
-                    <div className="mb-3 flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full border border-border" style={{ backgroundColor: theme.primary }} />
-                      <div className="h-6 w-6 rounded-full border border-border" style={{ backgroundColor: theme.accent }} />
-                    </div>
-                    <p className="text-right text-sm font-semibold text-foreground">{theme.label}</p>
-                    {selectedTheme === key ? <div className="absolute left-2 top-2 h-2 w-2 rounded-full bg-accent" /> : null}
-                  </motion.button>
-                ))}
-              </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(themes).map(([key, theme]) => (
+                    <motion.button
+                      key={key}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => void handleThemeChange(key as ThemeType)}
+                      className={`relative rounded-xl border-2 p-4 text-right transition-all ${
+                        selectedTheme === key
+                          ? "border-accent bg-accent/5"
+                          : "border-border hover:border-accent/50"
+                      }`}
+                    >
+                      <div className="mb-3 flex items-center gap-2">
+                        <div
+                          className="h-6 w-6 rounded-full border border-border"
+                          style={{ backgroundColor: theme.primary }}
+                        />
+                        <div
+                          className="h-6 w-6 rounded-full border border-border"
+                          style={{ backgroundColor: theme.accent }}
+                        />
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {theme.label}
+                      </p>
+                      {selectedTheme === key ? (
+                        <div className="absolute left-2 top-2 h-2 w-2 rounded-full bg-accent" />
+                      ) : null}
+                    </motion.button>
+                  ))}
+                </div>
+              </Card>
+            </motion.div>
 
-              <p className="mt-6 text-xs text-muted-foreground">
-                הבחירה נשמרת בפרופיל המשתמש ב-Convex ומוחלת על כל הדפים.
-              </p>
-            </Card>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <Card className="p-6">
+                <div className="mb-6 flex items-center gap-2">
+                  <ReceiptText className="h-5 w-5 text-accent" />
+                  <div>
+                    <h2 className="text-lg font-bold text-foreground">
+                      הזמנות וקבלות
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      כל ההזמנות האחרונות שלך במקום אחד
+                    </p>
+                  </div>
+                </div>
+
+                {myOrders === undefined ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="h-24 rounded-2xl skeleton" />
+                    ))}
+                  </div>
+                ) : myOrders.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                    עדיין לא נוצרו הזמנות בחשבון הזה.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {myOrders.map((order) => (
+                      <div
+                        key={order._id}
+                        className="rounded-2xl border border-border bg-background p-4"
+                      >
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">
+                              הזמנה #{String(order._id).slice(-6).toUpperCase()}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              נוצרה בתאריך{" "}
+                              {new Date(order.createdAt).toLocaleString("he-IL")}
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {order.items.length} פריטים · ₪
+                              {Number(order.subtotal).toFixed(2)}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge className="border-border bg-muted text-foreground">
+                              {statusLabel(order.orderStatus)}
+                            </Badge>
+                            <Badge className="border-accent/20 bg-accent/10 text-accent">
+                              תשלום: {paymentLabel(order.paymentStatus)}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Link href={`/checkout/${order._id}`}>
+                            <Button size="sm" variant="outline" className="gap-2">
+                              פתיחת הזמנה
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Button>
+                          </Link>
+                          {order.orderStatus === "paid" ? (
+                            <Link href={`/receipt/${order._id}`}>
+                              <Button size="sm" className="gap-2">
+                                צפייה בקבלה
+                                <ReceiptText className="h-3.5 w-3.5" />
+                              </Button>
+                            </Link>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </motion.div>
+          </div>
         </div>
       </div>
     </div>

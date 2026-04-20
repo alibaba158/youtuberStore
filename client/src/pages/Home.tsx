@@ -1,10 +1,85 @@
 import { Link } from "wouter";
-import { ArrowLeft, Sparkles, Package } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  CreditCard,
+  Package,
+  ShieldCheck,
+  Star,
+  Trophy,
+  UserRound,
+  Zap,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
 import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
 import { api } from "../../../convex/_generated/api";
+import brawlStarsLogo from "@/images/brawlstars_logo.png";
+import trophieImg from "@/images/trophie.png";
+import rankImg from "@/images/rank.png";
+import friendsImg from "@/images/friends.png";
+
+const categoryImages: Record<string, string> = {
+  trophies: trophieImg,
+  rank: rankImg,
+  friends: friendsImg,
+};
+
+const categoryIconBySlug = {
+  accounts: UserRound,
+} as const;
+
+const categoryMeta = {
+  friends: {
+    label: "Brawl Stars Friends",
+    summary: "חברויות ב-Brawl Stars.",
+  },
+  accounts: {
+    label: "Accounts",
+    summary: "חשבונות Brawl Stars ו-Roblox לקנייה.",
+  },
+  rank: {
+    label: "Rank Accounts",
+    summary: "חשבונות לפי ראנק. המלאי יתווסף בהמשך.",
+  },
+  trophies: {
+    label: "Trophy Accounts",
+    summary: "חשבונות לפי כמות גביעים. המלאי יתווסף בהמשך.",
+  },
+} as const;
+
+const boostTabs = ["Rank Boost", "Trophy Boost", "Prestige Icon", "Brawlers Rank"];
+
+const trustItems = [
+  "Verified sellers",
+  "Fast delivery",
+  "Secure payment",
+  "Live support",
+];
+
+const processSteps = [
+  {
+    title: "Select a service",
+    text: "Choose the account or boost category that fits what you need.",
+    icon: Zap,
+  },
+  {
+    title: "Choose an offer",
+    text: "Compare available products and pick the safest match.",
+    icon: CheckCircle2,
+  },
+  {
+    title: "Complete payment",
+    text: "Checkout is handled through a protected payment flow.",
+    icon: CreditCard,
+  },
+  {
+    title: "Rank up",
+    text: "Receive the account details or service confirmation.",
+    icon: Trophy,
+  },
+];
 
 function CategoryCard({
   category,
@@ -19,33 +94,51 @@ function CategoryCard({
   };
   index: number;
 }) {
+  const localImage =
+    categoryImages[category.slug] || categoryImages[category.name.toLowerCase()];
+  const displayImage = localImage || category.imageUrl;
+  const FallbackIcon =
+    categoryIconBySlug[category.slug as keyof typeof categoryIconBySlug] ??
+    Package;
+  const meta =
+    categoryMeta[category.slug as keyof typeof categoryMeta] ?? undefined;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.07 }}
+      transition={{ duration: 0.45, delay: index * 0.06 }}
     >
-      <Link href={`/category/${category.slug}`} className="group">
-        <div className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/40">
-          {category.imageUrl ? (
-            <img
-              src={category.imageUrl}
-              alt={category.name}
-              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary/50 to-muted">
-              <Package className="h-14 w-14 text-muted-foreground/20" />
+      <Link href={`/category/${category.slug}`} className="group block h-full">
+        <div className="group flex h-full flex-col overflow-hidden rounded-3xl border border-accent/25 bg-gradient-to-b from-foreground to-foreground/92 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-accent/60 hover:shadow-2xl hover:shadow-accent/15">
+          <div className="relative flex aspect-[1.05] items-center justify-center overflow-hidden px-6 pt-6">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(164,255,62,0.18),_transparent_48%)]" />
+            {displayImage ? (
+              <img
+                src={displayImage}
+                alt={category.name}
+                className="relative h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-110"
+              />
+            ) : (
+              <FallbackIcon className="relative h-16 w-16 text-accent/55" />
+            )}
+          </div>
+
+          <div className="flex flex-1 flex-col gap-3 p-5 text-right">
+            <div className="inline-flex w-fit self-end rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-accent">
+              {meta?.label ?? "Category"}
             </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-90" />
-          <div className="absolute inset-x-0 bottom-0 p-5">
-            <h3 className="text-lg font-bold text-white group-hover:text-accent transition-colors">{category.name}</h3>
-            {category.description ? (
-              <p className="mt-1.5 line-clamp-1 text-xs text-white/80">
-                {category.description}
+            <div>
+              <h3 className="text-lg font-black text-white transition-colors group-hover:text-accent">
+                {category.name}
+              </h3>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/72">
+                {meta?.summary ?? category.description ?? "מוצרים זמינים בקטגוריה הזאת."}
               </p>
-            ) : null}
+            </div>
+            <div className="mt-auto pt-2 text-sm font-semibold text-accent">
+              לצפייה במוצרים
+            </div>
           </div>
         </div>
       </Link>
@@ -66,86 +159,104 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground/95 to-foreground/85 text-white">
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-              backgroundSize: "32px 32px",
-            }}
-          />
-        </div>
         <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
-        <div className="container relative py-24 md:py-32">
+
+        <div className="container relative py-20 md:py-24">
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-3xl"
+            transition={{ duration: 0.6 }}
+            className="mx-auto max-w-4xl text-center"
           >
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-5 py-2 backdrop-blur-sm shadow-lg">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-semibold text-white/95">חנות פשוטה יותר, מבוססת Convex</span>
+            <div className="mb-8 flex justify-center">
+              <img
+                src={brawlStarsLogo}
+                alt="Razlo Store"
+                className="h-28 w-28 object-contain drop-shadow-2xl md:h-36 md:w-36"
+              />
             </div>
-            <h1 className="mb-6 text-5xl font-black leading-tight md:text-6xl lg:text-7xl">
-              המוצרים הכי
-              <span className="block bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">טובים בשבילך</span>
+
+            <h1 className="mb-4 text-5xl font-black leading-tight md:text-6xl">
+              Razlo Store
             </h1>
-            <p className="mb-10 max-w-xl text-lg leading-relaxed text-white/80 md:text-xl">
-              חוויית חנות נקייה יותר עם קטלוג, עגלה, משתמשים וניהול מלאי, בלי שכבת Manus ובלי שרת Express נפרד.
+            <p className="mx-auto mb-3 max-w-2xl text-xl font-bold text-accent md:text-2xl">
+              Brawl Stars ו-Roblox accounts במקום אחד
             </p>
-            <div className="flex flex-wrap gap-4">
+            <p className="mx-auto mb-8 max-w-2xl text-base leading-8 text-white/80 md:text-lg">
+              כאן קונים חשבונות Brawl Stars ו-Roblox. יש גם קטגוריות לפי גביעים,
+              ראנק וחברויות, ותוכל למלא אותן כשיהיה לך מלאי.
+            </p>
+
+            <div className="mx-auto mb-10 max-w-xl rounded-3xl border border-accent/25 bg-white/5 px-6 py-5 text-right shadow-lg backdrop-blur-sm">
+              <p className="text-base font-bold text-white">מה יש באתר</p>
+              <p className="mt-2 text-sm leading-7 text-white/75">
+                חשבונות Brawl Stars, חשבונות Roblox, קטגוריית גביעים, קטגוריית
+                ראנק וקטגוריית חברויות.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-4">
               <Button
                 size="lg"
-                className="group gap-2 bg-accent font-bold text-accent-foreground shadow-lg shadow-accent/25 transition-all duration-300 hover:bg-accent/90 hover:shadow-xl hover:shadow-accent/30 hover:scale-105"
-                onClick={() => document.getElementById("products")?.scrollIntoView({ behavior: "smooth" })}
+                className="group gap-2 bg-accent font-bold text-accent-foreground shadow-lg shadow-accent/25 transition-all duration-300 hover:bg-accent/90"
+                onClick={() =>
+                  document
+                    .getElementById("categories")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
               >
-                לקנייה עכשיו
+                לקטגוריות
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="group border-white/30 bg-white/10 font-bold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-lg"
-                onClick={() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth" })}
-              >
-                גלה קטגוריות
-              </Button>
+              <Link href="/cart">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                >
+                  לעגלה
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
-        <div
-          className="absolute bottom-0 left-0 right-0 h-16 bg-background"
-          style={{ clipPath: "ellipse(70% 100% at 50% 100%)" }}
-        />
       </section>
 
-      <section id="categories" className="py-20">
+      <section id="categories" className="py-12 md:py-16">
         <div className="container">
-          <div className="mb-10 flex items-end justify-between">
-            <div>
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">קטגוריות</p>
-              <h2 className="text-3xl font-black text-foreground md:text-4xl">עיין לפי קטגוריה</h2>
-            </div>
+          <div className="mb-12 text-center">
+            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">
+              Categories
+            </p>
+            <h2 className="text-3xl font-black text-foreground md:text-4xl">
+              מה אפשר לקנות כאן
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
+              בחר קטגוריה והמשך למוצרים שמתאימים למה שאתה מחפש.
+            </p>
           </div>
 
           {categoriesLoading ? (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="aspect-[4/3] rounded-2xl skeleton" />
+                <div key={index} className="aspect-[0.95] rounded-3xl skeleton" />
               ))}
             </div>
           ) : categories && categories.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {categories.map((category, index) => (
-                <CategoryCard key={category._id} category={category} index={index} />
+                <CategoryCard
+                  key={category._id}
+                  category={category}
+                  index={index}
+                />
               ))}
             </div>
           ) : (
             <div className="py-20 text-center">
               <Package className="mx-auto mb-5 h-12 w-12 text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground">עדיין לא נוספו קטגוריות.</p>
+              <p className="text-sm text-muted-foreground">עדיין אין קטגוריות.</p>
             </div>
           )}
         </div>
@@ -155,8 +266,12 @@ export default function Home() {
         <section className="bg-gradient-to-b from-muted/40 to-transparent py-20">
           <div className="container">
             <div className="mb-10">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">מוצרים</p>
-              <h2 className="text-3xl font-black text-foreground md:text-4xl">מוצרים מומלצים</h2>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">
+                Featured
+              </p>
+              <h2 className="text-3xl font-black text-foreground md:text-4xl">
+                מוצרים מומלצים
+              </h2>
             </div>
 
             {featuredLoading ? (
@@ -179,8 +294,12 @@ export default function Home() {
       <section id="products" className="py-20">
         <div className="container">
           <div className="mb-10">
-            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">כל המוצרים</p>
-            <h2 className="text-3xl font-black text-foreground md:text-4xl">חפש את המוצר שלך</h2>
+            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">
+              Products
+            </p>
+            <h2 className="text-3xl font-black text-foreground md:text-4xl">
+              כל המוצרים
+            </h2>
           </div>
 
           {productsLoading ? (
@@ -198,7 +317,7 @@ export default function Home() {
           ) : (
             <div className="py-20 text-center">
               <Package className="mx-auto mb-5 h-12 w-12 text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground">עדיין לא נוספו מוצרים.</p>
+              <p className="text-sm text-muted-foreground">עדיין אין מוצרים.</p>
             </div>
           )}
         </div>
