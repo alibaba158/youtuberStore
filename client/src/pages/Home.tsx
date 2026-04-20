@@ -13,11 +13,13 @@ import brawlStarsLogo from "@/images/brawlstars_logo.png";
 import trophieImg from "@/images/trophie.png";
 import rankImg from "@/images/rank.png";
 import friendsImg from "@/images/friends.png";
+import accountsImg from "@/images/accounts.png";
 
 const categoryImages: Record<string, string> = {
   trophies: trophieImg,
   rank: rankImg,
   friends: friendsImg,
+  accounts: accountsImg,
 };
 
 const categoryIconBySlug = {
@@ -146,8 +148,7 @@ export default function Home() {
               Brawl Stars ו-Roblox accounts במקום אחד
             </p>
             <p className="mx-auto mb-8 max-w-2xl text-base leading-8 text-white/80 md:text-lg">
-              כאן קונים חשבונות Brawl Stars ו-Roblox. יש גם קטגוריות לפי גביעים,
-              ראנק וחברויות, ותוכל למלא אותן כשיהיה לך מלאי.
+              
             </p>
 
             <div className="mx-auto mb-10 max-w-xl rounded-3xl border border-accent/25 bg-white/5 px-6 py-5 text-right shadow-lg backdrop-blur-sm">
