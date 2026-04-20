@@ -235,7 +235,8 @@ export default function AdminPage() {
   }
 
   const saveNewProduct = async () => {
-    await createProduct({ ...productForm, categoryId: productForm.categoryId ? productForm.categoryId as never : undefined, stock: parseInt(productForm.stock || "0", 10) || 0 });
+    const form = await prepareProductFormForSave(productForm);
+    await createProduct({ ...form, categoryId: form.categoryId ? form.categoryId as never : undefined, stock: parseInt(form.stock || "0", 10) || 0 });
     toast.success("המוצר נוצר");
     setProductForm(emptyProduct);
     setNewProductOpen(false);
@@ -243,13 +244,15 @@ export default function AdminPage() {
 
   const saveEditedProduct = async () => {
     if (!editProductId) return;
-    await updateProduct({ id: editProductId as never, data: { ...productForm, categoryId: productForm.categoryId ? productForm.categoryId as never : undefined, stock: parseInt(productForm.stock || "0", 10) || 0 } });
+    const form = await prepareProductFormForSave(productForm);
+    await updateProduct({ id: editProductId as never, data: { ...form, categoryId: form.categoryId ? form.categoryId as never : undefined, stock: parseInt(form.stock || "0", 10) || 0 } });
     toast.success("המוצר עודכן");
     setEditProductId(null);
   };
 
   const saveNewCategory = async () => {
-    await createCategory({ ...categoryForm, sortOrder: parseInt(categoryForm.sortOrder || "0", 10) || 0 });
+    const form = await prepareCategoryFormForSave(categoryForm);
+    await createCategory({ ...form, sortOrder: parseInt(form.sortOrder || "0", 10) || 0 });
     toast.success("הקטגוריה נוצרה");
     setCategoryForm(emptyCategory);
     setNewCategoryOpen(false);
@@ -257,7 +260,8 @@ export default function AdminPage() {
 
   const saveEditedCategory = async () => {
     if (!editCategoryId) return;
-    await updateCategory({ id: editCategoryId as never, data: { ...categoryForm, sortOrder: parseInt(categoryForm.sortOrder || "0", 10) || 0 } });
+    const form = await prepareCategoryFormForSave(categoryForm);
+    await updateCategory({ id: editCategoryId as never, data: { ...form, sortOrder: parseInt(form.sortOrder || "0", 10) || 0 } });
     toast.success("הקטגוריה עודכנה");
     setEditCategoryId(null);
   };
