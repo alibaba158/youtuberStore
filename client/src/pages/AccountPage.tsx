@@ -55,28 +55,7 @@ function paymentLabel(status: string) {
 
 export default function AccountPage() {
   const { user, logout, isAuthenticated, loading } = useAuth();
-  const [selectedTheme, setSelectedTheme] = useState<ThemeType>("default");
-  const updateTheme = useMutation(api.store.updateTheme);
   const myOrders = useQuery(api.orders.myOrders, user ? {} : "skip");
-
-  useEffect(() => {
-    if (user?.theme) {
-      setSelectedTheme(user.theme as ThemeType);
-      applyTheme(user.theme as ThemeType);
-    }
-  }, [user?.theme]);
-
-  const handleThemeChange = async (theme: ThemeType) => {
-    setSelectedTheme(theme);
-    applyTheme(theme);
-
-    try {
-      await updateTheme({ theme });
-      toast.success("הערכת עיצוב עודכנה");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "שגיאה בעדכון הערכה");
-    }
-  };
 
   if (loading || !user) {
     return (
@@ -190,52 +169,6 @@ export default function AccountPage() {
           </motion.div>
 
           <div className="space-y-6 lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
-            >
-              <Card className="p-6">
-                <div className="mb-6 flex items-center gap-2">
-                  <Palette className="h-5 w-5 text-accent" />
-                  <h2 className="text-lg font-bold text-foreground">ערכת עיצוב</h2>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {Object.entries(themes).map(([key, theme]) => (
-                    <motion.button
-                      key={key}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => void handleThemeChange(key as ThemeType)}
-                      className={`relative rounded-xl border-2 p-4 text-right transition-all ${
-                        selectedTheme === key
-                          ? "border-accent bg-accent/5"
-                          : "border-border hover:border-accent/50"
-                      }`}
-                    >
-                      <div className="mb-3 flex items-center gap-2">
-                        <div
-                          className="h-6 w-6 rounded-full border border-border"
-                          style={{ backgroundColor: theme.primary }}
-                        />
-                        <div
-                          className="h-6 w-6 rounded-full border border-border"
-                          style={{ backgroundColor: theme.accent }}
-                        />
-                      </div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {theme.label}
-                      </p>
-                      {selectedTheme === key ? (
-                        <div className="absolute left-2 top-2 h-2 w-2 rounded-full bg-accent" />
-                      ) : null}
-                    </motion.button>
-                  ))}
-                </div>
-              </Card>
-            </motion.div>
-
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
