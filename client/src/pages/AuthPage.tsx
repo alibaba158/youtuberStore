@@ -96,7 +96,7 @@ export default function AuthPage() {
                   type="password"
                   placeholder="Password"
                   autoComplete={mode === "signIn" ? "current-password" : "new-password"}
-                  minLength={12}
+                  minLength={4}
                   maxLength={128}
                   spellCheck={false}
                   value={password}

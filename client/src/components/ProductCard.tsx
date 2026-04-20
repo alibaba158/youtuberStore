@@ -61,7 +61,7 @@ export default function ProductCard({
       transition={{ duration: 0.5, delay: index * 0.06 }}
     >
       <Link href={`/product/${product._id}`} className="group">
-        <div className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/40">
+        <div className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-accent/20 hover:shadow-xl hover:shadow-accent/5">
           <div className="relative aspect-square overflow-hidden bg-muted">
             {product.imageUrl ? (
               <div className="flex h-full w-full items-center justify-center p-3">
@@ -85,7 +85,7 @@ export default function ProductCard({
           </div>
 
           <div className="p-4">
-            <h3 className="mb-1.5 line-clamp-2 text-sm font-bold leading-snug text-foreground transition-colors duration-200 group-hover:text-accent">
+            <h3 className="mb-1.5 line-clamp-2 text-sm font-bold leading-snug text-foreground transition-colors duration-200 group-hover:text-accent/80">
               {product.name}
             </h3>
             {product.description ? (

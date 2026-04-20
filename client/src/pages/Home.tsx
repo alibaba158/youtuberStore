@@ -74,7 +74,7 @@ function CategoryCard({
       transition={{ duration: 0.45, delay: index * 0.06 }}
     >
       <Link href={`/category/${category.slug}`} className="group block h-full">
-        <div className="group flex h-full flex-col overflow-hidden rounded-3xl border border-accent/25 bg-gradient-to-b from-foreground to-foreground/92 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-accent/60 hover:shadow-2xl hover:shadow-accent/15">
+        <div className="group flex h-full flex-col overflow-hidden rounded-3xl border border-accent/25 bg-gradient-to-b from-foreground to-foreground/92 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-accent/30 hover:shadow-2xl hover:shadow-accent/8">
           <div className="relative flex aspect-[1.05] items-center justify-center overflow-hidden px-6 pt-6">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(164,255,62,0.18),_transparent_48%)]" />
             {displayImage ? (
@@ -93,7 +93,7 @@ function CategoryCard({
               {meta?.label ?? "Category"}
             </div>
             <div>
-              <h3 className="text-lg font-black text-white transition-colors group-hover:text-accent">
+              <h3 className="text-lg font-black text-white transition-colors group-hover:text-accent/80">
                 {category.name}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/72">

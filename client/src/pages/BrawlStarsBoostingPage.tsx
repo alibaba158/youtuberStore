@@ -123,7 +123,7 @@ export default function BrawlStarsBoostingPage() {
                   className={`rounded-full border px-5 py-2 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 ${
                     index === 0
                       ? "border-slate-950 bg-slate-950 text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-accent"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-accent/30"
                   }`}
                 >
                   {tab}

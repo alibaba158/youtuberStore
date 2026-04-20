@@ -71,20 +71,8 @@ export function normalizeDisplayName(value: string) {
 }
 
 export function validatePasswordStrength(password: string) {
-  if (password.length < 12) {
-    fail("Password must be at least 12 characters");
-  }
-  if (!/[a-z]/.test(password)) {
-    fail("Password must include a lowercase letter");
-  }
-  if (!/[A-Z]/.test(password)) {
-    fail("Password must include an uppercase letter");
-  }
-  if (!/\d/.test(password)) {
-    fail("Password must include a number");
-  }
-  if (!/[^A-Za-z0-9]/.test(password)) {
-    fail("Password must include a special character");
+  if (password.length < 4) {
+    fail("Password must be at least 4 characters");
   }
 }
 
