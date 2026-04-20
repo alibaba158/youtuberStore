@@ -36,13 +36,76 @@ type CategoryForm = {
 const emptyProduct: ProductForm = { name: "", description: "", deliveryContent: "", price: "", imageUrl: "", categoryId: "", stock: "0", isActive: true, isFeatured: false };
 const emptyCategory: CategoryForm = { name: "", slug: "", description: "", imageUrl: "", sortOrder: "0" };
 
+async function loadImage(source: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not read image"));
+    image.src = source;
+  });
+}
+
+async function compressImageDataUrl(source: string) {
+  const image = await loadImage(source);
+  const maxSize = 700;
+  const scale = Math.min(1, maxSize / Math.max(image.naturalWidth, image.naturalHeight));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Could not prepare image");
+  }
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+  if (dataUrl.length > 900_000) {
+    throw new Error("Image is too large. Try a smaller image.");
+  }
+
+  return dataUrl;
+}
+
 async function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Please choose an image file");
+  }
+
+  const source = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ""));
     reader.onerror = () => reject(new Error("Failed to read image"));
     reader.readAsDataURL(file);
   });
+
+  return compressImageDataUrl(source);
+}
+
+async function prepareProductFormForSave(form: ProductForm) {
+  const imageUrl = form.imageUrl.trim();
+  return {
+    ...form,
+    imageUrl: imageUrl.startsWith("data:image/")
+      ? await compressImageDataUrl(imageUrl)
+      : imageUrl,
+  };
+}
+
+async function prepareCategoryFormForSave(form: CategoryForm) {
+  const imageUrl = form.imageUrl.trim();
+  return {
+    ...form,
+    imageUrl: imageUrl.startsWith("data:image/")
+      ? await compressImageDataUrl(imageUrl)
+      : imageUrl,
+  };
 }
 
 function ProductEditor({
