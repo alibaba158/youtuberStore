@@ -33,7 +33,7 @@ const categoryMeta = {
   },
   accounts: {
     label: "Accounts",
-    summary: "חשבונות Brawl Stars ו-Roblox לקנייה.",
+    summary: "חשבונות Brawl Stars.",
   },
   rank: {
     label: "Rank Accounts",
@@ -144,17 +144,19 @@ export default function Home() {
             <h1 className="mb-4 text-5xl font-black leading-tight md:text-6xl">
               Razlo Store
             </h1>
-            <p className="mx-auto mb-3 max-w-2xl text-xl font-bold text-accent md:text-2xl">
-              Brawl Stars ו-Roblox accounts במקום אחד
-            </p>
+            {/* <p className="mx-auto mb-3 max-w-2xl text-xl font-bold text-accent md:text-2xl">
+              Brawl Stars במקום אחד
+            </p> */}
             <p className="mx-auto mb-8 max-w-2xl text-base leading-8 text-white/80 md:text-lg">
-              
+              ברוכים הבאים ל Razlo Store
+המקום שבא לספק לכם את כל מה שצריך ב Brawl Stars במחירים שבאמת מתאימים
+מגביעים משתמשים פרנדים בוטים ועוד כל מה שאתם צריכים במקום אחד
             </p>
 
             <div className="mx-auto mb-10 max-w-xl rounded-3xl border border-accent/25 bg-white/5 px-6 py-5 text-right shadow-lg backdrop-blur-sm">
               <p className="text-base font-bold text-white">מה יש באתר</p>
               <p className="mt-2 text-sm leading-7 text-white/75">
-                חשבונות Brawl Stars, חשבונות Roblox, קטגוריית גביעים, קטגוריית
+                חשבונות Brawl Stars, קטגוריית גביעים, קטגוריית
                 ראנק וקטגוריית חברויות.
               </p>
             </div>
