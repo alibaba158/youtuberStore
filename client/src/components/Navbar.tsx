@@ -29,7 +29,7 @@ import { api } from "../../../convex/_generated/api";
 
 const categoryDescriptions = {
   friends: "חברויות ב-Brawl Stars",
-  accounts: "חשבונות Brawl Stars ו-Roblox",
+  accounts: "חשבונות Brawl Stars",
   rank: "חשבונות לפי ראנק",
   trophies: "חשבונות לפי כמות גביעים",
 } as const;
@@ -84,7 +84,7 @@ export default function Navbar() {
                   Razlo Store
                 </span>
                 <span className="text-[11px] font-medium text-muted-foreground">
-                  Brawl Stars & Roblox
+                  Brawl Stars
                 </span>
               </span>
             </span>

@@ -44,7 +44,7 @@ const defaultCategories = [
   {
     name: "חשבונות",
     slug: "accounts",
-    description: "חשבונות Brawl Stars ו-Roblox לקנייה.",
+    description: "חשבונות Brawl Stars לקנייה.",
     imageUrl: undefined,
     sortOrder: 1,
   },

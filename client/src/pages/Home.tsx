@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import {
   ArrowLeft,
-  Package,
   UserRound,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,6 +13,7 @@ import trophieImg from "@/images/trophie.png";
 import rankImg from "@/images/rank.png";
 import friendsImg from "@/images/friends.png";
 import accountsImg from "@/images/accounts.png";
+import noProductsImg from "@/images/noproducts.png";
 
 const categoryImages: Record<string, string> = {
   trophies: trophieImg,
@@ -29,19 +29,19 @@ const categoryIconBySlug = {
 const categoryMeta = {
   friends: {
     label: "Brawl Stars Friends",
-    summary: "חברויות ב-Brawl Stars.",
+    summary: "חברויות משחקני טופ בBrawl Stars.",
   },
   accounts: {
     label: "Accounts",
-    summary: "חשבונות Brawl Stars.",
+    summary: "חשבונות Brawl Stars מכל הסוגים.",
   },
   rank: {
-    label: "Rank Accounts",
-    summary: "חשבונות לפי ראנק. המלאי יתווסף בהמשך.",
+    label: "Boost Rank",
+    summary: "מקדמים אותך במדורג בBrawl Stars.",
   },
   trophies: {
-    label: "Trophy Accounts",
-    summary: "חשבונות לפי כמות גביעים. המלאי יתווסף בהמשך.",
+    label: "Boost Trophies",
+    summary: "מעלים אותך גביעים בBrawl Stars.",
   },
 } as const;
 
@@ -63,7 +63,7 @@ function CategoryCard({
   const displayImage = localImage || category.imageUrl;
   const FallbackIcon =
     categoryIconBySlug[category.slug as keyof typeof categoryIconBySlug] ??
-    Package;
+    UserRound;
   const meta =
     categoryMeta[category.slug as keyof typeof categoryMeta] ?? undefined;
 
@@ -220,7 +220,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="py-20 text-center">
-              <Package className="mx-auto mb-5 h-12 w-12 text-muted-foreground/30" />
+              <img src={noProductsImg} alt="אין קטגוריות" className="mx-auto mb-5 h-28 w-28 object-contain opacity-70" />
               <p className="text-sm text-muted-foreground">עדיין אין קטגוריות.</p>
             </div>
           )}
@@ -281,7 +281,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="py-20 text-center">
-              <Package className="mx-auto mb-5 h-12 w-12 text-muted-foreground/30" />
+              <img src={noProductsImg} alt="אין מוצרים" className="mx-auto mb-5 h-28 w-28 object-contain opacity-70" />
               <p className="text-sm text-muted-foreground">עדיין אין מוצרים.</p>
             </div>
           )}

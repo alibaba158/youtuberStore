@@ -12,7 +12,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              חנות לחשבונות ושירותים של Brawl Stars ו-Roblox.
+              חנות לחשבונות ושירותים של Brawl Stars.
             </p>
           </div>
 
@@ -47,7 +47,6 @@ export default function Footer() {
             <h3 className="mb-3 text-sm font-semibold text-foreground">מה יש באתר</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>חשבונות Brawl Stars</li>
-              <li>חשבונות Roblox</li>
               <li>קידום גביעים וראנק</li>
               <li>הזמנות וקבלות</li>
             </ul>

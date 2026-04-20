@@ -1,14 +1,15 @@
 import { useQuery } from "convex/react";
 import { useParams, Link } from "wouter";
-import { ArrowRight, Package } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
 import { api } from "../../../convex/_generated/api";
+import noProductsImg from "@/images/noproducts.png";
 
 const emptyStateBySlug = {
   accounts: {
     title: "עדיין אין חשבונות זמינים",
     description:
-      "כאן יופיעו חשבונות Brawl Stars ו-Roblox כשתוסיף מלאי.",
+      "כאן יופיעו חשבונות Brawl Stars כשתוסיף מלאי.",
   },
   rank: {
     title: "עדיין אין חשבונות ראנק זמינים",
@@ -96,9 +97,7 @@ export default function CategoryPage() {
           </div>
         ) : products.length === 0 ? (
           <div className="py-20 text-center">
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-              <Package className="h-10 w-10 text-muted-foreground/40" />
-            </div>
+            <img src={noProductsImg} alt="אין מוצרים" className="mx-auto mb-5 h-28 w-28 object-contain opacity-70" />
             <h3 className="mb-2 text-lg font-semibold text-foreground">
               {emptyState.title}
             </h3>

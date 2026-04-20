@@ -69,7 +69,6 @@ export default function BrawlStarsBoostingPage() {
           <div className="hidden items-center gap-6 text-sm font-semibold text-white/70 md:flex">
             <span>Accounts</span>
             <span>Boosting</span>
-            <span>Roblox</span>
             <span>Support</span>
           </div>
         </motion.div>
