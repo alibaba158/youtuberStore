@@ -28,11 +28,11 @@ import { addGuestCartItem } from "@/lib/guestCart";
 import { api } from "../../../convex/_generated/api";
 
 const skinStats = [
-  { key: "rareSkinCount", label: "Rare", image: rareSkinImage },
-  { key: "superRareSkinCount", label: "Super Rare", image: superRareSkinImage },
-  { key: "epicSkinCount", label: "Epic", image: epicSkinImage },
-  { key: "mythicSkinCount", label: "Mythic", image: mythicSkinImage },
-  { key: "legendarySkinCount", label: "Legendary", image: legendarySkinImage },
+  { key: "rareSkinCount", label: "רייר", image: rareSkinImage },
+  { key: "superRareSkinCount", label: "סופר רייר", image: superRareSkinImage },
+  { key: "epicSkinCount", label: "אפיק", image: epicSkinImage },
+  { key: "mythicSkinCount", label: "מיתיק", image: mythicSkinImage },
+  { key: "legendarySkinCount", label: "לג'נדרי", image: legendarySkinImage },
 ] as const;
 
 function StockBadge({ stock }: { stock: number }) {
@@ -130,10 +130,10 @@ export default function ProductPage() {
   const price = Number.parseFloat(product.price);
   const mainImage = galleryImages[selectedImage];
   const trophyCount = Number(product.trophyCount ?? 0);
-  const visibleSkinStats = skinStats
-    .map((stat) => ({ ...stat, value: Number(product[stat.key] ?? 0) }))
-    .filter((stat) => stat.value > 0);
-  const hasAccountStats = trophyCount > 0 || visibleSkinStats.length > 0;
+  const visibleSkinStats = skinStats.map((stat) => ({
+    ...stat,
+    value: Number(product[stat.key] ?? 0),
+  }));
 
   return (
     <div className="min-h-screen bg-[#f5f6f8]">
@@ -202,43 +202,39 @@ export default function ProductPage() {
               </div>
             </motion.div>
 
-            {hasAccountStats ? (
-              <section className="rounded-2xl border border-border bg-card p-5">
-                <h2 className="mb-4 text-xl font-black">נתוני החשבון</h2>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                  {trophyCount > 0 ? (
-                    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 p-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-yellow-800">
-                        <Trophy className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-muted-foreground">גביעים</p>
-                        <p className="text-lg font-black">{trophyCount.toLocaleString("he-IL")}</p>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {visibleSkinStats.map((stat) => (
-                    <div key={stat.key} className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 p-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1.5">
-                        <img
-                          src={stat.image}
-                          alt=""
-                          className="h-full w-full object-contain"
-                          onError={(event) => {
-                            event.currentTarget.style.display = "none";
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-muted-foreground">{stat.label} skins</p>
-                        <p className="text-lg font-black">{stat.value.toLocaleString("he-IL")}</p>
-                      </div>
-                    </div>
-                  ))}
+            <section className="rounded-2xl border border-border bg-card p-5">
+              <h2 className="mb-4 text-xl font-black">נתוני החשבון</h2>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 p-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-yellow-800">
+                    <Trophy className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground">גביעים</p>
+                    <p className="text-lg font-black">{trophyCount.toLocaleString("he-IL")}</p>
+                  </div>
                 </div>
-              </section>
-            ) : null}
+
+                {visibleSkinStats.map((stat) => (
+                  <div key={stat.key} className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 p-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1.5">
+                      <img
+                        src={stat.image}
+                        alt=""
+                        className="h-full w-full object-contain"
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground">סקינים {stat.label}</p>
+                      <p className="text-lg font-black">{stat.value.toLocaleString("he-IL")}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
             <section className="rounded-2xl border border-border bg-card p-5">
               <h2 className="mb-3 text-xl font-black">פרטי המוצר</h2>

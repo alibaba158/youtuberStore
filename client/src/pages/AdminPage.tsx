@@ -95,6 +95,14 @@ async function readFileAsDataUrl(file: File) {
   return compressImageDataUrl(source);
 }
 
+function appendGalleryImages(current: string, images: string[]) {
+  const existing = current
+    .split(/\r?\n/)
+    .map((url) => url.trim())
+    .filter(Boolean);
+  return [...existing, ...images].join("\n");
+}
+
 async function prepareProductFormForSave(form: ProductForm) {
   const imageUrl = form.imageUrl.trim();
   const optionalCount = (value: string) => {
@@ -154,40 +162,119 @@ function ProductEditor({
     try {
       const imageUrl = await readFileAsDataUrl(file);
       onChange({ ...value, imageUrl });
-      toast.success("Image added");
+      toast.success("התמונה נוספה");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to add image");
+      toast.error(error instanceof Error ? error.message : "לא הצלחנו להוסיף תמונה");
     }
   };
 
+  const handleGalleryImagesSelect = async (files: FileList | null) => {
+    const selectedFiles = Array.from(files ?? []);
+    if (selectedFiles.length === 0) return;
+
+    try {
+      const imageUrls = await Promise.all(selectedFiles.map((file) => readFileAsDataUrl(file)));
+      onChange({
+        ...value,
+        imageUrl: value.imageUrl || imageUrls[0] || "",
+        imageUrls: appendGalleryImages(value.imageUrls, imageUrls),
+      });
+      toast.success(`${imageUrls.length} תמונות נוספו`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "לא הצלחנו להוסיף תמונות");
+    }
+  };
+
+  const galleryImages = value.imageUrls
+    .split(/\r?\n/)
+    .map((url) => url.trim())
+    .filter(Boolean);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="max-w-lg">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-1.5"><Label>שם</Label><Input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5"><Label>מחיר</Label><Input type="number" value={value.price} onChange={(e) => onChange({ ...value, price: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>מלאי</Label><Input type="number" value={value.stock} onChange={(e) => onChange({ ...value, stock: e.target.value })} /></div>
-          </div>
-          <div className="space-y-1.5"><Label>תמונה</Label><Input value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="Image URL or local image" /><Input type="file" accept="image/*" onChange={(e) => void handleImageSelect(e.target.files?.[0])} />{value.imageUrl ? <img src={value.imageUrl} alt="Preview" className="h-28 w-full rounded-md border border-border bg-muted object-contain" /> : null}</div>
-          <div className="space-y-1.5"><Label>תמונות נוספות</Label><Textarea rows={3} dir="ltr" value={value.imageUrls} onChange={(e) => onChange({ ...value, imageUrls: e.target.value })} placeholder="One image URL per line" /></div>
-          <div className="space-y-2">
-            <Label>נתוני חשבון</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <Input type="number" min="0" placeholder="כמות גביעים" value={value.trophyCount} onChange={(e) => onChange({ ...value, trophyCount: e.target.value })} />
-              <Input type="number" min="0" placeholder="Rare skins" value={value.rareSkinCount} onChange={(e) => onChange({ ...value, rareSkinCount: e.target.value })} />
-              <Input type="number" min="0" placeholder="Super-rare skins" value={value.superRareSkinCount} onChange={(e) => onChange({ ...value, superRareSkinCount: e.target.value })} />
-              <Input type="number" min="0" placeholder="Epic skins" value={value.epicSkinCount} onChange={(e) => onChange({ ...value, epicSkinCount: e.target.value })} />
-              <Input type="number" min="0" placeholder="Mythic skins" value={value.mythicSkinCount} onChange={(e) => onChange({ ...value, mythicSkinCount: e.target.value })} />
-              <Input type="number" min="0" placeholder="Legendary skins" value={value.legendarySkinCount} onChange={(e) => onChange({ ...value, legendarySkinCount: e.target.value })} />
+      <DialogContent dir="rtl" className="max-h-[calc(100vh-2rem)] max-w-2xl overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-6 pb-4 pr-14 pt-6 text-right">
+          <DialogTitle className="text-xl font-black leading-7">{title}</DialogTitle>
+        </DialogHeader>
+        <div className="max-h-[calc(100vh-11rem)] space-y-7 overflow-y-auto px-6 py-5">
+          <section className="space-y-3">
+            <h3 className="text-sm font-black text-foreground">פרטים בסיסיים</h3>
+            <div className="space-y-1.5">
+              <Label className="block text-right font-bold">שם המוצר</Label>
+              <Input className="text-right" value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} placeholder="לדוגמה: חשבון 30K גביעים" />
             </div>
-          </div>
-          <div className="space-y-1.5"><Label>קטגוריה</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={value.categoryId} onChange={(e) => onChange({ ...value, categoryId: e.target.value })}><option value="">ללא</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.name}</option>)}</select></div>
-          <div className="space-y-1.5"><Label>תיאור</Label><Textarea rows={4} value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Delivery content</Label><Textarea rows={4} value={value.deliveryContent} onChange={(e) => onChange({ ...value, deliveryContent: e.target.value })} /></div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label className="block text-right font-bold">מחיר</Label>
+                <Input className="text-right" type="number" min="0" step="0.01" value={value.price} onChange={(e) => onChange({ ...value, price: e.target.value })} placeholder="0.00" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="block text-right font-bold">מלאי</Label>
+                <Input className="text-right" type="number" min="0" value={value.stock} onChange={(e) => onChange({ ...value, stock: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="block text-right font-bold">קטגוריה</Label>
+                <select className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-right text-sm" value={value.categoryId} onChange={(e) => onChange({ ...value, categoryId: e.target.value })}>
+                  <option value="">ללא קטגוריה</option>
+                  {categories.map((category) => <option key={category._id} value={category._id}>{category.name}</option>)}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-black text-foreground">תמונות המוצר</h3>
+            <div className="space-y-1.5">
+              <Label className="block text-right font-bold">תמונה ראשית</Label>
+              <Input dir="ltr" value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="קישור לתמונה או העלאה מהמחשב" />
+              <label className="flex h-10 cursor-pointer items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-bold transition-colors hover:bg-muted">
+                העלאת תמונה ראשית
+                <Input className="sr-only" type="file" accept="image/*" onChange={(e) => void handleImageSelect(e.target.files?.[0])} />
+              </label>
+              {value.imageUrl ? <img src={value.imageUrl} alt="תצוגה מקדימה" className="h-32 w-full rounded-md border border-border bg-muted object-contain" /> : null}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="block text-right font-bold">תמונות נוספות לאותו מוצר</Label>
+              <label className="flex h-10 cursor-pointer items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-bold transition-colors hover:bg-muted">
+                העלאת כמה תמונות
+                <Input className="sr-only" type="file" accept="image/*" multiple onChange={(e) => void handleGalleryImagesSelect(e.target.files)} />
+              </label>
+              <Textarea rows={4} dir="ltr" value={value.imageUrls} onChange={(e) => onChange({ ...value, imageUrls: e.target.value })} placeholder="אפשר להדביק כאן קישור אחד בכל שורה" />
+              {galleryImages.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {galleryImages.slice(0, 8).map((url) => (
+                    <img key={url} src={url} alt="" className="h-16 rounded-md border border-border bg-muted object-contain" />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-black text-foreground">נתוני החשבון</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5"><Label className="block text-right font-bold">כמות גביעים</Label><Input className="text-right" type="number" min="0" value={value.trophyCount} onChange={(e) => onChange({ ...value, trophyCount: e.target.value })} placeholder="0" /></div>
+              <div className="space-y-1.5"><Label className="block text-right font-bold">סקינים רייר</Label><Input className="text-right" type="number" min="0" value={value.rareSkinCount} onChange={(e) => onChange({ ...value, rareSkinCount: e.target.value })} placeholder="0" /></div>
+              <div className="space-y-1.5"><Label className="block text-right font-bold">סקינים סופר רייר</Label><Input className="text-right" type="number" min="0" value={value.superRareSkinCount} onChange={(e) => onChange({ ...value, superRareSkinCount: e.target.value })} placeholder="0" /></div>
+              <div className="space-y-1.5"><Label className="block text-right font-bold">סקינים אפיק</Label><Input className="text-right" type="number" min="0" value={value.epicSkinCount} onChange={(e) => onChange({ ...value, epicSkinCount: e.target.value })} placeholder="0" /></div>
+              <div className="space-y-1.5"><Label className="block text-right font-bold">סקינים מיתיק</Label><Input className="text-right" type="number" min="0" value={value.mythicSkinCount} onChange={(e) => onChange({ ...value, mythicSkinCount: e.target.value })} placeholder="0" /></div>
+              <div className="space-y-1.5"><Label className="block text-right font-bold">סקינים לג'נדרי</Label><Input className="text-right" type="number" min="0" value={value.legendarySkinCount} onChange={(e) => onChange({ ...value, legendarySkinCount: e.target.value })} placeholder="0" /></div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-black text-foreground">תוכן ותיאור</h3>
+            <div className="space-y-1.5">
+              <Label className="block text-right font-bold">תיאור מוצר</Label>
+              <Textarea rows={4} value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} placeholder="מה הלקוח רואה לפני הקנייה" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="block text-right font-bold">תוכן שנמסר אחרי רכישה</Label>
+              <Textarea rows={4} value={value.deliveryContent} onChange={(e) => onChange({ ...value, deliveryContent: e.target.value })} placeholder="פרטים שיימסרו ללקוח אחרי התשלום" />
+            </div>
+          </section>
         </div>
-        <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button><Button onClick={onSubmit}>שמור</Button></DialogFooter>
+        <DialogFooter className="flex-row border-t border-border bg-card px-6 py-4 sm:justify-start"><Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button><Button onClick={onSubmit}>שמור מוצר</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
