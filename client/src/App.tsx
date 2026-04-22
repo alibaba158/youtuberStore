@@ -17,8 +17,11 @@ import AdminPage from "./pages/AdminPage";
 import AccountPage from "./pages/AccountPage";
 import AuthPage from "./pages/AuthPage";
 import BrawlStarsBoostingPage from "./pages/BrawlStarsBoostingPage";
+import ChatPage from "./pages/ChatPage";
+import AdminSupportPage from "./pages/AdminSupportPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import PublicChatWidget from "./components/PublicChatWidget";
 
 function Router() {
   return (
@@ -31,8 +34,10 @@ function Router() {
       <Route path="/checkout/:id" component={CheckoutPage} />
       <Route path="/receipt/:id" component={ReceiptPage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/admin/support" component={AdminSupportPage} />
       <Route path="/account" component={AccountPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/chat" component={ChatPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -57,6 +62,7 @@ function App() {
               <Router />
             </main>
             <Footer />
+            <PublicChatWidget />
           </div>
         </TooltipProvider>
       </ThemeProvider>

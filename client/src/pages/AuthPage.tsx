@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
-import { Redirect } from "wouter";
+import { Link, Redirect } from "wouter";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Mail, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,10 +25,17 @@ export default function AuthPage() {
 
   const title = useMemo(() => {
     if (step === "verifyEmail") {
-      return "Verify your email";
+      return "אימות המייל";
     }
-    return mode === "signIn" ? "Sign in" : "Create account";
+    return mode === "signIn" ? "כניסה לחשבון" : "פתיחת חשבון";
   }, [mode, step]);
+
+  const description =
+    step === "verifyEmail"
+      ? `הזינו את הקוד בן 6 הספרות שנשלח אל ${email}.`
+      : mode === "signIn"
+        ? "המשיכו להזמנות, קבלות ופרטי החשבון שלכם."
+        : "צרו חשבון כדי לשמור הזמנות ולקבל עדכונים.";
 
   if (!loading && isAuthenticated) {
     return <Redirect to="/" />;
@@ -75,26 +82,35 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="container py-16">
-      <div className="mx-auto max-w-md">
-        <Card className="overflow-hidden border-accent/20 bg-white/95 shadow-xl shadow-accent/10">
-          <div className="bg-gradient-to-l from-primary to-accent px-6 py-7 text-primary-foreground">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white/15">
+    <div className="container py-10">
+      <div className="mx-auto max-w-[420px]">
+        <Card className="border-border/80 bg-card p-6 shadow-[0_18px_60px_-36px_oklch(0.15_0.015_330)]">
+          <div>
+            <div className="flex items-start justify-between gap-3">
               {step === "verifyEmail" ? (
-                <Mail className="h-6 w-6" />
-              ) : (
-                <ShieldCheck className="h-6 w-6" />
-              )}
+                <span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-primary">
+                  <Mail className="h-4 w-4" />
+                </span>
+              ) : null}
+              <div>
+                <h1 className="text-2xl font-black leading-tight">{title}</h1>
+                <p className="mt-1.5 text-sm leading-5 text-muted-foreground">{description}</p>
+              </div>
+              <Button
+                asChild
+                aria-label="חזרה לעמוד הראשי"
+                className="h-9 w-9 shrink-0 rounded-lg bg-accent/10 text-primary hover:bg-accent/15"
+                size="icon"
+                variant="ghost"
+              >
+                <Link href="/">
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
-            <h1 className="text-2xl font-black">{title}</h1>
-            <p className="mt-2 text-sm leading-6 text-primary-foreground/85">
-              {step === "verifyEmail"
-                ? `Enter the 6-digit code sent to ${email}.`
-                : "Use your email and password to access Razlo Store."}
-            </p>
           </div>
 
-          <div className="p-6 md:p-8">
+          <div className="pt-4">
             <Tabs
               dir="rtl"
               value={mode}
@@ -104,9 +120,9 @@ export default function AuthPage() {
               }}
             >
               {step === "credentials" ? (
-                <TabsList className="mb-6 grid grid-cols-2">
-                  <TabsTrigger value="signIn">Sign in</TabsTrigger>
-                  <TabsTrigger value="signUp">Sign up</TabsTrigger>
+                <TabsList className="mb-3 grid grid-cols-2">
+                  <TabsTrigger value="signIn">כניסה</TabsTrigger>
+                  <TabsTrigger value="signUp">הרשמה</TabsTrigger>
                 </TabsList>
               ) : null}
 
@@ -130,7 +146,7 @@ export default function AuthPage() {
                         disabled={submitting || code.length < 6}
                         type="submit"
                       >
-                        {submitting ? "Verifying..." : "Verify email"}
+                        {submitting ? "מאמתים..." : "אימות המייל"}
                       </Button>
                       <Button
                         className="w-full"
@@ -139,7 +155,7 @@ export default function AuthPage() {
                         type="button"
                         onClick={resetToCredentials}
                       >
-                        Back to signup
+                        חזרה להרשמה
                       </Button>
                     </>
                   ) : (
@@ -147,7 +163,7 @@ export default function AuthPage() {
                       {mode === "signUp" ? (
                         <Input
                           dir="rtl"
-                          placeholder="Full name"
+                          placeholder="שם מלא"
                           autoComplete="name"
                           maxLength={80}
                           value={name}
@@ -168,7 +184,7 @@ export default function AuthPage() {
                       <Input
                         dir="ltr"
                         type="password"
-                        placeholder="Password"
+                        placeholder="סיסמה"
                         autoComplete={mode === "signIn" ? "current-password" : "new-password"}
                         minLength={4}
                         maxLength={128}
@@ -178,10 +194,10 @@ export default function AuthPage() {
                       />
                       <Button className="w-full" disabled={submitting} type="submit">
                         {submitting
-                          ? "Loading..."
+                          ? "טוען..."
                           : mode === "signIn"
-                            ? "Sign in"
-                            : "Create account"}
+                            ? "כניסה"
+                            : "יצירת חשבון"}
                       </Button>
                     </>
                   )}

@@ -142,6 +142,7 @@ export default function Navbar() {
                 </span>
               </Link>
             ) : null}
+
           </nav>
 
           <div className="flex items-center gap-2">

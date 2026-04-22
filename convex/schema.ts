@@ -90,4 +90,34 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
+
+  chatMessages: defineTable({
+    userId: v.optional(v.id("users")),
+    authorName: v.string(),
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
+
+  supportTickets: defineTable({
+    userId: v.id("users"),
+    customerName: v.string(),
+    customerEmail: v.optional(v.string()),
+    assignedAdminId: v.optional(v.id("users")),
+    status: v.union(v.literal("open"), v.literal("pending"), v.literal("closed")),
+    lastMessagePreview: v.optional(v.string()),
+    lastMessageAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId_status", ["userId", "status"])
+    .index("by_status_lastMessageAt", ["status", "lastMessageAt"]),
+
+  supportMessages: defineTable({
+    ticketId: v.id("supportTickets"),
+    senderId: v.id("users"),
+    senderName: v.string(),
+    senderRole: v.union(v.literal("customer"), v.literal("admin")),
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_ticketId_createdAt", ["ticketId", "createdAt"]),
 });

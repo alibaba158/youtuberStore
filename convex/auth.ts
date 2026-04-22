@@ -49,26 +49,31 @@ async function sendVerificationEmail({
   token: string;
   url: string;
 }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.AUTH_EMAIL_FROM ?? "Razlo Store <onboarding@resend.dev>";
+  const apiKey = process.env.BREVO_API_KEY;
+  const from = process.env.AUTH_EMAIL_FROM ?? "Razlo Store <noreply@razlostore.com>";
 
   if (!apiKey) {
     console.warn(`Email verification code for ${identifier}: ${token}`);
     return;
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const fromMatch = from.match(/^(.*)<(.+)>$/);
+  const sender = fromMatch
+    ? { name: fromMatch[1]?.trim() || "Razlo Store", email: fromMatch[2]?.trim() }
+    : { name: "Razlo Store", email: from };
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      "api-key": apiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from,
-      to: identifier,
+      sender,
+      to: [{ email: identifier }],
       subject: "Verify your Razlo Store account",
       html: verificationEmailHtml({ token, url }),
-      text: `Your Razlo Store verification code is ${token}`,
+      textContent: `Your Razlo Store verification code is ${token}`,
     }),
   });
 
@@ -107,7 +112,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       },
       verify: Email({
         id: "verify-email",
-        from: process.env.AUTH_EMAIL_FROM ?? "Razlo Store <onboarding@resend.dev>",
+        from: process.env.AUTH_EMAIL_FROM ?? "Razlo Store <noreply@razlostore.com>",
         maxAge: 10 * 60,
         async generateVerificationToken() {
           return String(Math.floor(100000 + Math.random() * 900000));
