@@ -27,6 +27,13 @@ const productInput = {
   deliveryContent: v.optional(v.string()),
   price: v.string(),
   imageUrl: v.optional(v.string()),
+  imageUrls: v.optional(v.array(v.string())),
+  trophyCount: v.optional(v.number()),
+  rareSkinCount: v.optional(v.number()),
+  superRareSkinCount: v.optional(v.number()),
+  epicSkinCount: v.optional(v.number()),
+  mythicSkinCount: v.optional(v.number()),
+  legendarySkinCount: v.optional(v.number()),
   categoryId: v.optional(v.id("categories")),
   stock: v.number(),
   isActive: v.boolean(),
@@ -212,11 +219,22 @@ function sanitizeProductInput(args: {
   deliveryContent?: string;
   price: string;
   imageUrl?: string;
+  imageUrls?: string[];
+  trophyCount?: number;
+  rareSkinCount?: number;
+  superRareSkinCount?: number;
+  epicSkinCount?: number;
+  mythicSkinCount?: number;
+  legendarySkinCount?: number;
   categoryId?: any;
   stock: number;
   isActive: boolean;
   isFeatured: boolean;
 }) {
+  const imageUrls = (args.imageUrls ?? [])
+    .map((url) => normalizeSafeImageUrl(url))
+    .filter((url): url is string => Boolean(url))
+    .slice(0, 6);
   return {
     name: normalizeDisplayName(args.name),
     description: normalizeOptionalText(args.description, "Description", 2_000),
@@ -227,6 +245,13 @@ function sanitizeProductInput(args: {
     ),
     price: normalizePrice(args.price),
     imageUrl: normalizeSafeImageUrl(args.imageUrl),
+    imageUrls,
+    trophyCount: args.trophyCount === undefined ? undefined : normalizeStock(args.trophyCount),
+    rareSkinCount: args.rareSkinCount === undefined ? undefined : normalizeStock(args.rareSkinCount),
+    superRareSkinCount: args.superRareSkinCount === undefined ? undefined : normalizeStock(args.superRareSkinCount),
+    epicSkinCount: args.epicSkinCount === undefined ? undefined : normalizeStock(args.epicSkinCount),
+    mythicSkinCount: args.mythicSkinCount === undefined ? undefined : normalizeStock(args.mythicSkinCount),
+    legendarySkinCount: args.legendarySkinCount === undefined ? undefined : normalizeStock(args.legendarySkinCount),
     categoryId: args.categoryId,
     stock: normalizeStock(args.stock),
     isActive: args.isActive,
@@ -240,11 +265,25 @@ function sanitizeProductPatch(args: {
   deliveryContent?: string;
   price?: string;
   imageUrl?: string;
+  imageUrls?: string[];
+  trophyCount?: number;
+  rareSkinCount?: number;
+  superRareSkinCount?: number;
+  epicSkinCount?: number;
+  mythicSkinCount?: number;
+  legendarySkinCount?: number;
   categoryId?: any;
   stock?: number;
   isActive?: boolean;
   isFeatured?: boolean;
 }) {
+  const imageUrls =
+    args.imageUrls === undefined
+      ? undefined
+      : args.imageUrls
+          .map((url) => normalizeSafeImageUrl(url))
+          .filter((url): url is string => Boolean(url))
+          .slice(0, 6);
   return {
     name:
       args.name === undefined ? undefined : normalizeDisplayName(args.name),
@@ -256,6 +295,13 @@ function sanitizeProductPatch(args: {
     ),
     price: args.price === undefined ? undefined : normalizePrice(args.price),
     imageUrl: normalizeSafeImageUrl(args.imageUrl),
+    imageUrls,
+    trophyCount: args.trophyCount === undefined ? undefined : normalizeStock(args.trophyCount),
+    rareSkinCount: args.rareSkinCount === undefined ? undefined : normalizeStock(args.rareSkinCount),
+    superRareSkinCount: args.superRareSkinCount === undefined ? undefined : normalizeStock(args.superRareSkinCount),
+    epicSkinCount: args.epicSkinCount === undefined ? undefined : normalizeStock(args.epicSkinCount),
+    mythicSkinCount: args.mythicSkinCount === undefined ? undefined : normalizeStock(args.mythicSkinCount),
+    legendarySkinCount: args.legendarySkinCount === undefined ? undefined : normalizeStock(args.legendarySkinCount),
     categoryId: args.categoryId,
     stock: args.stock === undefined ? undefined : normalizeStock(args.stock),
     isActive: args.isActive,
@@ -688,6 +734,13 @@ export const updateProduct = mutation({
       deliveryContent: v.optional(v.string()),
       price: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
+      imageUrls: v.optional(v.array(v.string())),
+      trophyCount: v.optional(v.number()),
+      rareSkinCount: v.optional(v.number()),
+      superRareSkinCount: v.optional(v.number()),
+      epicSkinCount: v.optional(v.number()),
+      mythicSkinCount: v.optional(v.number()),
+      legendarySkinCount: v.optional(v.number()),
       categoryId: v.optional(v.id("categories")),
       stock: v.optional(v.number()),
       isActive: v.optional(v.boolean()),

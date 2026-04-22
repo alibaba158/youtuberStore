@@ -249,10 +249,10 @@ export const createGuestOrder = mutation({
   },
   handler: async (ctx, args) => {
     const viewer = await getViewer(ctx);
-    if (viewer) {
-      const snapshot = await buildOrderSnapshot(ctx, viewer);
-      const now = Date.now();
+    const snapshot = await buildOrderSnapshotFromItems(ctx, args.items);
+    const now = Date.now();
 
+    if (viewer) {
       return ctx.db.insert("orders", {
         userId: viewer.authUser._id,
         customerEmail: viewer.user.email,
@@ -266,9 +266,6 @@ export const createGuestOrder = mutation({
         updatedAt: now,
       });
     }
-
-    const snapshot = await buildOrderSnapshotFromItems(ctx, args.items);
-    const now = Date.now();
 
     return ctx.db.insert("orders", {
       customerEmail: "",

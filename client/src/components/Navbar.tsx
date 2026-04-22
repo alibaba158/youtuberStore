@@ -28,10 +28,10 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "../../../convex/_generated/api";
 
 const categoryDescriptions = {
-  friends: "חברויות ב-Brawl Stars",
+  friends: "חברויות ב Brawl Stars",
   accounts: "חשבונות Brawl Stars",
-  rank: "חשבונות לפי ראנק",
-  trophies: "חשבונות לפי כמות גביעים",
+  rank: "בוסט לראנק בBrawl Stars",
+  trophies: "בוסט לכמות הגביעים בBrawl Stars",
 } as const;
 
 export default function Navbar() {

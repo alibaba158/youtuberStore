@@ -19,6 +19,13 @@ type ProductForm = {
   deliveryContent: string;
   price: string;
   imageUrl: string;
+  imageUrls: string;
+  trophyCount: string;
+  rareSkinCount: string;
+  superRareSkinCount: string;
+  epicSkinCount: string;
+  mythicSkinCount: string;
+  legendarySkinCount: string;
   categoryId: string;
   stock: string;
   isActive: boolean;
@@ -33,7 +40,7 @@ type CategoryForm = {
   sortOrder: string;
 };
 
-const emptyProduct: ProductForm = { name: "", description: "", deliveryContent: "", price: "", imageUrl: "", categoryId: "", stock: "0", isActive: true, isFeatured: false };
+const emptyProduct: ProductForm = { name: "", description: "", deliveryContent: "", price: "", imageUrl: "", imageUrls: "", trophyCount: "", rareSkinCount: "", superRareSkinCount: "", epicSkinCount: "", mythicSkinCount: "", legendarySkinCount: "", categoryId: "", stock: "0", isActive: true, isFeatured: false };
 const emptyCategory: CategoryForm = { name: "", slug: "", description: "", imageUrl: "", sortOrder: "0" };
 
 async function loadImage(source: string) {
@@ -90,11 +97,28 @@ async function readFileAsDataUrl(file: File) {
 
 async function prepareProductFormForSave(form: ProductForm) {
   const imageUrl = form.imageUrl.trim();
+  const optionalCount = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const parsed = parseInt(trimmed, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  };
+
   return {
     ...form,
     imageUrl: imageUrl.startsWith("data:image/")
       ? await compressImageDataUrl(imageUrl)
       : imageUrl,
+    imageUrls: form.imageUrls
+      .split(/\r?\n/)
+      .map((url) => url.trim())
+      .filter(Boolean),
+    trophyCount: optionalCount(form.trophyCount),
+    rareSkinCount: optionalCount(form.rareSkinCount),
+    superRareSkinCount: optionalCount(form.superRareSkinCount),
+    epicSkinCount: optionalCount(form.epicSkinCount),
+    mythicSkinCount: optionalCount(form.mythicSkinCount),
+    legendarySkinCount: optionalCount(form.legendarySkinCount),
   };
 }
 
@@ -147,6 +171,18 @@ function ProductEditor({
             <div className="space-y-1.5"><Label>מלאי</Label><Input type="number" value={value.stock} onChange={(e) => onChange({ ...value, stock: e.target.value })} /></div>
           </div>
           <div className="space-y-1.5"><Label>תמונה</Label><Input value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="Image URL or local image" /><Input type="file" accept="image/*" onChange={(e) => void handleImageSelect(e.target.files?.[0])} />{value.imageUrl ? <img src={value.imageUrl} alt="Preview" className="h-28 w-full rounded-md border border-border bg-muted object-contain" /> : null}</div>
+          <div className="space-y-1.5"><Label>תמונות נוספות</Label><Textarea rows={3} dir="ltr" value={value.imageUrls} onChange={(e) => onChange({ ...value, imageUrls: e.target.value })} placeholder="One image URL per line" /></div>
+          <div className="space-y-2">
+            <Label>נתוני חשבון</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Input type="number" min="0" placeholder="כמות גביעים" value={value.trophyCount} onChange={(e) => onChange({ ...value, trophyCount: e.target.value })} />
+              <Input type="number" min="0" placeholder="Rare skins" value={value.rareSkinCount} onChange={(e) => onChange({ ...value, rareSkinCount: e.target.value })} />
+              <Input type="number" min="0" placeholder="Super-rare skins" value={value.superRareSkinCount} onChange={(e) => onChange({ ...value, superRareSkinCount: e.target.value })} />
+              <Input type="number" min="0" placeholder="Epic skins" value={value.epicSkinCount} onChange={(e) => onChange({ ...value, epicSkinCount: e.target.value })} />
+              <Input type="number" min="0" placeholder="Mythic skins" value={value.mythicSkinCount} onChange={(e) => onChange({ ...value, mythicSkinCount: e.target.value })} />
+              <Input type="number" min="0" placeholder="Legendary skins" value={value.legendarySkinCount} onChange={(e) => onChange({ ...value, legendarySkinCount: e.target.value })} />
+            </div>
+          </div>
           <div className="space-y-1.5"><Label>קטגוריה</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={value.categoryId} onChange={(e) => onChange({ ...value, categoryId: e.target.value })}><option value="">ללא</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.name}</option>)}</select></div>
           <div className="space-y-1.5"><Label>תיאור</Label><Textarea rows={4} value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Delivery content</Label><Textarea rows={4} value={value.deliveryContent} onChange={(e) => onChange({ ...value, deliveryContent: e.target.value })} /></div>
@@ -297,7 +333,7 @@ export default function AdminPage() {
                 <motion.div key={product._id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
                   <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{product.name}</p><p className="text-sm text-muted-foreground">₪{parseFloat(product.price).toFixed(2)} · מלאי {product.stock}</p></div>
                   <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditProductId(product._id); setProductForm({ name: product.name, description: product.description ?? "", deliveryContent: product.deliveryContent ?? "", price: product.price, imageUrl: product.imageUrl ?? "", categoryId: product.categoryId ?? "", stock: String(product.stock), isActive: product.isActive, isFeatured: product.isFeatured }); }}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditProductId(product._id); setProductForm({ name: product.name, description: product.description ?? "", deliveryContent: product.deliveryContent ?? "", price: product.price, imageUrl: product.imageUrl ?? "", imageUrls: (product.imageUrls ?? []).join("\n"), trophyCount: product.trophyCount === undefined ? "" : String(product.trophyCount), rareSkinCount: product.rareSkinCount === undefined ? "" : String(product.rareSkinCount), superRareSkinCount: product.superRareSkinCount === undefined ? "" : String(product.superRareSkinCount), epicSkinCount: product.epicSkinCount === undefined ? "" : String(product.epicSkinCount), mythicSkinCount: product.mythicSkinCount === undefined ? "" : String(product.mythicSkinCount), legendarySkinCount: product.legendarySkinCount === undefined ? "" : String(product.legendarySkinCount), categoryId: product.categoryId ?? "", stock: String(product.stock), isActive: product.isActive, isFeatured: product.isFeatured }); }}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => void deleteProduct({ id: product._id as never }).then(() => toast.success("המוצר נמחק"))}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </motion.div>
