@@ -33,9 +33,8 @@ async function getViewer(ctx: any) {
     .withIndex("by_userId", (q: any) => q.eq("userId", userId))
     .unique();
 
-  const role =
-    profile?.role ??
-    (parseAdminEmails().has((authUser.email ?? "").toLowerCase()) ? "admin" : "user");
+  const isAdminEmail = parseAdminEmails().has((authUser.email ?? "").toLowerCase());
+  const role = isAdminEmail ? "admin" : (profile?.role ?? "user");
 
   return {
     userId,

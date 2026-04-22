@@ -90,9 +90,7 @@ async function getViewer(ctx: Parameters<typeof query>[0] extends never ? never 
     .unique();
 
   const adminEmails = parseAdminEmails();
-  const fallbackRole = adminEmails.has((authUser.email ?? "").toLowerCase())
-    ? "admin"
-    : "user";
+  const isAdminEmail = adminEmails.has((authUser.email ?? "").toLowerCase());
 
   return {
     authUser,
@@ -101,7 +99,7 @@ async function getViewer(ctx: Parameters<typeof query>[0] extends never ? never 
       _id: authUser._id,
       email: authUser.email ?? "",
       name: authUser.name ?? authUser.email ?? "User",
-      role: profile?.role ?? fallbackRole,
+      role: isAdminEmail ? "admin" : (profile?.role ?? "user"),
       theme: profile?.theme ?? "default",
       createdAt: authUser._creationTime,
     },
