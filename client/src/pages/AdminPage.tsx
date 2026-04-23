@@ -47,7 +47,7 @@ async function loadImage(source: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Could not read image"));
+    image.onerror = () => reject(new Error("לא הצלחנו לקרוא את התמונה"));
     image.src = source;
   });
 }
@@ -65,7 +65,7 @@ async function compressImageDataUrl(source: string) {
 
   const context = canvas.getContext("2d");
   if (!context) {
-    throw new Error("Could not prepare image");
+    throw new Error("לא הצלחנו להכין את התמונה");
   }
 
   context.fillStyle = "#ffffff";
@@ -74,7 +74,7 @@ async function compressImageDataUrl(source: string) {
 
   const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
   if (dataUrl.length > 900_000) {
-    throw new Error("Image is too large. Try a smaller image.");
+    throw new Error("התמונה גדולה מדי. נסו קובץ קטן יותר.");
   }
 
   return dataUrl;
@@ -82,13 +82,13 @@ async function compressImageDataUrl(source: string) {
 
 async function readFileAsDataUrl(file: File) {
   if (!file.type.startsWith("image/")) {
-    throw new Error("Please choose an image file");
+    throw new Error("יש לבחור קובץ תמונה");
   }
 
   const source = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.onerror = () => reject(new Error("לא הצלחנו לקרוא את התמונה"));
     reader.readAsDataURL(file);
   });
 
@@ -300,24 +300,46 @@ function CategoryEditor({
     try {
       const imageUrl = await readFileAsDataUrl(file);
       onChange({ ...value, imageUrl });
-      toast.success("Image added");
+      toast.success("התמונה נוספה");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to add image");
+      toast.error(error instanceof Error ? error.message : "לא הצלחנו להוסיף תמונה");
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="max-w-md">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-1.5"><Label>שם</Label><Input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") })} /></div>
-          <div className="space-y-1.5"><Label>Slug</Label><Input dir="ltr" value={value.slug} onChange={(e) => onChange({ ...value, slug: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>תמונה</Label><Input value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="Image URL or local image" /><Input type="file" accept="image/*" onChange={(e) => void handleImageSelect(e.target.files?.[0])} />{value.imageUrl ? <img src={value.imageUrl} alt="Preview" className="h-28 w-full rounded-md border border-border bg-muted object-contain" /> : null}</div>
-          <div className="space-y-1.5"><Label>תיאור</Label><Textarea rows={3} value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>סדר</Label><Input type="number" value={value.sortOrder} onChange={(e) => onChange({ ...value, sortOrder: e.target.value })} /></div>
+      <DialogContent dir="rtl" className="max-w-md overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-6 pb-4 pr-14 pt-6 text-right">
+          <DialogTitle className="text-xl font-black leading-7">{title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 px-6 py-5">
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">שם קטגוריה</Label>
+            <Input className="text-right" value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">Slug</Label>
+            <Input dir="ltr" value={value.slug} onChange={(e) => onChange({ ...value, slug: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">תמונה</Label>
+            <Input dir="ltr" value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="קישור לתמונה או העלאה מהמחשב" />
+            <label className="flex h-10 cursor-pointer items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-bold transition-colors hover:bg-muted">
+              העלאת תמונה
+              <Input className="sr-only" type="file" accept="image/*" onChange={(e) => void handleImageSelect(e.target.files?.[0])} />
+            </label>
+            {value.imageUrl ? <img src={value.imageUrl} alt="תצוגה מקדימה" className="h-28 w-full rounded-md border border-border bg-muted object-contain" /> : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">תיאור</Label>
+            <Textarea rows={3} value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">סדר תצוגה</Label>
+            <Input className="text-right" type="number" value={value.sortOrder} onChange={(e) => onChange({ ...value, sortOrder: e.target.value })} />
+          </div>
         </div>
-        <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button><Button onClick={onSubmit}>שמור</Button></DialogFooter>
+        <DialogFooter className="flex-row border-t border-border bg-card px-6 py-4 sm:justify-start"><Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button><Button onClick={onSubmit}>שמור קטגוריה</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
