@@ -100,16 +100,17 @@ function appendGalleryImages(current: string, images: string[]) {
     .split(/\r?\n/)
     .map((url) => url.trim())
     .filter(Boolean);
-  return [...existing, ...images].join("\n");
+  return [...existing, ...images].slice(0, 5).join("\n");
 }
 
 async function prepareProductFormForSave(form: ProductForm) {
   const imageUrl = form.imageUrl.trim();
   const optionalCount = (value: string) => {
-    const trimmed = value.trim();
+    const trimmed = value.replace(/[,\s]/g, "").trim();
     if (!trimmed) return undefined;
-    const parsed = parseInt(trimmed, 10);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    if (!/^\d+$/.test(trimmed)) return undefined;
+    const parsed = Number(trimmed);
+    return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : undefined;
   };
 
   return {
@@ -174,12 +175,17 @@ function ProductEditor({
 
     try {
       const imageUrls = await Promise.all(selectedFiles.map((file) => readFileAsDataUrl(file)));
+      const availableSlots = Math.max(0, 5 - galleryImages.length);
+      const nextImageUrls = imageUrls.slice(0, availableSlots);
       onChange({
         ...value,
-        imageUrl: value.imageUrl || imageUrls[0] || "",
-        imageUrls: appendGalleryImages(value.imageUrls, imageUrls),
+        imageUrl: value.imageUrl || nextImageUrls[0] || imageUrls[0] || "",
+        imageUrls: appendGalleryImages(value.imageUrls, nextImageUrls),
       });
-      toast.success(`${imageUrls.length} תמונות נוספו`);
+      toast.success(`${nextImageUrls.length} תמונות נוספו`);
+      if (imageUrls.length > nextImageUrls.length) {
+        toast.error("אפשר להוסיף עד 6 תמונות בסך הכל, כולל התמונה הראשית");
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "לא הצלחנו להוסיף תמונות");
     }
@@ -235,6 +241,7 @@ function ProductEditor({
             </div>
             <div className="space-y-1.5">
               <Label className="block text-right font-bold">תמונות נוספות לאותו מוצר</Label>
+              <p className="text-right text-xs text-muted-foreground">אפשר להוסיף עד 6 תמונות בסך הכל, כולל התמונה הראשית.</p>
               <label className="flex h-10 cursor-pointer items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-bold transition-colors hover:bg-muted">
                 העלאת כמה תמונות
                 <Input className="sr-only" type="file" accept="image/*" multiple onChange={(e) => void handleGalleryImagesSelect(e.target.files)} />

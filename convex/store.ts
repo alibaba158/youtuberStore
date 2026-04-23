@@ -235,7 +235,7 @@ function sanitizeProductInput(args: {
   const imageUrls = (args.imageUrls ?? [])
     .map((url) => normalizeSafeImageUrl(url))
     .filter((url): url is string => Boolean(url))
-    .slice(0, 6);
+    .slice(0, 5);
   return {
     name: normalizeDisplayName(args.name),
     description: normalizeOptionalText(args.description, "Description", 2_000),
@@ -284,7 +284,7 @@ function sanitizeProductPatch(args: {
       : args.imageUrls
           .map((url) => normalizeSafeImageUrl(url))
           .filter((url): url is string => Boolean(url))
-          .slice(0, 6);
+          .slice(0, 5);
   return {
     name:
       args.name === undefined ? undefined : normalizeDisplayName(args.name),

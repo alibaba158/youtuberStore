@@ -105,7 +105,7 @@ export function normalizeStock(value: number) {
 }
 
 export function normalizeAccountStat(value: number) {
-  if (!Number.isInteger(value) || value < 0 || value > 10_000_000) {
+  if (!Number.isSafeInteger(value) || value < 0) {
     fail("Account stat is out of range");
   }
   return value;
