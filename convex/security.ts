@@ -104,6 +104,13 @@ export function normalizeStock(value: number) {
   return value;
 }
 
+export function normalizeAccountStat(value: number) {
+  if (!Number.isInteger(value) || value < 0 || value > 10_000_000) {
+    fail("Account stat is out of range");
+  }
+  return value;
+}
+
 export function normalizeCartQuantity(value: number) {
   if (!Number.isInteger(value) || value < 1 || value > 100) {
     fail("Quantity is out of range");
