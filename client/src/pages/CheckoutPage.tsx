@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useParams } from "wouter";
+import { Link, useLocation, useParams, useSearch } from "wouter";
 import { useAction, useQuery } from "convex/react";
 import {
   ArrowRight,
@@ -16,6 +16,7 @@ import { api } from "../../../convex/_generated/api";
 export default function CheckoutPage() {
   const params = useParams<{ id: string }>();
   const [location] = useLocation();
+  const searchString = useSearch();
   const order = useQuery(
     api.orders.orderById,
     params.id ? { id: params.id as never } : "skip",
@@ -25,7 +26,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
-  const search = useMemo(() => new URLSearchParams(location.split("?")[1] ?? ""), [location]);
+  const search = useMemo(() => new URLSearchParams(searchString), [searchString]);
   const checkoutStatus = search.get("status");
   const sessionId = search.get("session_id");
 
