@@ -2,6 +2,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DISPLAY_NAME_REGEX = /^[A-Za-z0-9\u0590-\u05FF .,'_&()\/+-]+$/;
 const PRICE_REGEX = /^\d+(?:\.\d{1,2})?$/;
+const MAX_STOCK = 1_000_000;
 
 export const ALLOWED_THEMES = [
   "default",
@@ -97,7 +98,7 @@ export function normalizePrice(value: string) {
 }
 
 export function normalizeStock(value: number) {
-  if (!Number.isInteger(value) || value < 0 || value > 100_000) {
+  if (!Number.isInteger(value) || value < 0 || value > MAX_STOCK) {
     fail("Stock is out of range");
   }
   return value;

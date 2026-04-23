@@ -5,6 +5,7 @@ import {
   normalizePrice,
   normalizeSafeImageUrl,
   normalizeSlug,
+  normalizeStock,
   normalizeTheme,
   validatePasswordStrength,
 } from "./security";
@@ -40,5 +41,13 @@ describe("security helpers", () => {
 
   it("rejects zero cart quantity", () => {
     expect(() => normalizeCartQuantity(0)).toThrow();
+  });
+
+  it("accepts large stock counts within range", () => {
+    expect(normalizeStock(250_000)).toBe(250_000);
+  });
+
+  it("rejects stock counts above the max range", () => {
+    expect(() => normalizeStock(1_000_001)).toThrow("Stock is out of range");
   });
 });
