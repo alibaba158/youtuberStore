@@ -48,7 +48,8 @@ export const webhook = httpAction(async (ctx, request) => {
 
   try {
     switch (event.type) {
-      case "checkout.session.completed": {
+      case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.payment_status !== "paid") {
           break;
@@ -70,6 +71,18 @@ export const webhook = httpAction(async (ctx, request) => {
           currency: session.currency ?? "",
           paymentStatus: session.payment_status,
         });
+        break;
+      }
+      case "checkout.session.async_payment_failed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const orderId = session.metadata?.orderId;
+        if (orderId) {
+          await ctx.runMutation(internal.orders.markOrderPaymentFailed, {
+            orderId: orderId as Id<"orders">,
+            paymentStatus: "failed",
+            transactionStatus: session.payment_status ?? undefined,
+          });
+        }
         break;
       }
       case "checkout.session.expired": {
