@@ -114,3 +114,68 @@ export const startCheckout = action({
     };
   },
 });
+
+export const confirmCheckoutSession = action({
+  args: {
+    orderId: v.id("orders"),
+    sessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.runQuery(api.orders.orderById, {
+      id: args.orderId,
+    });
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.orderStatus === "paid") {
+      return { status: "already_paid" as const };
+    }
+
+    const missing = listMissingStripeConfiguration();
+    if (missing.length > 0) {
+      return {
+        status: "configuration_required" as const,
+        missing,
+      };
+    }
+
+    const sessionId = args.sessionId.trim();
+    if (!sessionId) {
+      throw new Error("Missing Stripe session ID");
+    }
+
+    const stripe = getStripe();
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.id !== order.stripeCheckoutSessionId) {
+      throw new Error("Stripe Checkout session does not match this order");
+    }
+
+    if (session.metadata?.orderId !== String(args.orderId)) {
+      throw new Error("Stripe session metadata does not match this order");
+    }
+
+    if (session.payment_status !== "paid") {
+      return {
+        status: "awaiting_payment" as const,
+        paymentStatus: session.payment_status,
+      };
+    }
+
+    await ctx.runMutation(internal.orders.markOrderPaidFromStripe, {
+      orderId: args.orderId,
+      checkoutSessionId: session.id,
+      paymentIntentId:
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : undefined,
+      amountTotal: session.amount_total ?? 0,
+      currency: session.currency ?? "",
+      paymentStatus: session.payment_status,
+    });
+
+    return {
+      status: "paid" as const,
+    };
+  },
+});

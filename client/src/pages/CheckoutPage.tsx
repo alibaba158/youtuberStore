@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { useAction, useQuery } from "convex/react";
 import {
@@ -21,10 +21,70 @@ export default function CheckoutPage() {
     params.id ? { id: params.id as never } : "skip",
   );
   const startCheckout = useAction(api.stripe.startCheckout);
+  const confirmCheckoutSession = useAction(api.stripe.confirmCheckoutSession);
   const [submitting, setSubmitting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const search = useMemo(() => new URLSearchParams(location.split("?")[1] ?? ""), [location]);
   const checkoutStatus = search.get("status");
+  const sessionId = search.get("session_id");
+
+  useEffect(() => {
+    if (
+      !params.id ||
+      !sessionId ||
+      checkoutStatus !== "success" ||
+      confirming ||
+      order === undefined ||
+      order?.orderStatus === "paid"
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        setConfirming(true);
+        const result = await confirmCheckoutSession({
+          orderId: params.id as never,
+          sessionId,
+        });
+
+        if (cancelled) return;
+
+        if (result.status === "paid" || result.status === "already_paid") {
+          toast.success("התשלום אומת וההזמנה אושרה");
+          return;
+        }
+
+        if (result.status === "awaiting_payment") {
+          toast.message("התשלום עדיין ממתין לאישור Stripe");
+          return;
+        }
+
+        if (result.status === "configuration_required") {
+          toast.error("Stripe עדיין לא מוגדר עד הסוף בשרת");
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(
+            error instanceof Error ? error.message : "לא הצלחנו לאמת את התשלום מול Stripe",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setConfirming(false);
+        }
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checkoutStatus, confirmCheckoutSession, confirming, order, params.id, sessionId]);
 
   const handlePay = async () => {
     if (!params.id) {
@@ -148,8 +208,7 @@ export default function CheckoutPage() {
 
             {checkoutStatus === "success" && !isPaid ? (
               <div className="mb-6 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5 text-sm text-blue-900">
-                חזרת מ-Stripe. אם התשלום הושלם, ההזמנה תתעדכן כאן אוטומטית אחרי
-                שהוובהוק יאשר את התשלום.
+                חזרת מ-Stripe. אנחנו מאמתים עכשיו את התשלום מול Stripe ומעדכנים את ההזמנה.
               </div>
             ) : null}
 
@@ -228,11 +287,11 @@ export default function CheckoutPage() {
                   type="button"
                   size="lg"
                   className="w-full gap-2 text-base font-semibold"
-                  disabled={submitting}
+                  disabled={submitting || confirming}
                   onClick={() => void handlePay()}
                 >
                   <ExternalLink className="h-5 w-5" />
-                  {submitting ? "מעביר לתשלום..." : "המשך לתשלום ב-Stripe"}
+                  {submitting ? "מעביר לתשלום..." : confirming ? "מאמת תשלום..." : "המשך לתשלום ב-Stripe"}
                 </Button>
               </div>
             )}
