@@ -83,6 +83,11 @@ export const startCheckout = action({
       success_url: `${appUrl}/checkout/${args.orderId}?status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/checkout/${args.orderId}?status=cancelled`,
       customer_email: order.customerEmail || undefined,
+      payment_intent_data: order.customerEmail
+        ? {
+            receipt_email: order.customerEmail,
+          }
+        : undefined,
       client_reference_id: String(args.orderId),
       metadata: {
         orderId: String(args.orderId),

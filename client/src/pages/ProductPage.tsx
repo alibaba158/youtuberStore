@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import epicSkinImage from "@/images/epic-skin.png";
 import legendarySkinImage from "@/images/legendary-skin.png";
 import mythicSkinImage from "@/images/mythic-skin.png";
@@ -51,6 +52,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [submittingBuy, setSubmittingBuy] = useState(false);
+  const [guestEmail, setGuestEmail] = useState("");
   const { isAuthenticated } = useAuth();
   const product = useQuery(
     api.store.productById,
@@ -86,15 +88,18 @@ export default function ProductPage() {
   const handleBuyNow = async () => {
     if (!product || product.stock === 0) return;
     if (!isAuthenticated) {
-      toast.error("צריך להתחבר כדי לקנות עכשיו");
-      setLocation("/auth");
-      return;
+      const trimmedGuestEmail = guestEmail.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedGuestEmail)) {
+        toast.error("צריך להזין אימייל תקין כדי לקבל קבלה");
+        return;
+      }
     }
 
     setSubmittingBuy(true);
     try {
       const orderId = await createOrderFromItems({
         items: [{ productId: product._id, quantity }],
+        customerEmail: isAuthenticated ? undefined : guestEmail.trim(),
       });
       setLocation(`/checkout/${orderId}`);
     } catch (error) {
@@ -336,6 +341,24 @@ export default function ProductPage() {
               </div>
 
               <div className="grid gap-3">
+                {!isAuthenticated ? (
+                  <div className="space-y-1.5">
+                    <label className="block text-right text-sm font-bold text-foreground">
+                      אימייל לקבלה
+                    </label>
+                    <Input
+                      dir="ltr"
+                      type="email"
+                      value={guestEmail}
+                      onChange={(event) => setGuestEmail(event.target.value)}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                    />
+                    <p className="text-right text-xs text-muted-foreground">
+                      נשלח את האימייל הזה ל-Stripe כדי לשלוח קבלה אחרי תשלום מוצלח.
+                    </p>
+                  </div>
+                ) : null}
                 <Button
                   size="lg"
                   className="h-12 gap-2 text-base font-black"

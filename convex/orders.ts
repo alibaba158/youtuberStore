@@ -7,6 +7,7 @@ import {
 import { v } from "convex/values";
 import {
   normalizeCartQuantity,
+  normalizeEmail,
   normalizeOptionalText,
   normalizePrice,
   normalizeRequiredText,
@@ -246,6 +247,8 @@ export const createGuestOrder = mutation({
         quantity: v.number(),
       }),
     ),
+    customerEmail: v.optional(v.string()),
+    customerName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const viewer = await getViewer(ctx);
@@ -267,9 +270,14 @@ export const createGuestOrder = mutation({
       });
     }
 
+    const customerEmail = normalizeEmail(args.customerEmail ?? "");
+    const customerName =
+      normalizeOptionalText(args.customerName, "Customer name", 80) ??
+      customerEmail;
+
     return ctx.db.insert("orders", {
-      customerEmail: "",
-      customerName: "Guest",
+      customerEmail,
+      customerName,
       items: snapshot.items,
       subtotal: snapshot.subtotal,
       paymentMethod: "stripe",
