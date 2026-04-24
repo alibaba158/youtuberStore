@@ -43,6 +43,11 @@ function listMissingStripeConfiguration() {
   return required.filter((name) => !process.env[name]);
 }
 
+function listMissingStripeConfirmationConfiguration() {
+  const required = ["STRIPE_SECRET_KEY"] as const;
+  return required.filter((name) => !process.env[name]);
+}
+
 export const startCheckout = action({
   args: {
     orderId: v.id("orders"),
@@ -121,17 +126,7 @@ export const confirmCheckoutSession = action({
     sessionId: v.string(),
   },
   handler: async (ctx, args) => {
-    const order = await ctx.runQuery(api.orders.orderById, {
-      id: args.orderId,
-    });
-    if (!order) {
-      throw new Error("Order not found");
-    }
-    if (order.orderStatus === "paid") {
-      return { status: "already_paid" as const };
-    }
-
-    const missing = listMissingStripeConfiguration();
+    const missing = listMissingStripeConfirmationConfiguration();
     if (missing.length > 0) {
       return {
         status: "configuration_required" as const,
@@ -146,10 +141,6 @@ export const confirmCheckoutSession = action({
 
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-    if (session.id !== order.stripeCheckoutSessionId) {
-      throw new Error("Stripe Checkout session does not match this order");
-    }
 
     if (session.metadata?.orderId !== String(args.orderId)) {
       throw new Error("Stripe session metadata does not match this order");
