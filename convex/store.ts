@@ -484,7 +484,9 @@ export const adminPageData = query({
 
     return {
       categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
-      products: products.sort((a, b) => b.createdAt - a.createdAt),
+      products: products
+        .filter((product) => product.isActive)
+        .sort((a, b) => b.createdAt - a.createdAt),
       stats: {
         totalProducts: products.length,
         activeProducts: products.filter((product) => product.isActive).length,
@@ -788,11 +790,11 @@ export const deleteProduct = mutation({
         isActive: false,
         updatedAt: Date.now(),
       });
-      return true;
+      return { deleted: false, deactivated: true };
     }
 
     await ctx.db.delete(args.id);
-    return true;
+    return { deleted: true, deactivated: false };
   },
 });
 

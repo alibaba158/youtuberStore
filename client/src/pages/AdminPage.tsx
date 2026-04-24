@@ -418,6 +418,15 @@ export default function AdminPage() {
     setEditCategoryId(null);
   };
 
+  const handleDeleteProduct = async (id: string) => {
+    const result = await deleteProduct({ id: id as never });
+    toast.success(
+      result.deactivated
+        ? "המוצר הוסר מהחנות ונשמר בהיסטוריית הזמנות"
+        : "המוצר נמחק",
+    );
+  };
+
   return (
     <div className="min-h-screen bg-muted/20">
       <div className="container py-8">
@@ -450,7 +459,7 @@ export default function AdminPage() {
                   <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{product.name}</p><p className="text-sm text-muted-foreground">₪{parseFloat(product.price).toFixed(2)} · מלאי {product.stock}</p></div>
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditProductId(product._id); setProductForm({ name: product.name, description: product.description ?? "", deliveryContent: product.deliveryContent ?? "", price: product.price, imageUrl: product.imageUrl ?? "", imageUrls: (product.imageUrls ?? []).join("\n"), trophyCount: product.trophyCount === undefined ? "" : String(product.trophyCount), rareSkinCount: product.rareSkinCount === undefined ? "" : String(product.rareSkinCount), superRareSkinCount: product.superRareSkinCount === undefined ? "" : String(product.superRareSkinCount), epicSkinCount: product.epicSkinCount === undefined ? "" : String(product.epicSkinCount), mythicSkinCount: product.mythicSkinCount === undefined ? "" : String(product.mythicSkinCount), legendarySkinCount: product.legendarySkinCount === undefined ? "" : String(product.legendarySkinCount), categoryId: product.categoryId ?? "", stock: String(product.stock), isActive: product.isActive, isFeatured: product.isFeatured }); }}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => void deleteProduct({ id: product._id as never }).then(() => toast.success("המוצר נמחק"))}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => void handleDeleteProduct(product._id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </motion.div>
               ))}
