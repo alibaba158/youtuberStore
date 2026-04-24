@@ -109,6 +109,7 @@ function serializeOrder(order: any, opts?: { includeSensitiveBitState?: boolean 
     bitRedirectUrl: order.bitRedirectUrl,
     bitTransactionStatus: order.bitTransactionStatus,
     stripeCheckoutSessionId: order.stripeCheckoutSessionId,
+    stripePaymentIntentId: order.stripePaymentIntentId,
     paidAt: order.paidAt,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
@@ -319,8 +320,39 @@ export const myOrders = query({
       .collect();
 
     return orders
+      .filter((order) => order.orderStatus !== "canceled")
       .sort((a, b) => b.createdAt - a.createdAt)
       .map((order) => serializeOrder(order));
+  },
+});
+
+export const cancelMyOrder = mutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await requireViewer(ctx);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.userId !== viewer.authUser._id) {
+      throw new Error("Access denied");
+    }
+    if (order.orderStatus === "paid" || order.paymentStatus === "paid") {
+      throw new Error("Paid orders cannot be canceled");
+    }
+    if (order.orderStatus === "canceled") {
+      return true;
+    }
+
+    await ctx.db.patch(args.orderId, {
+      orderStatus: "canceled",
+      paymentStatus: "canceled",
+      updatedAt: Date.now(),
+    });
+
+    return true;
   },
 });
 

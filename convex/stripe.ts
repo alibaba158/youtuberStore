@@ -64,6 +64,9 @@ export const startCheckout = action({
         status: "already_paid" as const,
       };
     }
+    if (order.orderStatus === "canceled") {
+      throw new Error("This order was canceled");
+    }
 
     const missing = listMissingStripeConfiguration();
     if (missing.length > 0) {

@@ -8,6 +8,16 @@ function receiptNumber(id: string) {
   return `RZ-${id.slice(-8).toUpperCase()}`;
 }
 
+function paymentMethodLabel(method: string) {
+  if (method === "stripe") {
+    return "Stripe - כרטיס / Google Pay / Apple Pay";
+  }
+  if (method === "bit") {
+    return "Bit";
+  }
+  return method;
+}
+
 export default function ReceiptPage() {
   const params = useParams<{ id: string }>();
   const order = useQuery(
@@ -39,6 +49,11 @@ export default function ReceiptPage() {
       </div>
     );
   }
+
+  const transactionId =
+    order.paymentMethod === "stripe"
+      ? order.stripePaymentIntentId ?? order.stripeCheckoutSessionId
+      : order.bitPaymentId;
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -103,7 +118,10 @@ export default function ReceiptPage() {
                 פרטי תשלום
               </h2>
               <p className="text-sm text-muted-foreground">
-                אמצעי תשלום: <span className="font-semibold text-foreground">Bit</span>
+                אמצעי תשלום:{" "}
+                <span className="font-semibold text-foreground">
+                  {paymentMethodLabel(order.paymentMethod)}
+                </span>
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 סטטוס: <span className="font-semibold text-foreground">שולם</span>
@@ -111,7 +129,7 @@ export default function ReceiptPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 מזהה עסקה:{" "}
                 <span className="font-semibold text-foreground">
-                  {order.bitPaymentId ?? "לא זמין"}
+                  {transactionId ?? "לא זמין"}
                 </span>
               </p>
             </div>

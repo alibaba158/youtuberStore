@@ -7,10 +7,13 @@ import {
   Mail,
   ReceiptText,
   Shield,
+  Trash2,
   User,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -56,6 +59,22 @@ function paymentLabel(status: string) {
 export default function AccountPage() {
   const { user, logout, isAuthenticated, loading } = useAuth();
   const myOrders = useQuery(api.orders.myOrders, user ? {} : "skip");
+  const cancelMyOrder = useMutation(api.orders.cancelMyOrder);
+  const [cancelingOrderId, setCancelingOrderId] = useState<string | null>(null);
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      setCancelingOrderId(orderId);
+      await cancelMyOrder({ orderId: orderId as never });
+      toast.success("ההזמנה הוסרה מהרשימה");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "לא הצלחנו לבטל את ההזמנה",
+      );
+    } finally {
+      setCancelingOrderId(null);
+    }
+  };
 
   if (loading || !user) {
     return (
@@ -243,6 +262,20 @@ export default function AccountPage() {
                                 <ReceiptText className="h-3.5 w-3.5" />
                               </Button>
                             </Link>
+                          ) : null}
+                          {order.orderStatus !== "paid" ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2 text-destructive hover:text-destructive"
+                              disabled={cancelingOrderId === order._id}
+                              onClick={() => void handleCancelOrder(order._id)}
+                            >
+                              {cancelingOrderId === order._id
+                                ? "מבטל..."
+                                : "ביטול הזמנה"}
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           ) : null}
                         </div>
                       </div>
