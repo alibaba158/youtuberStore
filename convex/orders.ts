@@ -110,6 +110,7 @@ function serializeOrder(order: any, opts?: { includeSensitiveBitState?: boolean 
     bitTransactionStatus: order.bitTransactionStatus,
     stripeCheckoutSessionId: order.stripeCheckoutSessionId,
     stripePaymentIntentId: order.stripePaymentIntentId,
+    stockReservedAt: order.stockReservedAt,
     paidAt: order.paidAt,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
@@ -434,6 +435,72 @@ export const saveStripeCheckoutSession = internalMutation({
   },
 });
 
+async function releaseReservedStockForOrder(ctx: any, order: any) {
+  if (!order.stockReservedAt) {
+    return;
+  }
+
+  for (const item of order.items) {
+    const product = await ctx.db.get(item.productId);
+    if (!product) {
+      continue;
+    }
+    await ctx.db.patch(item.productId, {
+      stock: normalizeStock(product.stock + item.quantity),
+      updatedAt: Date.now(),
+    });
+  }
+}
+
+export const reserveStockForStripeCheckout = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.orderStatus === "paid") {
+      return true;
+    }
+    if (order.orderStatus === "canceled") {
+      throw new Error("This order was canceled");
+    }
+    if (order.stockReservedAt) {
+      return true;
+    }
+
+    for (const item of order.items) {
+      const product = await ctx.db.get(item.productId);
+      if (!product || !product.isActive) {
+        throw new Error(`המוצר כבר לא זמין: ${item.name}`);
+      }
+      if (product.stock < item.quantity) {
+        throw new Error(`אין מספיק מלאי עבור ${item.name}`);
+      }
+    }
+
+    for (const item of order.items) {
+      const product = await ctx.db.get(item.productId);
+      if (!product) {
+        throw new Error(`המוצר כבר לא זמין: ${item.name}`);
+      }
+      await ctx.db.patch(item.productId, {
+        stock: normalizeStock(product.stock - item.quantity),
+        updatedAt: Date.now(),
+      });
+    }
+
+    await ctx.db.patch(args.orderId, {
+      stockReservedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return true;
+  },
+});
+
 export const markOrderPaid = internalMutation({
   args: {
     orderId: v.id("orders"),
@@ -547,6 +614,8 @@ export const markOrderPaymentFailed = internalMutation({
       updatedAt: Date.now(),
     });
 
+    await releaseReservedStockForOrder(ctx, order);
+
     return true;
   },
 });
@@ -605,27 +674,6 @@ export const markOrderPaidFromStripe = internalMutation({
       "Stripe payment intent ID",
       255,
     );
-
-    for (const item of order.items) {
-      const product = await ctx.db.get(item.productId);
-      if (!product) {
-        throw new Error(`Product no longer exists: ${item.name}`);
-      }
-      if (product.stock < item.quantity) {
-        throw new Error(`Insufficient stock to finalize ${item.name}`);
-      }
-    }
-
-    for (const item of order.items) {
-      const product = await ctx.db.get(item.productId);
-      if (!product) {
-        continue;
-      }
-      await ctx.db.patch(item.productId, {
-        stock: normalizeStock(product.stock - item.quantity),
-        updatedAt: Date.now(),
-      });
-    }
 
     const orderUserId = order.userId;
     if (orderUserId) {

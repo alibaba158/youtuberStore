@@ -81,6 +81,10 @@ export const startCheckout = action({
     const stripe = getStripe();
     const appUrl = getAppUrl();
 
+    await ctx.runMutation(internal.orders.reserveStockForStripeCheckout, {
+      orderId: args.orderId,
+    });
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: `${appUrl}/checkout/${args.orderId}?status=success&session_id={CHECKOUT_SESSION_ID}`,

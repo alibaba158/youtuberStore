@@ -778,6 +778,19 @@ export const deleteProduct = mutation({
   args: { id: v.id("products") },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+
+    const orders = await ctx.db.query("orders").collect();
+    const isInOrder = orders.some((order) =>
+      order.items.some((item: any) => item.productId === args.id),
+    );
+    if (isInOrder) {
+      await ctx.db.patch(args.id, {
+        isActive: false,
+        updatedAt: Date.now(),
+      });
+      return true;
+    }
+
     await ctx.db.delete(args.id);
     return true;
   },

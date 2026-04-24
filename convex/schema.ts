@@ -75,6 +75,7 @@ export default defineSchema({
     bitCodeVerifier: v.optional(v.string()),
     stripeCheckoutSessionId: v.optional(v.string()),
     stripePaymentIntentId: v.optional(v.string()),
+    stockReservedAt: v.optional(v.number()),
     paidAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
