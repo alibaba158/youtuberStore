@@ -81,6 +81,10 @@ export const startCheckout = action({
     const stripe = getStripe();
     const appUrl = getAppUrl();
 
+    await ctx.runMutation(internal.orders.validateOrderCanStartStripeCheckout, {
+      orderId: args.orderId,
+    });
+
     await ctx.runMutation(internal.orders.reserveStockForStripeCheckout, {
       orderId: args.orderId,
     });

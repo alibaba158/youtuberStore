@@ -152,6 +152,12 @@ export default function CheckoutPage() {
   }
 
   const isPaid = order.orderStatus === "paid";
+  const isUnavailable =
+    order.orderStatus === "canceled" ||
+    order.orderStatus === "failed" ||
+    order.paymentStatus === "canceled" ||
+    order.paymentStatus === "failed" ||
+    order.paymentStatus === "expired";
 
   return (
     <div className="min-h-screen">
@@ -171,7 +177,7 @@ export default function CheckoutPage() {
             </p>
           </div>
           <div className="rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent">
-            {isPaid ? "שולם" : "ממתין לתשלום"}
+            {isPaid ? "שולם" : isUnavailable ? "לא זמין" : "ממתין לתשלום"}
           </div>
         </div>
 
@@ -240,6 +246,12 @@ export default function CheckoutPage() {
               </div>
             ) : null}
 
+            {isUnavailable ? (
+              <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-900">
+                ההזמנה הזו כבר לא זמינה לתשלום. ייתכן שהמוצר נמחק, הוסר מהחנות או נגמר מהמלאי.
+              </div>
+            ) : null}
+
             {isPaid ? (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-700">
@@ -286,6 +298,12 @@ export default function CheckoutPage() {
                   ))}
                 </div>
               </div>
+            ) : isUnavailable ? (
+              <Link href="/">
+                <Button size="lg" className="w-full gap-2 text-base font-semibold">
+                  חזרה לחנות
+                </Button>
+              </Link>
             ) : (
               <div className="space-y-5">
                 <div className="rounded-2xl border border-border bg-background p-5">

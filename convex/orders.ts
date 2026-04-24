@@ -501,6 +501,49 @@ export const reserveStockForStripeCheckout = internalMutation({
   },
 });
 
+export const validateOrderCanStartStripeCheckout = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.orderStatus === "paid") {
+      return true;
+    }
+    if (order.orderStatus === "canceled") {
+      throw new Error("This order was canceled");
+    }
+    if (order.stockReservedAt) {
+      return true;
+    }
+
+    for (const item of order.items) {
+      const product = await ctx.db.get(item.productId);
+      if (!product || !product.isActive) {
+        await ctx.db.patch(args.orderId, {
+          orderStatus: "canceled",
+          paymentStatus: "canceled",
+          updatedAt: Date.now(),
+        });
+        throw new Error(`המוצר כבר לא זמין: ${item.name}`);
+      }
+      if (product.stock < item.quantity) {
+        await ctx.db.patch(args.orderId, {
+          orderStatus: "canceled",
+          paymentStatus: "canceled",
+          updatedAt: Date.now(),
+        });
+        throw new Error(`אין מספיק מלאי עבור ${item.name}`);
+      }
+    }
+
+    return true;
+  },
+});
+
 export const markOrderPaid = internalMutation({
   args: {
     orderId: v.id("orders"),
