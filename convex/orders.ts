@@ -521,6 +521,9 @@ async function releaseReservedStockForOrder(ctx: any, order: any) {
   if (!order.stockReservedAt) {
     return;
   }
+  if (order.orderStatus === "paid" || order.paymentStatus === "paid") {
+    return;
+  }
 
   for (const item of order.items) {
     const product = await ctx.db.get(item.productId);
@@ -532,6 +535,11 @@ async function releaseReservedStockForOrder(ctx: any, order: any) {
       updatedAt: Date.now(),
     });
   }
+
+  await ctx.db.patch(order._id, {
+    stockReservedAt: undefined,
+    updatedAt: Date.now(),
+  });
 }
 
 export const reserveStockForStripeCheckout = internalMutation({
@@ -660,25 +668,27 @@ export const markOrderPaid = internalMutation({
       throw new Error("Paid amount does not match order total");
     }
 
-    for (const item of order.items) {
-      const product = await ctx.db.get(item.productId);
-      if (!product) {
-        throw new Error(`Product no longer exists: ${item.name}`);
+    if (!order.stockReservedAt) {
+      for (const item of order.items) {
+        const product = await ctx.db.get(item.productId);
+        if (!product) {
+          throw new Error(`Product no longer exists: ${item.name}`);
+        }
+        if (product.stock < item.quantity) {
+          throw new Error(`Insufficient stock to finalize ${item.name}`);
+        }
       }
-      if (product.stock < item.quantity) {
-        throw new Error(`Insufficient stock to finalize ${item.name}`);
-      }
-    }
 
-    for (const item of order.items) {
-      const product = await ctx.db.get(item.productId);
-      if (!product) {
-        continue;
+      for (const item of order.items) {
+        const product = await ctx.db.get(item.productId);
+        if (!product) {
+          continue;
+        }
+        await ctx.db.patch(item.productId, {
+          stock: normalizeStock(product.stock - item.quantity),
+          updatedAt: Date.now(),
+        });
       }
-      await ctx.db.patch(item.productId, {
-        stock: normalizeStock(product.stock - item.quantity),
-        updatedAt: Date.now(),
-      });
     }
 
     const orderUserId = order.userId;
@@ -725,6 +735,9 @@ export const markOrderPaymentFailed = internalMutation({
     const order = await ctx.db.get(args.orderId);
     if (!order) {
       throw new Error("Order not found");
+    }
+    if (order.orderStatus === "paid" || order.paymentStatus === "paid") {
+      return true;
     }
 
     await ctx.db.patch(args.orderId, {
