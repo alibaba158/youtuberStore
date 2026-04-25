@@ -121,93 +121,100 @@ export default function ThankYouPage() {
   const isPaid = order.orderStatus === "paid";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-foreground via-foreground/95 to-background pb-12">
-      <section className="relative overflow-hidden text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(244,86,165,0.35),_transparent_38%),radial-gradient(circle_at_bottom_left,_rgba(164,255,62,0.16),_transparent_34%)]" />
-        <div className="container relative py-12 md:py-16">
-          <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_0.72fr] lg:items-center">
+    <div className="min-h-screen bg-muted/20">
+      <div className="container py-8 md:py-10">
+        <div className="mx-auto mb-6 flex max-w-6xl flex-wrap items-center justify-between gap-3">
+          <Link href="/">
+            <span className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <ArrowLeft className="h-4 w-4" />
+              Continue shopping
+            </span>
+          </Link>
+          <div className="rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent">
+            {isPaid ? "Payment approved" : "Confirming payment"}
+          </div>
+        </div>
+
+        <section className="mx-auto mb-6 max-w-6xl rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-center">
             <div>
-              <div className="mb-6 flex items-center gap-4">
-                <img
-                  src={brawlStarsLogo}
-                  alt="Razlo Store"
-                  className="h-20 w-20 object-contain drop-shadow-2xl"
-                />
+              <div className="mb-5 flex items-center gap-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-accent/20 bg-accent/5 p-2">
+                  <img
+                    src={brawlStarsLogo}
+                    alt="Razlo Store"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
                 <div>
                   <p className="text-sm font-bold uppercase tracking-wider text-accent">
                     Razlo Store
                   </p>
-                  <p className="text-sm text-white/70">
+                  <p className="text-sm text-muted-foreground">
                     Order {String(order._id).slice(-8)}
                   </p>
                 </div>
               </div>
 
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-bold backdrop-blur-sm">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-700">
                 {isPaid ? (
                   <>
-                    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                    <CheckCircle2 className="h-4 w-4" />
                     Payment went through
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="h-4 w-4 animate-spin text-accent" />
+                    <RefreshCw className="h-4 w-4 animate-spin" />
                     Confirming payment
                   </>
                 )}
               </div>
 
-              <h1 className="max-w-3xl text-4xl font-black leading-tight md:text-6xl">
+              <h1 className="max-w-3xl text-3xl font-black leading-tight text-foreground md:text-5xl">
                 Thanks for buying from Razlo Store.
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-white/76 md:text-lg">
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
                 {isPaid
                   ? "Your order is confirmed. The receipt was sent to your email, and your product details are unlocked below."
                   : "We are checking Stripe now. Keep this page open for a moment while the payment confirmation reaches the store."}
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Link href={`/receipt/${order._id}`}>
-                  <Button
-                    size="lg"
-                    className="gap-2 bg-accent font-bold text-accent-foreground hover:bg-accent/90"
-                    disabled={!isPaid}
-                  >
+                  <Button size="lg" className="gap-2 font-bold" disabled={!isPaid}>
                     <ReceiptText className="h-5 w-5" />
                     View receipt
                   </Button>
                 </Link>
-                <Link href="/">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="gap-2 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-                  >
-                    Continue shopping
+                <Link href="/account">
+                  <Button size="lg" variant="outline" className="gap-2">
+                    My account
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/15 bg-white/10 p-5 shadow-2xl shadow-black/20 backdrop-blur-md">
+            <div className="rounded-3xl border border-accent/25 bg-accent/5 p-5">
               <div className="mb-5 flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm text-white/60">Total paid</p>
-                  <p className="text-3xl font-black">
+                  <p className="text-sm text-muted-foreground">Total paid</p>
+                  <p className="text-3xl font-black text-foreground">
                     ₪{Number(order.subtotal).toFixed(2)}
                   </p>
                 </div>
-                <PackageCheck className="h-10 w-10 text-accent" />
+                <div className="rounded-2xl bg-accent/10 p-3 text-accent">
+                  <PackageCheck className="h-8 w-8" />
+                </div>
               </div>
 
               <div className="space-y-3">
                 {order.items.slice(0, 3).map((item) => (
                   <div
                     key={item.productId}
-                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 p-3"
+                    className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3"
                   >
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
@@ -215,12 +222,14 @@ export default function ThankYouPage() {
                           className="h-full w-full object-contain p-1"
                         />
                       ) : (
-                        <PackageCheck className="h-7 w-7 text-white/40" />
+                        <PackageCheck className="h-7 w-7 text-muted-foreground/30" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold">{item.name}</p>
-                      <p className="text-sm text-white/62">
+                      <p className="truncate font-bold text-foreground">
+                        {item.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
                         {item.quantity} x ₪{Number(item.price).toFixed(2)}
                       </p>
                     </div>
@@ -229,10 +238,8 @@ export default function ThankYouPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <div className="container -mt-4">
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.42fr]">
           <section className="rounded-3xl border border-border bg-card p-5 shadow-xl shadow-black/5 md:p-6">
             <div className="mb-5 flex items-center gap-3">
