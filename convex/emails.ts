@@ -80,13 +80,32 @@ function buildReceiptHtml(order: any, receiptUrl?: string) {
     .map(
       (item: any) => `
         <tr>
-          <td style="padding:12px;border-bottom:1px solid #e5e7eb;">${htmlEscape(
-            item.name,
-          )}</td>
-          <td style="padding:12px;border-bottom:1px solid #e5e7eb;text-align:center;">${htmlEscape(
-            item.quantity,
-          )}</td>
-          <td style="padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;">${htmlEscape(
+          <td style="padding:14px;border-bottom:1px solid #f2d9e7;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+              <tr>
+                <td style="width:68px;vertical-align:middle;">
+                  ${
+                    item.imageUrl
+                      ? `<img src="${htmlEscape(
+                          item.imageUrl,
+                        )}" alt="${htmlEscape(
+                          item.name,
+                        )}" width="56" height="56" style="display:block;width:56px;height:56px;object-fit:contain;border-radius:14px;background:#f7edf3;padding:6px;border:1px solid #f2d9e7;" />`
+                      : `<div style="width:56px;height:56px;border-radius:14px;background:#f7edf3;border:1px solid #f2d9e7;"></div>`
+                  }
+                </td>
+                <td style="vertical-align:middle;">
+                  <div style="font-weight:800;color:#24111c;">${htmlEscape(
+                    item.name,
+                  )}</div>
+                  <div style="font-size:13px;color:#7b6170;margin-top:3px;">${htmlEscape(
+                    item.quantity,
+                  )} x ${htmlEscape(formatCurrency(item.price))}</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+          <td style="padding:14px;border-bottom:1px solid #f2d9e7;text-align:left;font-weight:800;color:#24111c;white-space:nowrap;">${htmlEscape(
             formatCurrency(Number(item.price) * item.quantity),
           )}</td>
         </tr>`,
@@ -94,46 +113,74 @@ function buildReceiptHtml(order: any, receiptUrl?: string) {
     .join("");
 
   const receiptLink = receiptUrl
-    ? `<p style="margin:24px 0 0;"><a href="${htmlEscape(
+    ? `<p style="margin:26px 0 0;"><a href="${htmlEscape(
         receiptUrl,
-      )}" style="color:#2563eb;font-weight:700;">View receipt</a></p>`
+      )}" style="display:inline-block;background:#f456a5;color:#24111c;text-decoration:none;font-weight:900;border-radius:16px;padding:13px 18px;">View receipt</a></p>`
     : "";
 
   return `
-    <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;max-width:680px;margin:0 auto;padding:24px;">
-      <p style="display:inline-block;margin:0 0 16px;padding:6px 12px;border-radius:999px;background:#dcfce7;color:#166534;font-weight:700;">Payment approved</p>
-      <h1 style="margin:0 0 8px;font-size:28px;">Razlo Store receipt</h1>
-      <p style="margin:0 0 24px;color:#6b7280;">Receipt ${htmlEscape(
-        receiptNumber(String(order._id)),
-      )}</p>
+    <div style="margin:0;padding:0;background:#fbf7fa;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;background:#fbf7fa;">
+        <tr>
+          <td style="padding:28px 14px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;max-width:720px;margin:0 auto;border-collapse:collapse;font-family:Arial,sans-serif;color:#24111c;">
+              <tr>
+                <td style="border-radius:28px 28px 0 0;background:#24111c;padding:34px 28px;color:#ffffff;background-image:radial-gradient(circle at top right, rgba(244,86,165,0.42), transparent 34%), radial-gradient(circle at bottom left, rgba(164,255,62,0.16), transparent 32%);">
+                  <div style="display:inline-block;margin:0 0 18px;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.16);font-size:13px;font-weight:800;color:#f8d7e8;">Payment approved</div>
+                  <h1 style="margin:0;font-size:34px;line-height:1.08;font-weight:900;">Thanks for buying from Razlo Store.</h1>
+                  <p style="margin:14px 0 0;color:rgba(255,255,255,0.74);font-size:15px;line-height:1.7;">Your order is confirmed. Keep this email as your styled receipt.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#ffffff;border:1px solid #f2d9e7;border-top:0;border-radius:0 0 28px 28px;padding:24px 28px 30px;box-shadow:0 18px 45px rgba(36,17,28,0.08);">
+                  <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:22px;">
+                    <tr>
+                      <td style="padding:0 0 14px;vertical-align:top;">
+                        <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#f456a5;">Receipt</div>
+                        <div style="margin-top:4px;font-size:22px;font-weight:900;color:#24111c;">${htmlEscape(
+                          receiptNumber(String(order._id)),
+                        )}</div>
+                      </td>
+                      <td style="padding:0 0 14px;text-align:right;vertical-align:top;">
+                        <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#7b6170;">Total paid</div>
+                        <div style="margin-top:4px;font-size:26px;font-weight:900;color:#24111c;">${htmlEscape(
+                          formatCurrency(order.subtotal),
+                        )}</div>
+                      </td>
+                    </tr>
+                  </table>
 
-      <div style="padding:16px;border:1px solid #e5e7eb;border-radius:12px;margin-bottom:20px;">
-        <p style="margin:0;"><strong>Order:</strong> ${htmlEscape(
-          String(order._id),
-        )}</p>
-        <p style="margin:6px 0 0;"><strong>Paid:</strong> ${htmlEscape(
-          order.paidAt ? new Date(order.paidAt).toLocaleString("he-IL") : "-",
-        )}</p>
-        <p style="margin:6px 0 0;"><strong>Customer:</strong> ${htmlEscape(
-          order.customerName,
-        )}</p>
-      </div>
+                  <div style="padding:16px;border:1px solid #f2d9e7;border-radius:18px;background:#fbf7fa;margin-bottom:22px;">
+                    <p style="margin:0;font-size:14px;color:#7b6170;"><strong style="color:#24111c;">Order:</strong> ${htmlEscape(
+                      String(order._id),
+                    )}</p>
+                    <p style="margin:7px 0 0;font-size:14px;color:#7b6170;"><strong style="color:#24111c;">Paid:</strong> ${htmlEscape(
+                      order.paidAt
+                        ? new Date(order.paidAt).toLocaleString("he-IL")
+                        : "-",
+                    )}</p>
+                    <p style="margin:7px 0 0;font-size:14px;color:#7b6170;"><strong style="color:#24111c;">Customer:</strong> ${htmlEscape(
+                      order.customerName,
+                    )}</p>
+                  </div>
 
-      <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
-        <thead>
-          <tr style="background:#f9fafb;">
-            <th style="padding:12px;text-align:left;">Item</th>
-            <th style="padding:12px;text-align:center;">Qty</th>
-            <th style="padding:12px;text-align:left;">Total</th>
-          </tr>
-        </thead>
-        <tbody>${itemRows}</tbody>
+                  <table style="width:100%;border-collapse:separate;border-spacing:0;border:1px solid #f2d9e7;border-radius:18px;overflow:hidden;">
+                    <thead>
+                      <tr style="background:#f7edf3;">
+                        <th style="padding:13px 14px;text-align:left;color:#24111c;font-size:13px;">Item</th>
+                        <th style="padding:13px 14px;text-align:left;color:#24111c;font-size:13px;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>${itemRows}</tbody>
+                  </table>
+
+                  ${receiptLink}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
       </table>
-
-      <p style="margin:24px 0 0;font-size:22px;font-weight:800;">Total paid: ${htmlEscape(
-        formatCurrency(order.subtotal),
-      )}</p>
-      ${receiptLink}
     </div>`;
 }
 

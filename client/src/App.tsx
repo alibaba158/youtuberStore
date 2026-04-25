@@ -13,6 +13,7 @@ import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ReceiptPage from "./pages/ReceiptPage";
+import ThankYouPage from "./pages/ThankYouPage";
 import AdminPage from "./pages/AdminPage";
 import AccountPage from "./pages/AccountPage";
 import AuthPage from "./pages/AuthPage";
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout/:id" component={CheckoutPage} />
+      <Route path="/thank-you/:id" component={ThankYouPage} />
       <Route path="/receipt/:id" component={ReceiptPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/admin/support" component={AdminSupportPage} />
