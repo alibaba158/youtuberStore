@@ -71,6 +71,13 @@ export const webhook = httpAction(async (ctx, request) => {
           currency: session.currency ?? "",
           paymentStatus: session.payment_status,
         });
+        try {
+          await ctx.runAction(internal.emails.sendOrderReceipt, {
+            orderId: orderId as Id<"orders">,
+          });
+        } catch (error) {
+          console.error("Receipt email failed", error);
+        }
         break;
       }
       case "checkout.session.async_payment_failed": {

@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as bit from "../bit.js";
 import type * as chat from "../chat.js";
+import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as orders from "../orders.js";
 import type * as security from "../security.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   bit: typeof bit;
   chat: typeof chat;
+  emails: typeof emails;
   http: typeof http;
   orders: typeof orders;
   security: typeof security;

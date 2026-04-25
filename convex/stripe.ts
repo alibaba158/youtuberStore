@@ -181,6 +181,14 @@ export const confirmCheckoutSession = action({
       paymentStatus: session.payment_status,
     });
 
+    try {
+      await ctx.runAction(internal.emails.sendOrderReceipt, {
+        orderId: args.orderId,
+      });
+    } catch (error) {
+      console.error("Receipt email failed", error);
+    }
+
     return {
       status: "paid" as const,
     };

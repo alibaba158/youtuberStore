@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import {
   internalMutation,
+  internalQuery,
   mutation,
   query,
 } from "./_generated/server";
@@ -112,6 +113,7 @@ function serializeOrder(order: any, opts?: { includeSensitiveBitState?: boolean 
     stripePaymentIntentId: order.stripePaymentIntentId,
     stockReservedAt: order.stockReservedAt,
     paidAt: order.paidAt,
+    receiptEmailSentAt: order.receiptEmailSentAt,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     deliveryUnlocked,
@@ -308,6 +310,86 @@ export const orderById = query({
     }
 
     return serializeOrder(order, { includeSensitiveBitState: Boolean(isAdmin) });
+  },
+});
+
+export const claimOrderForReceiptEmail = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
+      return null;
+    }
+    if (order.receiptEmailSentAt) {
+      return null;
+    }
+
+    const now = Date.now();
+    const sendStartedAt = order.receiptEmailSendStartedAt;
+    if (sendStartedAt && now - sendStartedAt < 10 * 60 * 1000) {
+      return null;
+    }
+
+    await ctx.db.patch(args.orderId, {
+      receiptEmailSendStartedAt: now,
+      receiptEmailError: undefined,
+      updatedAt: now,
+    });
+
+    return true;
+  },
+});
+
+export const orderForReceiptEmail = internalQuery({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
+      return null;
+    }
+
+    return serializeOrder(order);
+  },
+});
+
+export const markReceiptEmailSent = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    await ctx.db.patch(args.orderId, {
+      receiptEmailSentAt: now,
+      receiptEmailError: undefined,
+      updatedAt: now,
+    });
+    return true;
+  },
+});
+
+export const markReceiptEmailFailed = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+    error: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.orderId, {
+      receiptEmailSendStartedAt: undefined,
+      receiptEmailError: normalizeRequiredText(
+        args.error,
+        "Receipt email error",
+        1_000,
+      ),
+      updatedAt: Date.now(),
+    });
+    return true;
   },
 });
 
