@@ -236,8 +236,7 @@ function RankOptionsPage({ products }: { products: Product[] }) {
             ))}
           </div>
           <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-white/75">
-            כל לחיצה מוסיפה את האפשרות לעגלה. אחרי התשלום נבקש בצ׳אט את תג השחקן
-            ואת הפרטים המדויקים לביצוע הבוסט.
+            אם אתם רוצים לקנות יותר מראנק אחד תוסיפו על ראנק שאתם רוצים בנפרד
           </p>
         </div>
       </div>

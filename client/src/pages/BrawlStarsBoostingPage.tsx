@@ -169,7 +169,7 @@ export default function BrawlStarsBoostingPage() {
             <div className="mt-8 rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm backdrop-blur">
               <h2 className="text-2xl font-black">למה לבחור ב-Razlo Store?</h2>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                אם אתם רוצים לקנות יותר מראנק אחד תוסיפו על ראנק שאתם רוצים בנפרד.
+                כל הזמנה מקבלת מסירה ברורה, תשלום מאובטח ותמיכה אחרי הקנייה.
               </p>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {trustItems.map((item) => (
