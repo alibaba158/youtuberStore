@@ -19,6 +19,11 @@ import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import epicSkinImage from "@/images/epic-skin.png";
 import legendarySkinImage from "@/images/legendary-skin.png";
@@ -52,6 +57,7 @@ export default function ProductPage() {
   const [, setLocation] = useLocation();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [submittingBuy, setSubmittingBuy] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
   const { isAuthenticated } = useAuth();
@@ -232,11 +238,18 @@ export default function ProductPage() {
 
                 <div className="order-1 flex min-h-[420px] items-center justify-center bg-white p-8 md:order-2">
                   {mainImage ? (
-                    <img
-                      src={mainImage}
-                      alt={product.name}
-                      className="max-h-[520px] max-w-full object-contain"
-                    />
+                    <button
+                      type="button"
+                      className="group/image flex h-full w-full items-center justify-center rounded-xl outline-none transition hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      onClick={() => setImageViewerOpen(true)}
+                      aria-label={`Open ${product.name} image`}
+                    >
+                      <img
+                        src={mainImage}
+                        alt={product.name}
+                        className="max-h-[520px] max-w-full object-contain transition duration-300 group-hover/image:scale-[1.03]"
+                      />
+                    </button>
                   ) : (
                     <div className="flex h-72 w-full items-center justify-center rounded-2xl bg-muted">
                       <Package className="h-20 w-20 text-muted-foreground/30" />
@@ -245,6 +258,21 @@ export default function ProductPage() {
                 </div>
               </div>
             </motion.div>
+
+            <Dialog open={imageViewerOpen} onOpenChange={setImageViewerOpen}>
+              <DialogContent className="max-h-[92vh] max-w-[min(96vw,1100px)] border-0 bg-white/95 p-3 shadow-2xl" showCloseButton>
+                <DialogTitle className="sr-only">{product.name}</DialogTitle>
+                {mainImage ? (
+                  <div className="flex max-h-[84vh] items-center justify-center rounded-xl bg-white p-2">
+                    <img
+                      src={mainImage}
+                      alt={product.name}
+                      className="max-h-[82vh] max-w-full object-contain"
+                    />
+                  </div>
+                ) : null}
+              </DialogContent>
+            </Dialog>
 
             <section className="rounded-2xl border border-border bg-card p-5">
               <h2 className="mb-4 text-xl font-black">נתוני החשבון</h2>

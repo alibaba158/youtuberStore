@@ -74,62 +74,74 @@ const defaultCategories = [
 
 const defaultRankBoostProducts = [
   {
-    name: "Mythic 1 to Legendary",
-    description: "Rank boost option from Mythic 1 to Legendary.",
+    name: "Mythic 1 to Mythic 2",
+    legacyName: "Mythic 1 to Legendary",
+    description: "Rank boost option from Mythic 1 to Mythic 2.",
     price: "100",
   },
   {
-    name: "Mythic 2 to Legendary",
-    description: "Rank boost option from Mythic 2 to Legendary.",
+    name: "Mythic 2 to Mythic 3",
+    legacyName: "Mythic 2 to Legendary",
+    description: "Rank boost option from Mythic 2 to Mythic 3.",
     price: "70",
   },
   {
     name: "Mythic 3 to Legendary",
+    legacyName: undefined,
     description: "Rank boost option from Mythic 3 to Legendary.",
     price: "50",
   },
   {
-    name: "Diamond 1 to Mythic",
-    description: "Rank boost option from Diamond 1 to Mythic.",
+    name: "Diamond 1 to Diamond 2",
+    legacyName: "Diamond 1 to Mythic",
+    description: "Rank boost option from Diamond 1 to Diamond 2.",
     price: "160",
   },
   {
-    name: "Diamond 2 to Mythic",
-    description: "Rank boost option from Diamond 2 to Mythic.",
+    name: "Diamond 2 to Diamond 3",
+    legacyName: "Diamond 2 to Mythic",
+    description: "Rank boost option from Diamond 2 to Diamond 3.",
     price: "120",
   },
   {
     name: "Diamond 3 to Mythic",
+    legacyName: undefined,
     description: "Rank boost option from Diamond 3 to Mythic.",
     price: "90",
   },
   {
-    name: "Legendary 1 to Master",
-    description: "Rank boost option from Legendary 1 to Master.",
+    name: "Legendary 1 to Legendary 2",
+    legacyName: "Legendary 1 to Master",
+    description: "Rank boost option from Legendary 1 to Legendary 2.",
     price: "250",
   },
   {
-    name: "Legendary 2 to Master",
-    description: "Rank boost option from Legendary 2 to Master.",
+    name: "Legendary 2 to Legendary 3",
+    legacyName: "Legendary 2 to Master",
+    description: "Rank boost option from Legendary 2 to Legendary 3.",
     price: "180",
   },
   {
     name: "Legendary 3 to Master",
+    legacyName: undefined,
     description: "Rank boost option from Legendary 3 to Master.",
     price: "120",
   },
   {
-    name: "Master 1 to Pro",
-    description: "Rank boost option from Master 1 to Pro.",
+    name: "Master 1 to Master 2",
+    legacyName: "Master 1 to Pro",
+    description: "Rank boost option from Master 1 to Master 2.",
     price: "1700",
   },
   {
-    name: "Master 2 to Pro",
-    description: "Rank boost option from Master 2 to Pro.",
+    name: "Master 2 to Master 3",
+    legacyName: "Master 2 to Pro",
+    description: "Rank boost option from Master 2 to Master 3.",
     price: "1400",
   },
   {
     name: "Master 3 to Pro",
+    legacyName: undefined,
     description: "Rank boost option from Master 3 to Pro.",
     price: "900",
   },
@@ -139,12 +151,14 @@ function parseAdminEmails() {
   return new Set(
     (process.env.ADMIN_EMAILS ?? "")
       .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean),
+      .map(email => email.trim().toLowerCase())
+      .filter(Boolean)
   );
 }
 
-async function getViewer(ctx: Parameters<typeof query>[0] extends never ? never : any) {
+async function getViewer(
+  ctx: Parameters<typeof query>[0] extends never ? never : any
+) {
   const userId = await getAuthUserId(ctx);
   if (!userId) {
     return null;
@@ -265,8 +279,7 @@ function sanitizeCategoryPatch(args: {
   sortOrder?: number;
 }) {
   return {
-    name:
-      args.name === undefined ? undefined : normalizeDisplayName(args.name),
+    name: args.name === undefined ? undefined : normalizeDisplayName(args.name),
     slug: args.slug === undefined ? undefined : normalizeSlug(args.slug),
     description: normalizeOptionalText(args.description, "Description", 500),
     imageUrl: normalizeSafeImageUrl(args.imageUrl),
@@ -296,7 +309,7 @@ function sanitizeProductInput(args: {
   isFeatured: boolean;
 }) {
   const imageUrls = (args.imageUrls ?? [])
-    .map((url) => normalizeSafeImageUrl(url))
+    .map(url => normalizeSafeImageUrl(url))
     .filter((url): url is string => Boolean(url))
     .slice(0, 5);
   return {
@@ -305,17 +318,35 @@ function sanitizeProductInput(args: {
     deliveryContent: normalizeOptionalText(
       args.deliveryContent,
       "Delivery content",
-      5_000,
+      5_000
     ),
     price: normalizePrice(args.price),
     imageUrl: normalizeSafeImageUrl(args.imageUrl),
     imageUrls,
-    trophyCount: args.trophyCount === undefined ? undefined : normalizeAccountStat(args.trophyCount),
-    rareSkinCount: args.rareSkinCount === undefined ? undefined : normalizeAccountStat(args.rareSkinCount),
-    superRareSkinCount: args.superRareSkinCount === undefined ? undefined : normalizeAccountStat(args.superRareSkinCount),
-    epicSkinCount: args.epicSkinCount === undefined ? undefined : normalizeAccountStat(args.epicSkinCount),
-    mythicSkinCount: args.mythicSkinCount === undefined ? undefined : normalizeAccountStat(args.mythicSkinCount),
-    legendarySkinCount: args.legendarySkinCount === undefined ? undefined : normalizeAccountStat(args.legendarySkinCount),
+    trophyCount:
+      args.trophyCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.trophyCount),
+    rareSkinCount:
+      args.rareSkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.rareSkinCount),
+    superRareSkinCount:
+      args.superRareSkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.superRareSkinCount),
+    epicSkinCount:
+      args.epicSkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.epicSkinCount),
+    mythicSkinCount:
+      args.mythicSkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.mythicSkinCount),
+    legendarySkinCount:
+      args.legendarySkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.legendarySkinCount),
     categoryId: args.categoryId,
     stock: normalizeStock(args.stock),
     isActive: args.isActive,
@@ -345,27 +376,44 @@ function sanitizeProductPatch(args: {
     args.imageUrls === undefined
       ? undefined
       : args.imageUrls
-          .map((url) => normalizeSafeImageUrl(url))
+          .map(url => normalizeSafeImageUrl(url))
           .filter((url): url is string => Boolean(url))
           .slice(0, 5);
   return {
-    name:
-      args.name === undefined ? undefined : normalizeDisplayName(args.name),
+    name: args.name === undefined ? undefined : normalizeDisplayName(args.name),
     description: normalizeOptionalText(args.description, "Description", 2_000),
     deliveryContent: normalizeOptionalText(
       args.deliveryContent,
       "Delivery content",
-      5_000,
+      5_000
     ),
     price: args.price === undefined ? undefined : normalizePrice(args.price),
     imageUrl: normalizeSafeImageUrl(args.imageUrl),
     imageUrls,
-    trophyCount: args.trophyCount === undefined ? undefined : normalizeAccountStat(args.trophyCount),
-    rareSkinCount: args.rareSkinCount === undefined ? undefined : normalizeAccountStat(args.rareSkinCount),
-    superRareSkinCount: args.superRareSkinCount === undefined ? undefined : normalizeAccountStat(args.superRareSkinCount),
-    epicSkinCount: args.epicSkinCount === undefined ? undefined : normalizeAccountStat(args.epicSkinCount),
-    mythicSkinCount: args.mythicSkinCount === undefined ? undefined : normalizeAccountStat(args.mythicSkinCount),
-    legendarySkinCount: args.legendarySkinCount === undefined ? undefined : normalizeAccountStat(args.legendarySkinCount),
+    trophyCount:
+      args.trophyCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.trophyCount),
+    rareSkinCount:
+      args.rareSkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.rareSkinCount),
+    superRareSkinCount:
+      args.superRareSkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.superRareSkinCount),
+    epicSkinCount:
+      args.epicSkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.epicSkinCount),
+    mythicSkinCount:
+      args.mythicSkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.mythicSkinCount),
+    legendarySkinCount:
+      args.legendarySkinCount === undefined
+        ? undefined
+        : normalizeAccountStat(args.legendarySkinCount),
     categoryId: args.categoryId,
     stock: args.stock === undefined ? undefined : normalizeStock(args.stock),
     isActive: args.isActive,
@@ -375,7 +423,7 @@ function sanitizeProductPatch(args: {
 
 export const currentUser = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const viewer = await getViewer(ctx);
     return viewer?.user ?? null;
   },
@@ -383,7 +431,7 @@ export const currentUser = query({
 
 export const listCategories = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const categories = await ctx.db.query("categories").collect();
     return categories.sort((a, b) => a.sortOrder - b.sortOrder);
   },
@@ -394,7 +442,7 @@ export const categoryBySlug = query({
   handler: async (ctx, args) => {
     return ctx.db
       .query("categories")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .withIndex("by_slug", q => q.eq("slug", args.slug))
       .unique();
   },
 });
@@ -410,19 +458,19 @@ export const listProducts = query({
     const products = await ctx.db.query("products").collect();
 
     return products
-      .filter((product) => adminView || product.isActive)
-      .map((product) => serializeProduct(product, adminView))
+      .filter(product => adminView || product.isActive)
+      .map(product => serializeProduct(product, adminView))
       .sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 
 export const featuredProducts = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const products = await ctx.db.query("products").collect();
     return products
-      .filter((product) => product.isActive && product.isFeatured)
-      .map((product) => serializeProduct(product))
+      .filter(product => product.isActive && product.isFeatured)
+      .map(product => serializeProduct(product))
       .sort((a, b) => b.updatedAt - a.updatedAt);
   },
 });
@@ -451,39 +499,39 @@ export const productsByIds = query({
   },
   handler: async (ctx, args) => {
     const products = await Promise.all(
-      args.ids.map(async (id) => serializeProduct(await ctx.db.get(id))),
+      args.ids.map(async id => serializeProduct(await ctx.db.get(id)))
     );
-    return products.filter((product) => product && product.isActive);
+    return products.filter(product => product && product.isActive);
   },
 });
 
 export const homePageData = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const categories = await ctx.db.query("categories").collect();
     const products = await ctx.db.query("products").collect();
-    const rankCategory = categories.find((category) => category.slug === "rank");
+    const rankCategory = categories.find(category => category.slug === "rank");
     const activeProducts = products
-      .filter((product) => product.isActive)
+      .filter(product => product.isActive)
       .sort((a, b) => b.createdAt - a.createdAt);
     const storefrontProducts = activeProducts.filter(
-      (product) => product.categoryId !== rankCategory?._id,
+      product => product.categoryId !== rankCategory?._id
     );
 
     return {
       categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
       featured: storefrontProducts
-        .filter((product) => product.isFeatured)
-        .map((product) => serializeProduct(product))
+        .filter(product => product.isFeatured)
+        .map(product => serializeProduct(product))
         .sort((a, b) => b.updatedAt - a.updatedAt),
-      allProducts: storefrontProducts.map((product) => serializeProduct(product)),
+      allProducts: storefrontProducts.map(product => serializeProduct(product)),
     };
   },
 });
 
 export const navData = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const categories = await ctx.db.query("categories").collect();
     const viewer = await getViewer(ctx);
 
@@ -491,7 +539,7 @@ export const navData = query({
     if (viewer) {
       const items = await ctx.db
         .query("cartItems")
-        .withIndex("by_userId", (q) => q.eq("userId", viewer.authUser._id))
+        .withIndex("by_userId", q => q.eq("userId", viewer.authUser._id))
         .collect();
       cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
     }
@@ -511,7 +559,7 @@ export const categoryPageData = query({
   handler: async (ctx, args) => {
     const category = await ctx.db
       .query("categories")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .withIndex("by_slug", q => q.eq("slug", args.slug))
       .unique();
 
     if (!category) {
@@ -526,14 +574,14 @@ export const categoryPageData = query({
 
     const products = await ctx.db
       .query("products")
-      .withIndex("by_categoryId", (q) => q.eq("categoryId", category._id))
+      .withIndex("by_categoryId", q => q.eq("categoryId", category._id))
       .collect();
 
     return {
       category,
       products: products
-        .filter((product) => adminView || product.isActive)
-        .map((product) => serializeProduct(product, adminView))
+        .filter(product => adminView || product.isActive)
+        .map(product => serializeProduct(product, adminView))
         .sort((a, b) => b.createdAt - a.createdAt),
     };
   },
@@ -541,19 +589,23 @@ export const categoryPageData = query({
 
 export const adminPageData = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const viewer = await getViewer(ctx);
     if (viewer?.user.role !== "admin") {
       return null;
     }
     const categories = await ctx.db.query("categories").collect();
     const products = await ctx.db.query("products").collect();
-    const rankCategory = categories.find((category) => category.slug === "rank");
-    const adminCategories = categories.filter((category) => category.slug !== "rank");
-    const adminProducts = products.filter(
-      (product) => product.categoryId !== rankCategory?._id,
+    const rankCategory = categories.find(category => category.slug === "rank");
+    const adminCategories = categories.filter(
+      category => category.slug !== "rank"
     );
-    const activeAdminProducts = adminProducts.filter((product) => product.isActive);
+    const adminProducts = products.filter(
+      product => product.categoryId !== rankCategory?._id
+    );
+    const activeAdminProducts = adminProducts.filter(
+      product => product.isActive
+    );
 
     return {
       categories: adminCategories.sort((a, b) => a.sortOrder - b.sortOrder),
@@ -561,12 +613,12 @@ export const adminPageData = query({
       stats: {
         totalProducts: adminProducts.length,
         activeProducts: activeAdminProducts.length,
-        outOfStock: adminProducts.filter((product) => product.stock === 0).length,
+        outOfStock: adminProducts.filter(product => product.stock === 0).length,
         lowStock: adminProducts.filter(
-          (product) => product.stock > 0 && product.stock <= 5,
+          product => product.stock > 0 && product.stock <= 5
         ).length,
         totalCategories: adminCategories.length,
-        lowStockProducts: adminProducts.filter((product) => product.stock <= 5),
+        lowStockProducts: adminProducts.filter(product => product.stock <= 5),
       },
     };
   },
@@ -574,7 +626,7 @@ export const adminPageData = query({
 
 export const cartItems = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const viewer = await getViewer(ctx);
     if (!viewer) {
       return [];
@@ -582,21 +634,21 @@ export const cartItems = query({
 
     const items = await ctx.db
       .query("cartItems")
-      .withIndex("by_userId", (q) => q.eq("userId", viewer.authUser._id))
+      .withIndex("by_userId", q => q.eq("userId", viewer.authUser._id))
       .collect();
 
     return Promise.all(
-      items.map(async (item) => ({
+      items.map(async item => ({
         ...item,
         product: serializeProduct(await ctx.db.get(item.productId)),
-      })),
+      }))
     );
   },
 });
 
 export const ensureProfile = mutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const viewer = await requireViewer(ctx);
     await ensureUserProfile(ctx, viewer.authUser._id, viewer.authUser.email);
     return true;
@@ -610,7 +662,7 @@ export const updateTheme = mutation({
     const profile = await ensureUserProfile(
       ctx,
       viewer.authUser._id,
-      viewer.authUser.email,
+      viewer.authUser.email
     );
     await ctx.db.patch(profile._id, {
       theme: normalizeTheme(args.theme),
@@ -636,8 +688,8 @@ export const addToCart = mutation({
 
     const existing = await ctx.db
       .query("cartItems")
-      .withIndex("by_userId_productId", (q) =>
-        q.eq("userId", viewer.authUser._id).eq("productId", args.productId),
+      .withIndex("by_userId_productId", q =>
+        q.eq("userId", viewer.authUser._id).eq("productId", args.productId)
       )
       .unique();
 
@@ -673,8 +725,8 @@ export const updateCartItem = mutation({
     const viewer = await requireViewer(ctx);
     const existing = await ctx.db
       .query("cartItems")
-      .withIndex("by_userId_productId", (q) =>
-        q.eq("userId", viewer.authUser._id).eq("productId", args.productId),
+      .withIndex("by_userId_productId", q =>
+        q.eq("userId", viewer.authUser._id).eq("productId", args.productId)
       )
       .unique();
 
@@ -708,8 +760,8 @@ export const removeCartItem = mutation({
     const viewer = await requireViewer(ctx);
     const existing = await ctx.db
       .query("cartItems")
-      .withIndex("by_userId_productId", (q) =>
-        q.eq("userId", viewer.authUser._id).eq("productId", args.productId),
+      .withIndex("by_userId_productId", q =>
+        q.eq("userId", viewer.authUser._id).eq("productId", args.productId)
       )
       .unique();
 
@@ -723,28 +775,28 @@ export const removeCartItem = mutation({
 
 export const clearCart = mutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const viewer = await requireViewer(ctx);
     const items = await ctx.db
       .query("cartItems")
-      .withIndex("by_userId", (q) => q.eq("userId", viewer.authUser._id))
+      .withIndex("by_userId", q => q.eq("userId", viewer.authUser._id))
       .collect();
 
-    await Promise.all(items.map((item) => ctx.db.delete(item._id)));
+    await Promise.all(items.map(item => ctx.db.delete(item._id)));
     return true;
   },
 });
 
 export const ensureDefaultCategories = mutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const categories = await ctx.db.query("categories").collect();
     let changed = false;
 
     for (const category of defaultCategories) {
       const sanitized = sanitizeCategoryInput(category);
       const existing = categories.find(
-        (candidate) => candidate.slug === sanitized.slug,
+        candidate => candidate.slug === sanitized.slug
       );
 
       if (existing) {
@@ -763,10 +815,10 @@ export const ensureDefaultCategories = mutation({
 
 export const ensureRankBoostProducts = mutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     let rankCategory = await ctx.db
       .query("categories")
-      .withIndex("by_slug", (q) => q.eq("slug", "rank"))
+      .withIndex("by_slug", q => q.eq("slug", "rank"))
       .unique();
 
     if (!rankCategory) {
@@ -778,7 +830,7 @@ export const ensureRankBoostProducts = mutation({
           description: "קידום ראנק מהיר ובטוח על ידי שחקנים מנוסים.",
           imageUrl: undefined,
           sortOrder: 2,
-        }),
+        })
       );
       rankCategory = await ctx.db.get(categoryId);
     } else {
@@ -788,7 +840,7 @@ export const ensureRankBoostProducts = mutation({
           name: "מדורג",
           description: "קידום ראנק מהיר ובטוח על ידי שחקנים מנוסים.",
           sortOrder: 2,
-        }),
+        })
       );
     }
 
@@ -798,14 +850,23 @@ export const ensureRankBoostProducts = mutation({
 
     const existingProducts = await ctx.db
       .query("products")
-      .withIndex("by_categoryId", (q) => q.eq("categoryId", rankCategory._id))
+      .withIndex("by_categoryId", q => q.eq("categoryId", rankCategory._id))
       .collect();
     const existingByName = new Map(
-      existingProducts.map((product) => [product.name.toLowerCase(), product]),
+      existingProducts.map(product => [product.name.toLowerCase(), product])
+    );
+    const defaultNames = new Set(
+      defaultRankBoostProducts.map(option => option.name.toLowerCase())
+    );
+    const legacyNames = new Set(
+      defaultRankBoostProducts
+        .map(option => option.legacyName?.toLowerCase())
+        .filter((name): name is string => Boolean(name))
     );
     const now = Date.now();
     let created = 0;
     let updated = 0;
+    const touchedProductIds = new Set<string>();
 
     for (const option of defaultRankBoostProducts) {
       const sanitizedProduct = sanitizeProductInput({
@@ -819,13 +880,22 @@ export const ensureRankBoostProducts = mutation({
         isActive: true,
         isFeatured: false,
       });
-      const existing = existingByName.get(option.name.toLowerCase());
+      const existing =
+        existingByName.get(option.name.toLowerCase()) ??
+        (option.legacyName
+          ? existingByName.get(option.legacyName.toLowerCase())
+          : undefined);
 
       if (existing) {
+        touchedProductIds.add(existing._id);
         await ctx.db.patch(existing._id, {
+          name: sanitizedProduct.name,
           description: sanitizedProduct.description,
           deliveryContent: sanitizedProduct.deliveryContent,
+          price: sanitizedProduct.price,
           categoryId: rankCategory._id,
+          stock: sanitizedProduct.stock,
+          isActive: true,
           isFeatured: false,
           updatedAt: now,
         });
@@ -839,6 +909,20 @@ export const ensureRankBoostProducts = mutation({
         updatedAt: now,
       });
       created += 1;
+    }
+
+    for (const product of existingProducts) {
+      const name = product.name.toLowerCase();
+      if (
+        legacyNames.has(name) &&
+        !defaultNames.has(name) &&
+        !touchedProductIds.has(product._id)
+      ) {
+        await ctx.db.patch(product._id, {
+          isActive: false,
+          updatedAt: now,
+        });
+      }
     }
 
     return { created, updated };
@@ -947,8 +1031,8 @@ export const deleteProduct = mutation({
     await requireAdmin(ctx);
 
     const orders = await ctx.db.query("orders").collect();
-    const isInOrder = orders.some((order) =>
-      order.items.some((item: any) => item.productId === args.id),
+    const isInOrder = orders.some(order =>
+      order.items.some((item: any) => item.productId === args.id)
     );
     if (isInOrder) {
       await ctx.db.patch(args.id, {
@@ -965,7 +1049,7 @@ export const deleteProduct = mutation({
 
 export const storeStats = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const viewer = await getViewer(ctx);
     if (viewer?.user.role !== "admin") {
       return null;
@@ -976,13 +1060,13 @@ export const storeStats = query({
 
     return {
       totalProducts: products.length,
-      activeProducts: products.filter((product) => product.isActive).length,
-      outOfStock: products.filter((product) => product.stock === 0).length,
+      activeProducts: products.filter(product => product.isActive).length,
+      outOfStock: products.filter(product => product.stock === 0).length,
       lowStock: products.filter(
-        (product) => product.stock > 0 && product.stock <= 5,
+        product => product.stock > 0 && product.stock <= 5
       ).length,
       totalCategories: categories.length,
-      lowStockProducts: products.filter((product) => product.stock <= 5),
+      lowStockProducts: products.filter(product => product.stock <= 5),
     };
   },
 });

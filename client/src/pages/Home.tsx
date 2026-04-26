@@ -132,6 +132,8 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground/95 to-foreground/85 text-white">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-pink-500/10 blur-2xl md:h-72 md:w-72" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-pink-400/10 blur-2xl md:h-80 md:w-80" />
         <div className="container relative py-16 md:py-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

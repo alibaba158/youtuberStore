@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { Link, useParams } from "wouter";
-import { ArrowRight, Package, ShoppingCart, Sparkles, X, ZoomIn } from "lucide-react";
+import {
+  ArrowRight,
+  Package,
+  ShoppingCart,
+  Sparkles,
+  X,
+  ZoomIn,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -103,15 +110,17 @@ const categorySeoBySlug = {
 } as const;
 
 function displayRankOptionName(name: string) {
-  const match = name.match(/^(.+?)\s+([123])\s+to\s+(.+)$/i);
+  const match = name.match(
+    /^([A-Za-z]+)\s+([123])\s+to\s+([A-Za-z]+)(?:\s+([123]))?$/i
+  );
   if (!match) {
     return name;
   }
 
-  const [, fromRank, level, toRank] = match;
+  const [, fromRank, level, toRank, targetLevel] = match;
   const from = rankNameMap[fromRank] ?? fromRank;
   const to = rankNameMap[toRank] ?? toRank;
-  return `${from} ${level} ל${to}`;
+  return `${from} ${level} - ${to}${targetLevel ? ` ${targetLevel}` : ""}`;
 }
 
 function rankLevel(product: Product) {
@@ -126,7 +135,7 @@ function rankGroupForProduct(product: Product) {
   }
 
   const key = rankKeyByEnglish[startingRank.toLowerCase()];
-  return rankGroups.find((group) => group.key === key) ?? rankGroups[0];
+  return rankGroups.find(group => group.key === key) ?? rankGroups[0];
 }
 
 function RankOptionCard({
@@ -154,7 +163,7 @@ function RankOptionCard({
       toast.success("האפשרות נוספה לעגלה");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "שגיאה בהוספה לעגלה",
+        error instanceof Error ? error.message : "שגיאה בהוספה לעגלה"
       );
     }
   };
@@ -188,10 +197,10 @@ function RankOptionsPage({ products }: { products: Product[] }) {
     src: string;
     alt: string;
   } | null>(null);
-  const grouped = rankGroups.map((group) => ({
+  const grouped = rankGroups.map(group => ({
     ...group,
     products: products
-      .filter((product) => rankGroupForProduct(product).key === group.key)
+      .filter(product => rankGroupForProduct(product).key === group.key)
       .sort((a, b) => rankLevel(a) - rankLevel(b)),
   }));
 
@@ -219,8 +228,8 @@ function RankOptionsPage({ products }: { products: Product[] }) {
             ))}
           </div>
           <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-white/75">
-            כל לחיצה מוסיפה את האפשרות לעגלה. אחרי התשלום נבקש בצ׳אט את תג
-            השחקן ואת הפרטים המדויקים לביצוע הבוסט.
+            כל לחיצה מוסיפה את האפשרות לעגלה. אחרי התשלום נבקש בצ׳אט את תג השחקן
+            ואת הפרטים המדויקים לביצוע הבוסט.
           </p>
         </div>
       </div>
@@ -246,10 +255,10 @@ function RankOptionsPage({ products }: { products: Product[] }) {
                   loading="eager"
                   decoding="async"
                   className="h-auto max-h-32 w-auto max-w-full object-contain drop-shadow-lg"
-                  onError={(event) => {
+                  onError={event => {
                     event.currentTarget.style.display = "none";
                     event.currentTarget.nextElementSibling?.classList.remove(
-                      "hidden",
+                      "hidden"
                     );
                   }}
                 />
@@ -306,7 +315,7 @@ function RankOptionsPage({ products }: { products: Product[] }) {
             src={previewImage.src}
             alt={previewImage.alt}
             className="h-auto max-h-[88vh] w-auto max-w-[94vw] object-contain"
-            onClick={(event) => event.stopPropagation()}
+            onClick={event => event.stopPropagation()}
           />
         </div>
       ) : null}
@@ -318,15 +327,19 @@ export default function CategoryPage() {
   const params = useParams<{ slug: string }>();
   const data = useQuery(
     api.store.categoryPageData,
-    params.slug ? { slug: params.slug } : "skip",
+    params.slug ? { slug: params.slug } : "skip"
   );
-  const ensureRankBoostProducts = useMutation(api.store.ensureRankBoostProducts);
+  const ensureRankBoostProducts = useMutation(
+    api.store.ensureRankBoostProducts
+  );
   const category = data?.category;
   const products = data?.products;
   const isRankCategory = category?.slug === "rank";
   const seo =
     categorySeoBySlug[
-      (category?.slug ?? params.slug ?? "accounts") as keyof typeof categorySeoBySlug
+      (category?.slug ??
+        params.slug ??
+        "accounts") as keyof typeof categorySeoBySlug
     ];
 
   useSeo({
@@ -343,7 +356,7 @@ export default function CategoryPage() {
     if (params.slug !== "rank") {
       return;
     }
-    void ensureRankBoostProducts().catch((error) => {
+    void ensureRankBoostProducts().catch(error => {
       console.error("Failed to ensure rank boost products", error);
     });
   }, [ensureRankBoostProducts, params.slug]);
@@ -383,7 +396,11 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen">
-      <div className={isRankCategory ? "bg-background" : "border-b border-border bg-white"}>
+      <div
+        className={
+          isRankCategory ? "bg-background" : "border-b border-border bg-white"
+        }
+      >
         <div className="container py-8">
           <Link href="/">
             <span className="mb-4 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -406,7 +423,9 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      <div className={isRankCategory ? "bg-background pb-12" : "container py-10"}>
+      <div
+        className={isRankCategory ? "bg-background pb-12" : "container py-10"}
+      >
         <div className={isRankCategory ? "container" : undefined}>
           {products === undefined ? (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -437,7 +456,11 @@ export default function CategoryPage() {
               </p>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {products.map((product, index) => (
-                  <ProductCard key={product._id} product={product} index={index} />
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    index={index}
+                  />
                 ))}
               </div>
             </>
