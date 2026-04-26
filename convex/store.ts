@@ -128,15 +128,15 @@ const defaultRankBoostProducts = [
     price: "120",
   },
   {
-    name: "Master 1 to Master 2",
-    legacyName: "Master 1 to Pro",
-    description: "Rank boost option from Master 1 to Master 2.",
+    name: "Master 1 to Pro",
+    legacyName: "Master 1 to Master 2",
+    description: "Rank boost option from Master 1 to Pro.",
     price: "1700",
   },
   {
-    name: "Master 2 to Master 3",
-    legacyName: "Master 2 to Pro",
-    description: "Rank boost option from Master 2 to Master 3.",
+    name: "Master 2 to Pro",
+    legacyName: "Master 2 to Master 3",
+    description: "Rank boost option from Master 2 to Pro.",
     price: "1400",
   },
   {

@@ -119,6 +119,10 @@ function displayRankOptionName(name: string) {
 
   const [, fromRank, level, toRank, targetLevel] = match;
   const from = rankNameMap[fromRank] ?? fromRank;
+  if (fromRank.toLowerCase() === "master") {
+    return `${from} ${level} - ${rankNameMap.Pro}`;
+  }
+
   if (level === "1" || level === "2") {
     return `${from} ${level} - ${from} ${Number(level) + 1}`;
   }

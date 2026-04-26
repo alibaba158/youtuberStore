@@ -260,14 +260,14 @@ export default function ProductPage() {
             </motion.div>
 
             <Dialog open={imageViewerOpen} onOpenChange={setImageViewerOpen}>
-              <DialogContent className="max-h-[92vh] max-w-[min(96vw,1100px)] border-0 bg-white/95 p-3 shadow-2xl" showCloseButton>
+              <DialogContent className="h-[96vh] max-h-[96vh] w-[98vw] max-w-[98vw] border-0 bg-white/95 p-2 shadow-2xl sm:max-w-[98vw]" showCloseButton>
                 <DialogTitle className="sr-only">{product.name}</DialogTitle>
                 {mainImage ? (
-                  <div className="flex max-h-[84vh] items-center justify-center rounded-xl bg-white p-2">
+                  <div className="flex h-full items-center justify-center rounded-xl bg-white p-1">
                     <img
                       src={mainImage}
                       alt={product.name}
-                      className="max-h-[82vh] max-w-full object-contain"
+                      className="max-h-[94vh] max-w-full object-contain"
                     />
                   </div>
                 ) : null}
