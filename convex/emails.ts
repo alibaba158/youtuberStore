@@ -134,11 +134,22 @@ async function sendViaSmtp(payload: EmailPayload) {
 }
 
 async function sendEmail(payload: EmailPayload) {
+  try {
+    await sendViaSmtp(payload);
+    return;
+  } catch (smtpError) {
+    const hasBrevo = Boolean(process.env.BREVO_API_KEY?.trim());
+    if (!hasBrevo) {
+      throw smtpError;
+    }
+  }
+
   const sentWithBrevo = await sendViaBrevo(payload);
   if (sentWithBrevo) {
     return;
   }
-  await sendViaSmtp(payload);
+
+  throw new Error("No email provider is configured");
 }
 
 function formatCurrency(value: string | number) {
