@@ -90,6 +90,15 @@ export default defineSchema({
     customerDeliveryEmailSendStartedAt: v.optional(v.number()),
     customerDeliveryEmailSentAt: v.optional(v.number()),
     customerDeliveryEmailError: v.optional(v.string()),
+    adminFulfillmentItems: v.optional(
+      v.array(
+        v.object({
+          productId: v.id("products"),
+          content: v.string(),
+        }),
+      ),
+    ),
+    adminFulfillmentPreparedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),

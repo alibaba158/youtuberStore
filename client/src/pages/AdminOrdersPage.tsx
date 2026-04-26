@@ -1,16 +1,20 @@
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowRight,
   CheckCircle2,
   Clock3,
+  ExternalLink,
   Mail,
   Package,
   ReceiptText,
+  Save,
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { api } from "../../../convex/_generated/api";
 
@@ -43,21 +47,67 @@ export default function AdminOrdersPage() {
     api.orders.adminRecentOrders,
     user?.role === "admin" ? {} : "skip",
   );
-  const sendCustomerDeliveryEmail = useMutation(
-    api.orders.sendCustomerDeliveryEmail,
+  const saveAdminFulfillment = useMutation(api.orders.saveAdminFulfillment);
+  const sendCustomerDeliveryEmail = useMutation(api.orders.sendCustomerDeliveryEmail);
+  const [draftsByOrder, setDraftsByOrder] = useState<Record<string, Record<string, string>>>({});
+
+  const initialDraftsByOrder = useMemo(
+    () =>
+      Object.fromEntries(
+        (orders ?? []).map((order) => [
+          order._id,
+          Object.fromEntries(
+            order.items.map((item) => [item.productId, item.deliveryContent ?? ""]),
+          ),
+        ]),
+      ),
+    [orders],
   );
 
-  const handleSendDetails = async (orderId: string) => {
-    try {
-      await sendCustomerDeliveryEmail({ orderId: orderId as never });
-      toast.success("אימייל פרטי המוצר נשלח לתור השליחה");
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "לא הצלחנו לשלוח את פרטי המוצר",
-      );
-    }
+  const orderDrafts = (orderId: string) =>
+    draftsByOrder[orderId] ?? initialDraftsByOrder[orderId] ?? {};
+
+  const setOrderDraft = (orderId: string, productId: string, value: string) => {
+    setDraftsByOrder((current) => ({
+      ...current,
+      [orderId]: {
+        ...(current[orderId] ?? initialDraftsByOrder[orderId] ?? {}),
+        [productId]: value,
+      },
+    }));
+  };
+
+  const buildPayload = (order: NonNullable<typeof orders>[number]) =>
+    order.items.map((item) => ({
+      productId: item.productId,
+      content: orderDrafts(order._id)[item.productId] ?? "",
+    }));
+
+  const handleSave = async (order: NonNullable<typeof orders>[number]) => {
+    await saveAdminFulfillment({
+      orderId: order._id as never,
+      items: buildPayload(order) as never,
+    });
+    toast.success("פרטי הלקוח נשמרו");
+    setDraftsByOrder((current) => {
+      const next = { ...current };
+      delete next[order._id];
+      return next;
+    });
+  };
+
+  const handleSendDetails = async (order: NonNullable<typeof orders>[number]) => {
+    await saveAdminFulfillment({
+      orderId: order._id as never,
+      items: buildPayload(order) as never,
+    });
+    await sendCustomerDeliveryEmail({ orderId: order._id as never });
+    toast.success("פרטי המוצר נשלחו ללקוח");
+    setDraftsByOrder((current) => {
+      const next = { ...current };
+      delete next[order._id];
+      return next;
+    });
   };
 
   if (loading) {
@@ -94,8 +144,7 @@ export default function AdminOrdersPage() {
           <div>
             <h1 className="text-3xl font-black">רכישות אחרונות</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              הקבלה נשלחת אוטומטית אחרי תשלום. מכאן האדמין יכול לשלוח ללקוח
-              אימייל נוסף עם כל פרטי המוצר.
+              כאן ממלאים את פרטי הלקוח לכל הזמנה ושולחים את המייל ישירות מהמסך הזה, או פותחים עמוד מילוי נפרד מתוך מייל האדמין.
             </p>
           </div>
           <div className="rounded-full border border-border bg-card px-4 py-2 text-sm font-bold text-foreground">
@@ -118,13 +167,13 @@ export default function AdminOrdersPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {orders.map((order) => (
               <section
                 key={order._id}
                 className="rounded-2xl border border-border bg-card p-5 shadow-sm"
               >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-bold">
@@ -151,56 +200,21 @@ export default function AdminOrdersPage() {
                       <Mail className="h-4 w-4" />
                       {order.customerEmail}
                     </a>
-
-                    <div className="mt-4 grid gap-2 md:grid-cols-2">
-                      {order.items.map((item) => (
-                        <div
-                          key={`${order._id}-${item.productId}`}
-                          className="rounded-xl border border-border bg-background p-3"
-                        >
-                          <p className="font-bold text-foreground">{item.name}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            כמות {item.quantity} · {formatPrice(item.price)}
-                          </p>
-                          {item.deliveryContent ? (
-                            <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                              {item.deliveryContent}
-                            </p>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
-                  <div className="shrink-0 rounded-xl border border-border bg-background p-4 text-sm lg:w-64">
+                  <div className="shrink-0 rounded-xl border border-border bg-background p-4 text-sm xl:w-72">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">סכום</span>
-                      <span className="font-black">
-                        {formatPrice(order.subtotal)}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">נוצר</span>
-                      <span className="font-semibold">
-                        {formatDate(order.createdAt)}
-                      </span>
+                      <span className="font-black">{formatPrice(order.subtotal)}</span>
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">שולם</span>
-                      <span className="font-semibold">
-                        {formatDate(order.paidAt)}
-                      </span>
+                      <span className="font-semibold">{formatDate(order.paidAt)}</span>
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">קבלה</span>
+                      <span className="text-muted-foreground">נשלח ללקוח</span>
                       <span className="font-semibold">
-                        {order.receiptEmailSentAt ? "נשלחה" : "בהכנה"}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between gap-4">
-                      <span className="text-muted-foreground">פרטי מוצר</span>
-                      <span className="font-semibold">
-                        {order.customerDeliveryEmailSentAt ? "נשלחו" : "לא נשלחו"}
+                        {order.customerDeliveryEmailSentAt ? "כן" : "לא"}
                       </span>
                     </div>
                     {order.customerDeliveryEmailError ? (
@@ -208,17 +222,50 @@ export default function AdminOrdersPage() {
                         {order.customerDeliveryEmailError}
                       </p>
                     ) : null}
-                    <Button
-                      type="button"
-                      className="mt-4 w-full gap-2"
-                      onClick={() => void handleSendDetails(order._id)}
-                    >
-                      <Send className="h-4 w-4" />
-                      {order.customerDeliveryEmailSentAt
-                        ? "שלח שוב פרטי מוצר"
-                        : "שלח פרטי מוצר"}
-                    </Button>
+                    <div className="mt-4 flex flex-col gap-2">
+                      <Button asChild type="button" variant="outline" className="gap-2">
+                        <Link href={`/admin/orders/${order._id}/fulfill`}>
+                          <ExternalLink className="h-4 w-4" />
+                          עמוד מילוי נפרד
+                        </Link>
+                      </Button>
+                      <Button type="button" variant="outline" className="gap-2" onClick={() => void handleSave(order)}>
+                        <Save className="h-4 w-4" />
+                        שמור
+                      </Button>
+                      <Button type="button" className="gap-2" onClick={() => void handleSendDetails(order)}>
+                        <Send className="h-4 w-4" />
+                        {order.customerDeliveryEmailSentAt ? "שמור ושלח שוב" : "שמור ושלח ללקוח"}
+                      </Button>
+                    </div>
                   </div>
+                </div>
+
+                <div className="grid gap-3">
+                  {order.items.map((item) => (
+                    <div
+                      key={`${order._id}-${item.productId}`}
+                      className="rounded-xl border border-border bg-background p-4"
+                    >
+                      <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="font-bold text-foreground">{item.name}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            כמות {item.quantity} · {formatPrice(item.price)}
+                          </p>
+                        </div>
+                      </div>
+                      <Textarea
+                        rows={5}
+                        value={orderDrafts(order._id)[item.productId] ?? ""}
+                        onChange={(event) =>
+                          setOrderDraft(order._id, item.productId, event.target.value)
+                        }
+                        placeholder="כאן ממלאים את מה שהלקוח צריך לקבל עבור הפריט הזה"
+                        className="text-right"
+                      />
+                    </div>
+                  ))}
                 </div>
               </section>
             ))}

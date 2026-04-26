@@ -172,7 +172,7 @@ function htmlEscape(value: unknown) {
     .replace(/'/g, "&#39;");
 }
 
-function buildReceiptText(order: any, receiptUrl?: string) {
+function buildReceiptText(order: any, receiptUrl?: string, fulfillmentUrl?: string) {
   const lines = [
     "Razlo Store - קבלה",
     "",
@@ -199,10 +199,13 @@ function buildReceiptText(order: any, receiptUrl?: string) {
     lines.push("", `צפה בקבלה: ${receiptUrl}`);
   }
 
+  if (fulfillmentUrl) {
+    lines.push("", `׳׳™׳׳•׳™ ׳•׳©׳׳™׳—׳× ׳₪׳¨׳˜׳™ ׳׳§׳•׳—: ${fulfillmentUrl}`);
+  }
   return lines.join("\n");
 }
 
-function buildReceiptHtml(order: any, receiptUrl?: string) {
+function buildReceiptHtml(order: any, receiptUrl?: string, fulfillmentUrl?: string) {
   const itemRows = order.items
     .map(
       (item: any) => `
@@ -243,6 +246,16 @@ function buildReceiptHtml(order: any, receiptUrl?: string) {
     ? `<p style="margin:26px 0 0;"><a href="${htmlEscape(
         receiptUrl,
       )}" style="display:inline-block;background:#f456a5;color:#24111c;text-decoration:none;font-weight:900;border-radius:16px;padding:13px 18px;">צפה בקבלה</a></p>`
+    : "";
+  const receiptFulfillmentLink1 = fulfillmentUrl
+    ? `<p style="margin:18px 0 0;"><a href="${htmlEscape(
+        fulfillmentUrl,
+      )}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-weight:800;border-radius:12px;padding:12px 16px;">׳₪׳×׳— ׳“׳£ ׳׳™׳׳•׳™ ׳•׳©׳׳™׳—׳”</a></p>`
+    : "";
+  const receiptFulfillmentLink2 = fulfillmentUrl
+    ? `<p style="margin:18px 0 0;"><a href="${htmlEscape(
+        fulfillmentUrl,
+      )}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-weight:800;border-radius:12px;padding:12px 16px;">פתח דף מילוי ושליחה</a></p>`
     : "";
 
   return `
@@ -408,7 +421,7 @@ function buildCustomerDeliveryHtml(order: any, receiptUrl?: string) {
     </div>`;
 }
 
-function buildAdminPurchaseText(order: any, receiptUrl?: string) {
+function buildAdminPurchaseText(order: any, receiptUrl?: string, fulfillmentUrl?: string) {
   const lines = [
     "רכישה חדשה בRazlo Store",
     "",
@@ -442,7 +455,12 @@ function buildAdminPurchaseText(order: any, receiptUrl?: string) {
   return lines.join("\n");
 }
 
-function buildAdminPurchaseHtml(order: any, receiptUrl?: string) {
+function buildAdminPurchaseHtml(order: any, receiptUrl?: string, fulfillmentUrl?: string) {
+  const fulfillmentLink = fulfillmentUrl
+    ? `<p style="margin:18px 0 0;"><a href="${htmlEscape(
+        fulfillmentUrl,
+      )}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-weight:800;border-radius:12px;padding:12px 16px;">פתח דף מילוי ושליחה</a></p>`
+    : "";
   const itemRows = order.items
     .map(
       (item: any) => `
@@ -511,6 +529,7 @@ function buildAdminPurchaseHtml(order: any, receiptUrl?: string) {
             <tbody>${itemRows}</tbody>
           </table>
           ${receiptLink}
+          ${fulfillmentLink}
         </div>
       </div>
     </div>`;
@@ -661,6 +680,9 @@ export const sendOrderReceipt = internalAction({
       const receiptUrl = getAppUrl()
         ? `${getAppUrl()}/receipt/${String(order._id)}`
         : undefined;
+      const fulfillmentUrl = getAppUrl()
+        ? `${getAppUrl()}/admin/orders/${String(order._id)}/fulfill`
+        : undefined;
 
       const isMysteryBoxOrder = order.items.some((item: any) => item.isMysteryBox);
 
@@ -717,13 +739,16 @@ export const sendAdminPurchaseNotification = internalAction({
       const receiptUrl = getAppUrl()
         ? `${getAppUrl()}/receipt/${String(order._id)}`
         : undefined;
+      const fulfillmentUrl = getAppUrl()
+        ? `${getAppUrl()}/admin/orders/${String(order._id)}/fulfill`
+        : undefined;
 
       await sendEmail({
         to: getAdminRecipients(),
         replyTo: order.customerEmail,
         subject: `רכישה חדשה בRazlo Store מאת ${order.customerName}`,
-        text: buildAdminPurchaseText(order, receiptUrl),
-        html: buildAdminPurchaseHtml(order, receiptUrl),
+        text: buildAdminPurchaseText(order, receiptUrl, fulfillmentUrl),
+        html: buildAdminPurchaseHtml(order, receiptUrl, fulfillmentUrl),
       });
 
       await ctx.runMutation(internal.orders.markAdminPurchaseEmailSent, {

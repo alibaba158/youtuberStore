@@ -101,6 +101,26 @@ function sanitizeOrderItems(items: any[], deliveryUnlocked: boolean) {
   }));
 }
 
+function applyAdminFulfillment(items: any[], adminFulfillmentItems?: any[]) {
+  if (!adminFulfillmentItems?.length) {
+    return items;
+  }
+
+  const fulfillmentByProductId = new Map(
+    adminFulfillmentItems.map((item) => [String(item.productId), item.content]),
+  );
+
+  return items.map((item) => {
+    const adminContent = fulfillmentByProductId.get(String(item.productId));
+    return adminContent
+      ? {
+          ...item,
+          deliveryContent: adminContent,
+        }
+      : item;
+  });
+}
+
 function serializeOrder(
   order: any,
   opts?: { includeSensitiveBitState?: boolean; includeDeliveryContent?: boolean },
@@ -108,13 +128,17 @@ function serializeOrder(
   const deliveryUnlocked =
     Boolean(opts?.includeDeliveryContent) ||
     (order.orderStatus === "paid" && Boolean(order.customerDeliveryEmailSentAt));
+  const itemsWithFulfillment = applyAdminFulfillment(
+    order.items,
+    order.adminFulfillmentItems,
+  );
   return {
     _id: order._id,
     _creationTime: order._creationTime,
     userId: order.userId,
     customerEmail: order.customerEmail,
     customerName: order.customerName,
-    items: sanitizeOrderItems(order.items, deliveryUnlocked),
+    items: sanitizeOrderItems(itemsWithFulfillment, deliveryUnlocked),
     subtotal: order.subtotal,
     paymentMethod: order.paymentMethod,
     orderStatus: order.orderStatus,
@@ -131,6 +155,8 @@ function serializeOrder(
     adminPurchaseEmailSentAt: order.adminPurchaseEmailSentAt,
     customerDeliveryEmailSentAt: order.customerDeliveryEmailSentAt,
     customerDeliveryEmailError: order.customerDeliveryEmailError,
+    adminFulfillmentItems: order.adminFulfillmentItems ?? [],
+    adminFulfillmentPreparedAt: order.adminFulfillmentPreparedAt,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     deliveryUnlocked,
@@ -588,6 +614,61 @@ export const sendCustomerDeliveryEmail = mutation({
 
     await ctx.scheduler.runAfter(0, internal.emails.sendCustomerDeliveryEmail, {
       orderId: args.orderId,
+    });
+
+    return true;
+  },
+});
+
+export const adminOrderById = query({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      return null;
+    }
+
+    return serializeOrder(order, { includeDeliveryContent: true });
+  },
+});
+
+export const saveAdminFulfillment = mutation({
+  args: {
+    orderId: v.id("orders"),
+    items: v.array(
+      v.object({
+        productId: v.id("products"),
+        content: v.string(),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
+      throw new Error("Only paid orders can be fulfilled");
+    }
+
+    const normalizedItems = args.items.map((item) => ({
+      productId: item.productId,
+      content: normalizeRequiredText(
+        item.content,
+        "Fulfillment content",
+        5_000,
+      ),
+    }));
+
+    const now = Date.now();
+    await ctx.db.patch(args.orderId, {
+      adminFulfillmentItems: normalizedItems,
+      adminFulfillmentPreparedAt: now,
+      updatedAt: now,
     });
 
     return true;
