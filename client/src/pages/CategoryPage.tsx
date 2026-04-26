@@ -95,43 +95,48 @@ const emptyStateBySlug = {
 
 const categorySeoBySlug = {
   accounts: {
-    title: "Brawl Stars Accounts for Sale | Razlo Store",
+    title: "חשבונות Brawl Stars למכירה | דוגמה",
     description:
-      "Browse Brawl Stars accounts for sale at Razlo Store. Find accounts with trophies, skins, and fast delivery.",
+      "דפדף בחשבונות Brawl Stars למכירה ב-Razlo Store. מצא חשבונות עם גביעים, סקינים ומשלוח מהיר.",
   },
   rank: {
-    title: "Brawl Stars Rank Boosting | Razlo Store",
+    title: "בוסט לראנק ב-Brawl Stars | Razlo Store",
     description:
-      "Choose Brawl Stars rank boosting options from Diamond, Mythic, Legendary, and Master ranks.",
+      "בחר אפשרויות בוסט לראנק ב-Brawl Stars מראנק דיימונד, מיטיק, לג׳נדרי ומאסטר ב-Razlo Store.",
   },
   trophies: {
-    title: "Brawl Stars Trophy Boosting | Razlo Store",
+    title: "בוסט לגביעים ב-Brawl Stars | Razlo Store",
     description:
-      "Buy Brawl Stars trophy boosting services from Razlo Store with clear options and fast support.",
+      "קנה שירותי בוסט לגביעים ב-Brawl Stars מ-Razlo Store עם אפשרויות ברורות ותמיכה מהירה.",
   },
   friends: {
-    title: "Brawl Stars Friends and Services | Razlo Store",
+    title: "חברים ושירותים ב-Brawl Stars | Razlo Store",
     description:
-      "Browse Brawl Stars friend services and account services from Razlo Store.",
+      "דפדף בשירותי חברים ושירותי חשבון ב-Brawl Stars מ-Razlo Store.",
   },
 } as const;
 
-function displayRankOptionName(name: string) {
+function getRankOptionLabels(product: Product) {
+  const name = product.name;
   const match = name.match(
     /^([A-Za-z]+)\s+([123])\s+to\s+([A-Za-z]+)(?:\s+([123]))?$/i
   );
   if (!match) {
-    return name;
+    return { from: name, to: "" };
   }
 
-  const [, fromRank, level, toRank, targetLevel] = match;
+  const [, fromRank, level, toRank, toLevel] = match;
   const from = rankNameMap[fromRank] ?? fromRank;
-  if (level === "1" || level === "2") {
-    return `${from} ${level} - ${from} ${Number(level) + 1}`;
-  }
-
   const to = rankNameMap[toRank] ?? toRank;
-  return `${from} ${level} - ${to}${targetLevel ? ` ${targetLevel}` : ""}`;
+  const nextLevel =
+    fromRank.toLowerCase() === toRank.toLowerCase()
+      ? Number(level) + 1
+      : toLevel;
+
+  return {
+    from: `${from} ${level}`,
+    to: nextLevel ? `${to} ${nextLevel}` : to,
+  };
 }
 
 function rankLevel(product: Product) {
@@ -143,21 +148,19 @@ function rankGroupForProduct(product: Product) {
   const match = product.name.match(
     /^([A-Za-z]+)\s+([123])\s+to\s+([A-Za-z]+)(?:\s+[123])?/i
   );
-  if (!match) {
-    return rankGroups[0];
+  if (!match) return rankGroups[0];
+
+  const [, startingRank, , targetRank] = match;
+  const from = startingRank.toLowerCase();
+  const to = targetRank.toLowerCase();
+
+  // Master X to Pro → Pro column
+  if (from === "master" && to === "pro") {
+    return rankGroups.find(g => g.key === "pro") ?? rankGroups[0];
   }
 
-  const [, startingRank, level, targetRank] = match;
-  if (
-    startingRank.toLowerCase() === "master" &&
-    level === "3" &&
-    targetRank.toLowerCase() === "pro"
-  ) {
-    return rankGroups.find(group => group.key === "pro") ?? rankGroups[0];
-  }
-
-  const key = rankKeyByEnglish[startingRank.toLowerCase()];
-  return rankGroups.find(group => group.key === key) ?? rankGroups[0];
+  const key = rankKeyByEnglish[from];
+  return rankGroups.find(g => g.key === key) ?? rankGroups[0];
 }
 
 function RankOptionCard({
@@ -170,6 +173,7 @@ function RankOptionCard({
   const { isAuthenticated } = useAuth();
   const addToCart = useMutation(api.store.addToCart);
   const disabled = product.stock === 0;
+  const optionLabels = getRankOptionLabels(product);
 
   const handleAddToCart = async () => {
     if (disabled) {
@@ -200,8 +204,20 @@ function RankOptionCard({
       onClick={() => void handleAddToCart()}
       className="group grid w-full grid-cols-[1fr_96px] overflow-hidden rounded-2xl border border-border bg-card text-right shadow-sm transition hover:-translate-y-1 hover:border-accent/50 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-55 sm:grid-cols-[1fr_112px]"
     >
-      <span className="flex min-h-[78px] items-center justify-center px-4 py-3 text-xl font-black leading-tight text-foreground sm:text-2xl">
-        {displayRankOptionName(product.name)}
+      <span className="flex min-h-[78px] flex-col items-center justify-center gap-1 px-4 py-3 text-center text-xl font-black leading-tight text-foreground sm:text-2xl">
+        <span dir="rtl" className="block whitespace-nowrap">
+          {optionLabels.from}
+        </span>
+        {optionLabels.to ? (
+          <>
+            <span dir="ltr" className="block text-base leading-none">
+              ←
+            </span>
+            <span dir="rtl" className="block whitespace-nowrap">
+              {optionLabels.to}
+            </span>
+          </>
+        ) : null}
       </span>
       <span className="flex min-h-[78px] items-center justify-center bg-accent px-3 py-3 text-2xl font-black tabular-nums text-accent-foreground sm:text-3xl">
         {Number(product.price).toLocaleString("he-IL")}
@@ -364,11 +380,9 @@ export default function CategoryPage() {
     ];
 
   useSeo({
-    title: seo?.title ?? `${category?.name ?? "Category"} | Razlo Store`,
+    title: seo?.title ?? `${category?.name ?? "קטגוריה"} | דוגמה`,
     description:
-      seo?.description ??
-      category?.description ??
-      "Browse Brawl Stars products and services from Razlo Store.",
+      "דפדף במוצרי ושירותי Brawl Stars מ-דוגמה.",
     canonicalPath: params.slug ? `/category/${params.slug}` : undefined,
     image: "/favicon.png",
   });

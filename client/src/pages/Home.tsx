@@ -112,9 +112,9 @@ function CategoryCard({
 
 export default function Home() {
   useSeo({
-    title: "Razlo Store | Brawl Stars Accounts, Rank Boosting and Trophy Boosting",
+    title: "Razlo Store | חשבונות Brawl Stars, בוסט לראנק ובוסט לגביעים",
     description:
-      "Buy Brawl Stars accounts, rank boosting, trophy boosting, and friend services from Razlo Store with fast delivery and support.",
+      "קנה חשבונות Brawl Stars, בוסט לראנק, בוסט לגביעים ושירותי חברים מ-Razlo Store עם משלוח מהיר ותמיכה.",
     canonicalPath: "/",
     image: "/favicon.png",
     structuredData: buildSiteStructuredData(),

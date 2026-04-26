@@ -107,17 +107,17 @@ export default function ProductCard({
             ) : null}
           </div>
 
-          <div className="p-4">
+          <div className="flex h-36 flex-col p-4">
             <h3 className="mb-1.5 line-clamp-2 text-sm font-bold leading-snug text-foreground transition-colors duration-200 group-hover:text-accent/80">
               {product.name}
             </h3>
             {product.description ? (
-              <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                 {product.description}
               </p>
             ) : null}
 
-            <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="mt-auto flex items-center justify-between gap-2">
               <div>
                 <p className="text-xl font-black text-foreground">₪{price.toFixed(2)}</p>
                 <StockBadge stock={product.stock} />

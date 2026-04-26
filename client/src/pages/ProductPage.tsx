@@ -328,11 +328,23 @@ export default function ProductPage() {
                   <h1 className="text-2xl font-black leading-tight">{product.name}</h1>
                   <p className="mt-1 text-sm text-muted-foreground">שירות דיגיטלי ל-Brawl Stars</p>
                 </div>
-                {product.isFeatured ? (
-                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-black text-yellow-900">
-                    מומלץ
-                  </span>
-                ) : null}
+                <div className="flex flex-col items-end gap-1.5">
+                  {product.isMysteryBox ? (
+                    <span className="animate-pulse rounded-full border-2 border-pink-400 bg-gradient-to-br from-yellow-100 to-pink-100 px-3 py-1 text-xs font-black text-pink-700 shadow-md">
+                      🎁 תיבת מסתורין
+                    </span>
+                  ) : null}
+                  {product.isSpecialOffer ? (
+                    <span className="rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 px-3 py-1 text-xs font-black text-yellow-900 shadow-md">
+                      🔥 מבצע מיוחד
+                    </span>
+                  ) : null}
+                  {product.isFeatured ? (
+                    <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-black text-yellow-900">
+                      מומלץ
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <StockBadge stock={product.stock} />
             </div>

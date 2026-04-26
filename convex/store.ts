@@ -132,13 +132,13 @@ const defaultRankBoostProducts = [
   },
   {
     name: "Master 1 to Master 2",
-    legacyName: "Master 1 to Pro",
+    legacyName: undefined,
     description: "Rank boost option from Master 1 to Master 2.",
     price: "1700",
   },
   {
     name: "Master 2 to Master 3",
-    legacyName: "Master 2 to Pro",
+    legacyName: undefined,
     description: "Rank boost option from Master 2 to Master 3.",
     price: "1400",
   },
@@ -147,6 +147,18 @@ const defaultRankBoostProducts = [
     legacyName: undefined,
     description: "Rank boost option from Master 3 to Pro.",
     price: "900",
+  },
+  {
+    name: "Master 1 to Pro",
+    legacyName: undefined,
+    description: "Rank boost option from Master 1 to Pro.",
+    price: "3000",
+  },
+  {
+    name: "Master 2 to Pro",
+    legacyName: undefined,
+    description: "Rank boost option from Master 2 to Pro.",
+    price: "2300",
   },
 ] as const;
 
@@ -281,7 +293,7 @@ function sanitizeCategoryPatch(args: {
   imageUrl?: string;
   sortOrder?: number;
 }) {
-  return {
+  const patch = {
     name: args.name === undefined ? undefined : normalizeDisplayName(args.name),
     slug: args.slug === undefined ? undefined : normalizeSlug(args.slug),
     description: normalizeOptionalText(args.description, "Description", 500),
@@ -291,6 +303,9 @@ function sanitizeCategoryPatch(args: {
         ? undefined
         : normalizeSortOrder(args.sortOrder),
   };
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined)
+  );
 }
 
 function sanitizeProductInput(args: {
@@ -909,8 +924,13 @@ export const ensureRankBoostProducts = mutation({
           ? existingByName.get(option.legacyName.toLowerCase())
           : undefined);
 
-      if (existing) {
+      if (existing && !touchedProductIds.has(existing._id)) {
         touchedProductIds.add(existing._id);
+        existingByName.delete(existing.name.toLowerCase());
+        if (option.legacyName) {
+          existingByName.delete(option.legacyName.toLowerCase());
+        }
+
         await ctx.db.patch(existing._id, {
           name: sanitizedProduct.name,
           description: sanitizedProduct.description,
@@ -936,9 +956,11 @@ export const ensureRankBoostProducts = mutation({
 
     for (const product of existingProducts) {
       const name = product.name.toLowerCase();
+      // Only deactivate it if it's NOT a current product name, NOT a legacy name we just used,
+      // and NOT something we already updated.
       if (
-        legacyNames.has(name) &&
         !defaultNames.has(name) &&
+        !legacyNames.has(name) &&
         !touchedProductIds.has(product._id)
       ) {
         await ctx.db.patch(product._id, {

@@ -188,6 +188,7 @@ async function buildOrderSnapshotFromItems(ctx: any, sourceItems: OrderSnapshotI
         "Delivery content",
         5_000,
       ),
+      isMysteryBox: product.isMysteryBox ?? false,
     });
   }
 

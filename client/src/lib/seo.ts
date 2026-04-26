@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const SITE_NAME = "Razlo Store";
 const DEFAULT_DESCRIPTION =
-  "Razlo Store sells Brawl Stars accounts, rank boosting, trophy boosting, and friend services with fast delivery and support.";
+  "Razlo Store מוכרת חשבונות Brawl Stars, בוסט לראנק, בוסט לגביעים ושירותי חברים עם משלוח מהיר ותמיכה.";
 
 type SeoOptions = {
   title?: string;

@@ -61,11 +61,10 @@ export default function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
+      className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
           ? "border-b border-border/60 bg-white/85 shadow-lg backdrop-blur-xl"
           : "border-b border-transparent bg-transparent"
-      }`}
+        }`}
     >
       <div className="container">
         <div className="flex h-16 items-center justify-between gap-4">
@@ -93,11 +92,10 @@ export default function Navbar() {
           <nav className="hidden items-center gap-1 md:flex">
             <Link href="/">
               <span
-                className={`cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                  location === "/"
+                className={`cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ${location === "/"
                     ? "bg-secondary text-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
-                }`}
+                  }`}
               >
                 ראשי
               </span>

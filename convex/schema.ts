@@ -49,6 +49,7 @@ export default defineSchema({
         price: v.string(),
         quantity: v.number(),
         deliveryContent: v.optional(v.string()),
+        isMysteryBox: v.optional(v.boolean()),
       }),
     ),
     subtotal: v.string(),
