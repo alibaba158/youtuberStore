@@ -171,7 +171,7 @@ async function buildOrderSnapshotFromItems(ctx: any, sourceItems: OrderSnapshotI
     if (!product || !product.isActive) {
       throw new Error("One of the products in your cart is no longer available");
     }
-    if (product.stock < quantity) {
+    if (product.stock < quantity && !product.isMysteryBox) {
       throw new Error(`Insufficient stock for ${product.name}`);
     }
 
@@ -784,7 +784,7 @@ export const reserveStockForStripeCheckout = internalMutation({
       if (!product || !product.isActive) {
         throw new Error(`המוצר כבר לא זמין: ${item.name}`);
       }
-      if (product.stock < item.quantity) {
+      if (!product.isMysteryBox && product.stock < item.quantity) {
         throw new Error(`אין מספיק מלאי עבור ${item.name}`);
       }
     }
@@ -794,6 +794,7 @@ export const reserveStockForStripeCheckout = internalMutation({
       if (!product) {
         throw new Error(`המוצר כבר לא זמין: ${item.name}`);
       }
+      if (product.isMysteryBox) continue;
       await ctx.db.patch(item.productId, {
         stock: normalizeStock(product.stock - item.quantity),
         updatedAt: Date.now(),
@@ -838,7 +839,7 @@ export const validateOrderCanStartStripeCheckout = internalMutation({
         });
         throw new Error(`המוצר כבר לא זמין: ${item.name}`);
       }
-      if (product.stock < item.quantity) {
+      if (product.stock < item.quantity && !product.isMysteryBox) {
         await ctx.db.patch(args.orderId, {
           orderStatus: "canceled",
           paymentStatus: "canceled",
@@ -892,7 +893,7 @@ export const markOrderPaid = internalMutation({
         if (!product) {
           throw new Error(`Product no longer exists: ${item.name}`);
         }
-        if (product.stock < item.quantity) {
+        if (product.stock < item.quantity && !product.isMysteryBox) {
           throw new Error(`Insufficient stock to finalize ${item.name}`);
         }
       }
@@ -902,6 +903,7 @@ export const markOrderPaid = internalMutation({
         if (!product) {
           continue;
         }
+        if (product.isMysteryBox) continue;
         await ctx.db.patch(item.productId, {
           stock: normalizeStock(product.stock - item.quantity),
           updatedAt: Date.now(),

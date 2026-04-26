@@ -720,7 +720,7 @@ export const addToCart = mutation({
     const quantity = normalizeCartQuantity(args.quantity);
     const product = await getProductOrThrow(ctx, args.productId);
 
-    if (!product.isActive || product.stock < quantity) {
+    if (!product.isActive || (!product.isMysteryBox && product.stock < quantity)) {
       throw new Error("Insufficient stock");
     }
 
@@ -732,7 +732,7 @@ export const addToCart = mutation({
       .unique();
 
     const nextQuantity = (existing?.quantity ?? 0) + quantity;
-    if (product.stock < nextQuantity) {
+    if (!product.isMysteryBox && product.stock < nextQuantity) {
       throw new Error("Insufficient stock");
     }
 
@@ -779,7 +779,7 @@ export const updateCartItem = mutation({
     const quantity = normalizeCartQuantity(args.quantity);
 
     const product = await getProductOrThrow(ctx, args.productId);
-    if (product.stock < quantity) {
+    if (!product.isMysteryBox && product.stock < quantity) {
       throw new Error("Insufficient stock");
     }
 

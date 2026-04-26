@@ -36,7 +36,7 @@ export default function ProductCard({
     event.preventDefault();
     event.stopPropagation();
 
-    if (product.stock === 0) {
+    if (product.stock === 0 && !product.isMysteryBox) {
       return;
     }
 
@@ -44,7 +44,7 @@ export default function ProductCard({
       if (isAuthenticated) {
         await addToCart({ productId: product._id, quantity: 1 });
       } else {
-        addGuestCartItem(product._id, 1, product.stock);
+        addGuestCartItem(product._id, 1, product.isMysteryBox ? 9999 : product.stock);
       }
       toast.success("המוצר נוסף לעגלה");
     } catch (error) {
@@ -120,21 +120,21 @@ export default function ProductCard({
             <div className="mt-auto flex items-center justify-between gap-2">
               <div>
                 <p className="text-xl font-black text-foreground">₪{price.toFixed(2)}</p>
-                <StockBadge stock={product.stock} />
+                {!product.isMysteryBox && <StockBadge stock={product.stock} />}
               </div>
               <Button
                 size="sm"
-                variant={product.stock === 0 ? "outline" : "default"}
-                disabled={product.stock === 0}
+                variant={product.stock === 0 && !product.isMysteryBox ? "outline" : "default"}
+                disabled={product.stock === 0 && !product.isMysteryBox}
                 onClick={(event) => void handleAddToCart(event)}
                 className={`shrink-0 gap-1.5 font-semibold transition-all duration-200 ${
-                  product.stock > 0 
+                  product.stock > 0 || product.isMysteryBox
                     ? "hover:scale-105 hover:shadow-md" 
                     : ""
                 }`}
               >
                 <ShoppingCart className="h-3.5 w-3.5" />
-                {product.stock === 0 ? "אזל" : "הוסף"}
+                {product.stock === 0 && !product.isMysteryBox ? "אזל" : "הוסף"}
               </Button>
             </div>
           </div>

@@ -25,6 +25,122 @@ function getAppUrl() {
   return (process.env.APP_URL || process.env.SITE_URL || "").replace(/\/$/, "");
 }
 
+function getFromEmail() {
+  return (
+    process.env.AUTH_EMAIL_FROM?.trim() ||
+    process.env.GMAIL_FROM?.trim() ||
+    process.env.SMTP_FROM?.trim() ||
+    undefined
+  );
+}
+
+function getAdminRecipients() {
+  const configured = process.env.ADMIN_EMAILS
+    ?.split(",")
+    .map(email => email.trim())
+    .filter(Boolean);
+
+  if (configured && configured.length > 0) {
+    return configured;
+  }
+
+  return [
+    "xtremeytkids@gmail.com",
+    "almondtor123@gmail.com",
+  ];
+}
+
+type EmailPayload = {
+  to: string | string[];
+  subject: string;
+  text: string;
+  html: string;
+  replyTo?: string;
+};
+
+async function sendViaBrevo(payload: EmailPayload) {
+  const apiKey = process.env.BREVO_API_KEY?.trim();
+  const from = getFromEmail();
+
+  if (!apiKey || !from) {
+    return false;
+  }
+
+  const fromMatch = from.match(/^(.*)<([^>]+)>$/);
+  const sender = fromMatch
+    ? {
+        name: fromMatch[1].trim().replace(/^"|"$/g, ""),
+        email: fromMatch[2].trim(),
+      }
+    : { email: from };
+
+  const recipients = Array.isArray(payload.to) ? payload.to : [payload.to];
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": apiKey,
+    },
+    body: JSON.stringify({
+      sender,
+      to: recipients.map(email => ({ email })),
+      replyTo: payload.replyTo ? { email: payload.replyTo } : undefined,
+      subject: payload.subject,
+      htmlContent: payload.html,
+      textContent: payload.text,
+    }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Brevo email request failed: ${response.status} ${message}`);
+  }
+
+  return true;
+}
+
+async function sendViaSmtp(payload: EmailPayload) {
+  const user = getGmailUser();
+  const pass = getGmailPassword();
+  const from = getFromEmail() || (user ? `Razlo Store <${user}>` : undefined);
+
+  if (!user || !pass || !from) {
+    throw new Error(
+      "Missing email configuration. Set BREVO_API_KEY and AUTH_EMAIL_FROM, or SMTP/Gmail credentials in Convex environment variables.",
+    );
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST?.trim(),
+    port: process.env.SMTP_PORT?.trim()
+      ? Number(process.env.SMTP_PORT)
+      : undefined,
+    secure: process.env.SMTP_SECURE?.trim() === "true",
+    service:
+      !process.env.SMTP_HOST?.trim() && !process.env.SMTP_PORT?.trim()
+        ? "gmail"
+        : undefined,
+    auth: { user, pass },
+  });
+
+  await transporter.sendMail({
+    from,
+    to: payload.to,
+    replyTo: payload.replyTo,
+    subject: payload.subject,
+    text: payload.text,
+    html: payload.html,
+  });
+}
+
+async function sendEmail(payload: EmailPayload) {
+  const sentWithBrevo = await sendViaBrevo(payload);
+  if (sentWithBrevo) {
+    return;
+  }
+  await sendViaSmtp(payload);
+}
+
 function formatCurrency(value: string | number) {
   return new Intl.NumberFormat("he-IL", {
     style: "currency",
@@ -281,11 +397,6 @@ function buildCustomerDeliveryHtml(order: any, receiptUrl?: string) {
     </div>`;
 }
 
-const PURCHASE_NOTIFICATION_RECIPIENTS = [
-  "xtremeytkids@gmail.com",
-  "almondtor123@gmail.com",
-];
-
 function buildAdminPurchaseText(order: any, receiptUrl?: string) {
   const lines = [
     "רכישה חדשה בRazlo Store",
@@ -536,26 +647,13 @@ export const sendOrderReceipt = internalAction({
         throw new Error("Order does not have a customer email");
       }
 
-      const user = getGmailUser();
-      const pass = getGmailPassword();
-      if (!user || !pass) {
-        throw new Error(
-          "Missing Gmail credentials. Set GMAIL_USER and GMAIL_APP_PASSWORD in Convex environment variables.",
-        );
-      }
-
       const receiptUrl = getAppUrl()
         ? `${getAppUrl()}/receipt/${String(order._id)}`
         : undefined;
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: { user, pass },
-      });
 
       const isMysteryBoxOrder = order.items.some((item: any) => item.isMysteryBox);
 
-      await transporter.sendMail({
-        from: process.env.GMAIL_FROM?.trim() || `Razlo Store <${user}>`,
+      await sendEmail({
         to: order.customerEmail,
         subject: isMysteryBoxOrder
           ? `🎁 תיבת המסתורין שלך בדרך — Razlo Store`
@@ -605,28 +703,12 @@ export const sendAdminPurchaseNotification = internalAction({
         throw new Error("Paid order was not found");
       }
 
-      const user = getGmailUser();
-      const pass = getGmailPassword();
-      if (!user || !pass) {
-        throw new Error(
-          "Missing Gmail credentials. Set GMAIL_USER and GMAIL_APP_PASSWORD in Convex environment variables.",
-        );
-      }
-
       const receiptUrl = getAppUrl()
         ? `${getAppUrl()}/receipt/${String(order._id)}`
         : undefined;
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user,
-          pass,
-        },
-      });
 
-      await transporter.sendMail({
-        from: process.env.GMAIL_FROM?.trim() || `Razlo Store <${user}>`,
-        to: PURCHASE_NOTIFICATION_RECIPIENTS,
+      await sendEmail({
+        to: getAdminRecipients(),
         replyTo: order.customerEmail,
         subject: `רכישה חדשה בRazlo Store מאת ${order.customerName}`,
         text: buildAdminPurchaseText(order, receiptUrl),
@@ -676,27 +758,11 @@ export const sendCustomerDeliveryEmail = internalAction({
         throw new Error("Order does not have a customer email");
       }
 
-      const user = getGmailUser();
-      const pass = getGmailPassword();
-      if (!user || !pass) {
-        throw new Error(
-          "Missing Gmail credentials. Set GMAIL_USER and GMAIL_APP_PASSWORD in Convex environment variables.",
-        );
-      }
-
       const receiptUrl = getAppUrl()
         ? `${getAppUrl()}/receipt/${String(order._id)}`
         : undefined;
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user,
-          pass,
-        },
-      });
 
-      await transporter.sendMail({
-        from: process.env.GMAIL_FROM?.trim() || `Razlo Store <${user}>`,
+      await sendEmail({
         to: order.customerEmail,
         subject: `פרטי המוצר שלך בRazlo Store ${receiptNumber(String(order._id))}`,
         text: buildCustomerDeliveryText(order, receiptUrl),
