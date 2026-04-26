@@ -72,6 +72,69 @@ const defaultCategories = [
   },
 ] as const;
 
+const defaultRankBoostProducts = [
+  {
+    name: "Mythic 1 to Legendary",
+    description: "Rank boost option from Mythic 1 to Legendary.",
+    price: "100",
+  },
+  {
+    name: "Mythic 2 to Legendary",
+    description: "Rank boost option from Mythic 2 to Legendary.",
+    price: "70",
+  },
+  {
+    name: "Mythic 3 to Legendary",
+    description: "Rank boost option from Mythic 3 to Legendary.",
+    price: "50",
+  },
+  {
+    name: "Diamond 1 to Mythic",
+    description: "Rank boost option from Diamond 1 to Mythic.",
+    price: "160",
+  },
+  {
+    name: "Diamond 2 to Mythic",
+    description: "Rank boost option from Diamond 2 to Mythic.",
+    price: "120",
+  },
+  {
+    name: "Diamond 3 to Mythic",
+    description: "Rank boost option from Diamond 3 to Mythic.",
+    price: "90",
+  },
+  {
+    name: "Legendary 1 to Master",
+    description: "Rank boost option from Legendary 1 to Master.",
+    price: "250",
+  },
+  {
+    name: "Legendary 2 to Master",
+    description: "Rank boost option from Legendary 2 to Master.",
+    price: "180",
+  },
+  {
+    name: "Legendary 3 to Master",
+    description: "Rank boost option from Legendary 3 to Master.",
+    price: "120",
+  },
+  {
+    name: "Master 1 to Pro",
+    description: "Rank boost option from Master 1 to Pro.",
+    price: "1700",
+  },
+  {
+    name: "Master 2 to Pro",
+    description: "Rank boost option from Master 2 to Pro.",
+    price: "1400",
+  },
+  {
+    name: "Master 3 to Pro",
+    description: "Rank boost option from Master 3 to Pro.",
+    price: "900",
+  },
+] as const;
+
 function parseAdminEmails() {
   return new Set(
     (process.env.ADMIN_EMAILS ?? "")
@@ -677,6 +740,69 @@ export const ensureDefaultCategories = mutation({
     }
 
     return true;
+  },
+});
+
+export const ensureRankBoostProducts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    let rankCategory = await ctx.db
+      .query("categories")
+      .withIndex("by_slug", (q) => q.eq("slug", "rank"))
+      .unique();
+
+    if (!rankCategory) {
+      const categoryId = await ctx.db.insert(
+        "categories",
+        sanitizeCategoryInput({
+          name: "מדורג",
+          slug: "rank",
+          description: "קידום ראנק מהיר ובטוח על ידי שחקנים מנוסים.",
+          imageUrl: undefined,
+          sortOrder: 2,
+        }),
+      );
+      rankCategory = await ctx.db.get(categoryId);
+    }
+
+    if (!rankCategory) {
+      throw new Error("Could not create rank category");
+    }
+
+    const existingProducts = await ctx.db
+      .query("products")
+      .withIndex("by_categoryId", (q) => q.eq("categoryId", rankCategory._id))
+      .collect();
+    const existingNames = new Set(
+      existingProducts.map((product) => product.name.toLowerCase()),
+    );
+    const now = Date.now();
+    let created = 0;
+
+    for (const option of defaultRankBoostProducts) {
+      if (existingNames.has(option.name.toLowerCase())) {
+        continue;
+      }
+
+      await ctx.db.insert("products", {
+        ...sanitizeProductInput({
+          name: option.name,
+          description: option.description,
+          deliveryContent:
+            "After payment, open live chat and send your player tag plus the brawler/rank details for this boost.",
+          price: option.price,
+          categoryId: rankCategory._id,
+          stock: 99,
+          isActive: true,
+          isFeatured: false,
+        }),
+        createdAt: now + created,
+        updatedAt: now,
+      });
+      created += 1;
+    }
+
+    return { created };
   },
 });
 
