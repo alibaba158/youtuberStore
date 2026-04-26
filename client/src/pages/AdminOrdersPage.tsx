@@ -97,11 +97,10 @@ export default function AdminOrdersPage() {
   };
 
   const handleSendDetails = async (order: NonNullable<typeof orders>[number]) => {
-    await saveAdminFulfillment({
+    await sendCustomerDeliveryEmail({
       orderId: order._id as never,
       items: buildPayload(order) as never,
     });
-    await sendCustomerDeliveryEmail({ orderId: order._id as never });
     toast.success("פרטי המוצר נשלחו ללקוח");
     setDraftsByOrder((current) => {
       const next = { ...current };

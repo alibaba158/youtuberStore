@@ -409,6 +409,12 @@ function buildReceiptHtml(order: any, receiptUrl?: string, fulfillmentUrl?: stri
 }
 
 function buildCustomerDeliveryText(order: any, receiptUrl?: string) {
+  const deliveryByProductId = new Map(
+    (order.adminFulfillmentItems ?? []).map((entry: any) => [
+      String(entry.productId),
+      entry.content,
+    ]),
+  );
   const lines = [
     "Razlo Store - פרטי מוצר",
     "",
@@ -485,6 +491,118 @@ function buildCustomerDeliveryHtml(order: any, receiptUrl?: string) {
                 <div style="display:inline-block;margin:0 0 18px;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.16);font-size:13px;font-weight:800;color:#f8d7e8;">פרטי מוצר</div>
                 <h1 style="margin:0;font-size:32px;line-height:1.12;font-weight:900;">פרטי ההזמנה שלך ב-Razlo Store</h1>
                 <p style="margin:14px 0 0;color:rgba(255,255,255,0.74);font-size:15px;line-height:1.7;">צוות האדמין שלח את פרטי המוצר עבור הזמנתך ששולמה.</p>
+              </div>
+              <div style="background:#fbf7fa;border:1px solid #f2d9e7;border-top:0;border-radius:0 0 28px 28px;padding:24px 28px 30px;box-shadow:0 18px 45px rgba(36,17,28,0.08);text-align:right;">
+                <div style="padding:16px;border:1px solid #f2d9e7;border-radius:18px;background:#ffffff;margin-bottom:20px;">
+                  <p style="margin:0;font-size:14px;color:#7b6170;"><strong style="color:#24111c;">הזמנה:</strong> ${htmlEscape(
+                    String(order._id),
+                  )}</p>
+                  <p style="margin:7px 0 0;font-size:14px;color:#7b6170;"><strong style="color:#24111c;">לקוח:</strong> ${htmlEscape(
+                    order.customerName,
+                  )}</p>
+                </div>
+                ${itemCards}
+                ${receiptLink}
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>`;
+}
+
+function resolveOrderDeliveryContent(order: any, item: any) {
+  if (item.deliveryContent) {
+    return item.deliveryContent;
+  }
+
+  const match = (order.adminFulfillmentItems ?? []).find(
+    (entry: any) => String(entry.productId) === String(item.productId),
+  );
+
+  return match?.content || "לא נוספו פרטי מוצר עדיין.";
+}
+
+function buildResolvedCustomerDeliveryText(order: any, receiptUrl?: string) {
+  const lines = [
+    "Razlo Store - פרטי מוצר",
+    "",
+    `הזמנה: ${String(order._id)}`,
+    `לקוח: ${order.customerName}`,
+    `אימייל: ${order.customerEmail}`,
+    "",
+    "פרטי המוצר:",
+  ];
+
+  for (const item of order.items) {
+    lines.push(
+      "",
+      `${item.name} x${item.quantity}`,
+      resolveOrderDeliveryContent(order, item),
+    );
+  }
+
+  if (receiptUrl) {
+    lines.push("", `קבלה: ${receiptUrl}`);
+  }
+
+  return lines.join("\n");
+}
+
+function buildResolvedCustomerDeliveryHtml(order: any, receiptUrl?: string) {
+  const itemCards = order.items
+    .map(
+      (item: any) => `
+        <div style="margin:0 0 18px;padding:18px;border:1px solid #f0d9e6;border-radius:20px;background:#ffffff;text-align:right;">
+          <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;direction:rtl;">
+            <tr>
+              <td style="width:72px;vertical-align:top;">
+                ${
+                  item.imageUrl
+                    ? `<img src="${htmlEscape(
+                        item.imageUrl,
+                      )}" alt="${htmlEscape(
+                        item.name,
+                      )}" width="58" height="58" style="display:block;width:58px;height:58px;object-fit:contain;border-radius:14px;background:#f7edf3;padding:6px;border:1px solid #f2d9e7;" />`
+                    : `<div style="width:58px;height:58px;border-radius:14px;background:#f7edf3;border:1px solid #f2d9e7;"></div>`
+                }
+              </td>
+              <td style="vertical-align:top;padding-right:12px;">
+                <div style="font-size:18px;font-weight:900;color:#24111c;">${htmlEscape(
+                  item.name,
+                )}</div>
+                <div style="margin-top:4px;font-size:13px;color:#7b6170;">כמות: ${htmlEscape(
+                  item.quantity,
+                )}</div>
+              </td>
+            </tr>
+          </table>
+          <div style="margin-top:14px;border:1px solid #f0d9e6;border-radius:16px;background:#fcf8fb;overflow:hidden;">
+            <div style="padding:10px 14px;background:#f7edf3;color:#6b2150;font-size:12px;font-weight:900;">פרטי החשבון שנשלחו עבורך</div>
+            <div style="padding:14px;color:#24111c;font-size:14px;line-height:1.8;white-space:pre-wrap;">${htmlEscape(
+              resolveOrderDeliveryContent(order, item),
+            )}</div>
+          </div>
+        </div>`,
+    )
+    .join("");
+
+  const receiptLink = receiptUrl
+    ? `<p style="margin:22px 0 0;"><a href="${htmlEscape(
+        receiptUrl,
+      )}" style="display:inline-block;background:#24111c;color:#ffffff;text-decoration:none;font-weight:800;border-radius:14px;padding:12px 18px;">פתח קבלה</a></p>`
+    : "";
+
+  return `
+    <div style="margin:0;padding:0;background:#fbf7fa;direction:rtl;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;background:#fbf7fa;">
+        <tr>
+          <td style="padding:28px 14px;">
+            <div style="width:100%;max-width:720px;margin:0 auto;font-family:Arial,sans-serif;color:#24111c;">
+              <div style="border-radius:28px 28px 0 0;background:#24111c;padding:32px 28px;color:#ffffff;background-image:radial-gradient(circle at top right, rgba(244,86,165,0.42), transparent 34%), radial-gradient(circle at bottom left, rgba(164,255,62,0.16), transparent 32%);text-align:right;">
+                <div style="display:inline-block;margin:0 0 18px;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.16);font-size:13px;font-weight:800;color:#f8d7e8;">פרטי מוצר</div>
+                <h1 style="margin:0;font-size:32px;line-height:1.12;font-weight:900;">הפרטים של ההזמנה שלך מוכנים</h1>
+                <p style="margin:14px 0 0;color:rgba(255,255,255,0.74);font-size:15px;line-height:1.7;">צוות האדמין שלח לך את פרטי המוצר עבור ההזמנה ששולמה.</p>
               </div>
               <div style="background:#fbf7fa;border:1px solid #f2d9e7;border-top:0;border-radius:0 0 28px 28px;padding:24px 28px 30px;box-shadow:0 18px 45px rgba(36,17,28,0.08);text-align:right;">
                 <div style="padding:16px;border:1px solid #f2d9e7;border-radius:18px;background:#ffffff;margin-bottom:20px;">
@@ -885,8 +1003,8 @@ export const sendCustomerDeliveryEmail = internalAction({
       await sendEmail({
         to: order.customerEmail,
         subject: `פרטי המוצר שלך בRazlo Store ${receiptNumber(String(order._id))}`,
-        text: buildCustomerDeliveryText(order, receiptUrl),
-        html: buildCustomerDeliveryHtml(order, receiptUrl),
+        text: buildResolvedCustomerDeliveryText(order, receiptUrl),
+        html: buildResolvedCustomerDeliveryHtml(order, receiptUrl),
       });
 
       await ctx.runMutation(internal.orders.markCustomerDeliveryEmailSent, {

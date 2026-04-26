@@ -597,6 +597,14 @@ export const markCustomerDeliveryEmailFailed = internalMutation({
 export const sendCustomerDeliveryEmail = mutation({
   args: {
     orderId: v.id("orders"),
+    items: v.optional(
+      v.array(
+        v.object({
+          productId: v.id("products"),
+          content: v.string(),
+        }),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     const viewer = await requireViewer(ctx);
@@ -610,6 +618,34 @@ export const sendCustomerDeliveryEmail = mutation({
     }
     if (order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
       throw new Error("Only paid orders can receive product details");
+    }
+
+    if (args.items?.length) {
+      const normalizedItems = args.items.map((item) => ({
+        productId: item.productId,
+        content: normalizeRequiredText(
+          item.content,
+          "Fulfillment content",
+          5_000,
+        ),
+      }));
+      const fulfillmentByProductId = new Map(
+        normalizedItems.map((item) => [String(item.productId), item.content]),
+      );
+      const updatedOrderItems = order.items.map((item) => ({
+        ...item,
+        deliveryContent:
+          fulfillmentByProductId.get(String(item.productId)) ??
+          item.deliveryContent,
+      }));
+      const now = Date.now();
+
+      await ctx.db.patch(args.orderId, {
+        items: updatedOrderItems,
+        adminFulfillmentItems: normalizedItems,
+        adminFulfillmentPreparedAt: now,
+        updatedAt: now,
+      });
     }
 
     await ctx.scheduler.runAfter(0, internal.emails.sendCustomerDeliveryEmail, {

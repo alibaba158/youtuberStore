@@ -57,11 +57,10 @@ export default function AdminOrderFulfillmentPage() {
 
   const handleSend = async () => {
     if (!order) return;
-    await saveAdminFulfillment({
+    await sendCustomerDeliveryEmail({
       orderId: order._id as never,
       items: buildPayload() as never,
     });
-    await sendCustomerDeliveryEmail({ orderId: order._id as never });
     toast.success("המייל ללקוח נשלח");
     setDrafts({});
   };
