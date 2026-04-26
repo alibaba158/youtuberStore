@@ -205,6 +205,90 @@ function buildReceiptText(order: any, receiptUrl?: string, fulfillmentUrl?: stri
   return lines.join("\n");
 }
 
+function buildMysteryBoxReceiptHtmlClean(order: any, receiptUrl?: string) {
+  const itemRows = order.items
+    .map(
+      (item: any) => `
+        <tr>
+          <td style="padding:14px 16px;border-bottom:1px solid #ece7f3;text-align:right;">
+            <div style="font-weight:800;color:#201726;font-size:15px;">${htmlEscape(item.name)}</div>
+            <div style="font-size:13px;color:#7b6b86;margin-top:3px;">${htmlEscape(item.quantity)} x ${htmlEscape(formatCurrency(item.price))}</div>
+          </td>
+          <td style="padding:14px 16px;border-bottom:1px solid #ece7f3;text-align:left;font-weight:900;color:#201726;white-space:nowrap;font-size:16px;">${htmlEscape(formatCurrency(Number(item.price) * item.quantity))}</td>
+        </tr>`,
+    )
+    .join("");
+
+  const receiptLink = receiptUrl
+    ? `<p style="margin:24px 0 0;text-align:right;"><a href="${htmlEscape(
+        receiptUrl,
+      )}" style="display:inline-block;background:#201726;color:#ffffff;text-decoration:none;font-weight:800;border-radius:14px;padding:12px 18px;font-size:14px;">צפייה בקבלה</a></p>`
+    : "";
+
+  return `
+    <div style="margin:0;padding:0;background:#f6f2f8;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;background:#f6f2f8;">
+        <tr>
+          <td style="padding:32px 14px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;max-width:680px;margin:0 auto;border-collapse:collapse;font-family:Arial,sans-serif;direction:rtl;">
+              <tr>
+                <td style="border-radius:24px 24px 0 0;background:linear-gradient(135deg,#201726,#4b1f46);padding:36px 32px;color:#ffffff;text-align:right;">
+                  <div style="display:inline-block;margin:0 0 14px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.16);font-size:12px;font-weight:800;">מיסטרי בוקס</div>
+                  <h1 style="margin:0;font-size:30px;line-height:1.15;font-weight:900;">ההזמנה שלך התקבלה</h1>
+                  <p style="margin:14px 0 0;color:rgba(255,255,255,0.78);font-size:15px;line-height:1.8;">תיבת המסתורין שלך בטיפול. ברגע שהחשבון יהיה מוכן, פרטי המוצר יישלחו אליך במייל נוסף.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#ffffff;padding:24px 32px;border-left:1px solid #e7deef;border-right:1px solid #e7deef;">
+                  <div style="border:1px solid #eadff1;border-radius:18px;padding:18px 20px;background:#faf7fc;text-align:right;">
+                    <p style="margin:0;font-size:15px;font-weight:800;color:#201726;line-height:1.8;">מה קורה עכשיו?</p>
+                    <p style="margin:8px 0 0;font-size:14px;color:#6f627a;line-height:1.9;">הצוות שלנו מכין עבורך את החשבון מהמיסטרי בוקס. אחרי שההכנה תושלם, יישלח אליך מייל נוסף עם כל הפרטים שצריך.</p>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#ffffff;padding:0 32px 28px;border-left:1px solid #e7deef;border-right:1px solid #e7deef;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+                    <tr>
+                      <td style="padding:0 0 12px;vertical-align:top;">
+                        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#8d4c7f;">קבלה</div>
+                        <div style="margin-top:4px;font-size:20px;font-weight:900;color:#201726;">${htmlEscape(receiptNumber(String(order._id)))}</div>
+                      </td>
+                      <td style="padding:0 0 12px;text-align:left;vertical-align:top;">
+                        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#8d4c7f;">סה"כ שולם</div>
+                        <div style="margin-top:4px;font-size:22px;font-weight:900;color:#201726;">${htmlEscape(formatCurrency(order.subtotal))}</div>
+                      </td>
+                    </tr>
+                  </table>
+                  <div style="padding:14px 16px;border:1px solid #eadff1;border-radius:14px;background:#faf7fc;margin-bottom:18px;">
+                    <p style="margin:0;font-size:13px;color:#6f627a;"><strong style="color:#201726;">הזמנה:</strong> ${htmlEscape(String(order._id))}</p>
+                    <p style="margin:7px 0 0;font-size:13px;color:#6f627a;"><strong style="color:#201726;">תאריך:</strong> ${htmlEscape(order.paidAt ? new Date(order.paidAt).toLocaleString("he-IL") : "-")}</p>
+                    <p style="margin:7px 0 0;font-size:13px;color:#6f627a;"><strong style="color:#201726;">לקוח:</strong> ${htmlEscape(order.customerName)}</p>
+                  </div>
+                  <table style="width:100%;border-collapse:collapse;border:1px solid #eadff1;border-radius:14px;overflow:hidden;">
+                    <thead>
+                      <tr style="background:#faf7fc;">
+                        <th style="padding:12px 16px;text-align:right;color:#6f627a;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;">פריט</th>
+                        <th style="padding:12px 16px;text-align:left;color:#6f627a;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;">סכום</th>
+                      </tr>
+                    </thead>
+                    <tbody>${itemRows}</tbody>
+                  </table>
+                  ${receiptLink}
+                </td>
+              </tr>
+              <tr>
+                <td style="border-radius:0 0 24px 24px;background:#ffffff;padding:18px 32px;text-align:right;border:1px solid #e7deef;border-top:0;">
+                  <p style="margin:0;font-size:12px;color:#8a7d95;">נשלח מ-Razlo Store לאחר אישור תשלום.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>`;
+}
+
 function buildReceiptHtml(order: any, receiptUrl?: string, fulfillmentUrl?: string) {
   const itemRows = order.items
     .map(
@@ -695,7 +779,7 @@ export const sendOrderReceipt = internalAction({
           ? buildMysteryBoxReceiptText(order, receiptUrl)
           : buildReceiptText(order, receiptUrl),
         html: isMysteryBoxOrder
-          ? buildMysteryBoxReceiptHtml(order, receiptUrl)
+          ? buildMysteryBoxReceiptHtmlClean(order, receiptUrl)
           : buildReceiptHtml(order, receiptUrl),
       });
 

@@ -663,9 +663,19 @@ export const saveAdminFulfillment = mutation({
         5_000,
       ),
     }));
+    const fulfillmentByProductId = new Map(
+      normalizedItems.map((item) => [String(item.productId), item.content]),
+    );
+    const updatedOrderItems = order.items.map((item) => ({
+      ...item,
+      deliveryContent:
+        fulfillmentByProductId.get(String(item.productId)) ??
+        item.deliveryContent,
+    }));
 
     const now = Date.now();
     await ctx.db.patch(args.orderId, {
+      items: updatedOrderItems,
       adminFulfillmentItems: normalizedItems,
       adminFulfillmentPreparedAt: now,
       updatedAt: now,
@@ -704,7 +714,7 @@ export const adminRecentOrders = query({
       )
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, 100)
-      .map((order) => serializeOrder(order));
+      .map((order) => serializeOrder(order, { includeDeliveryContent: true }));
   },
 });
 
