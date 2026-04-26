@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
 import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
 import { api } from "../../../convex/_generated/api";
+import { buildSiteStructuredData, useSeo } from "@/lib/seo";
 import brawlStarsLogo from "@/images/brawlstars_logo.png";
 import trophieImg from "@/images/trophie.png";
 import rankImg from "@/images/rank.png";
@@ -110,6 +111,15 @@ function CategoryCard({
 }
 
 export default function Home() {
+  useSeo({
+    title: "Razlo Store | Brawl Stars Accounts, Rank Boosting and Trophy Boosting",
+    description:
+      "Buy Brawl Stars accounts, rank boosting, trophy boosting, and friend services from Razlo Store with fast delivery and support.",
+    canonicalPath: "/",
+    image: "/favicon.png",
+    structuredData: buildSiteStructuredData(),
+  });
+
   const data = useQuery(api.store.homePageData);
   const categories = data?.categories;
   const featured = data?.featured;

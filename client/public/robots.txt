@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /auth
+Disallow: /cart
+Disallow: /checkout
+Disallow: /receipt
+Disallow: /thank-you
+Disallow: /chat
+
+Sitemap: https://razlo.store/sitemap.xml

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
 import { addGuestCartItem } from "@/lib/guestCart";
+import { useSeo } from "@/lib/seo";
 import { api } from "../../../convex/_generated/api";
 import { Doc } from "../../../convex/_generated/dataModel";
 import noProductsImg from "@/images/noproducts.png";
@@ -75,6 +76,29 @@ const emptyStateBySlug = {
   friends: {
     title: "עדיין אין מוצרים בקטגוריה הזאת",
     description: "כאן יופיעו מוצרי חברויות כשתוסיף מלאי.",
+  },
+} as const;
+
+const categorySeoBySlug = {
+  accounts: {
+    title: "Brawl Stars Accounts for Sale | Razlo Store",
+    description:
+      "Browse Brawl Stars accounts for sale at Razlo Store. Find accounts with trophies, skins, and fast delivery.",
+  },
+  rank: {
+    title: "Brawl Stars Rank Boosting | Razlo Store",
+    description:
+      "Choose Brawl Stars rank boosting options from Diamond, Mythic, Legendary, and Master ranks.",
+  },
+  trophies: {
+    title: "Brawl Stars Trophy Boosting | Razlo Store",
+    description:
+      "Buy Brawl Stars trophy boosting services from Razlo Store with clear options and fast support.",
+  },
+  friends: {
+    title: "Brawl Stars Friends and Services | Razlo Store",
+    description:
+      "Browse Brawl Stars friend services and account services from Razlo Store.",
   },
 } as const;
 
@@ -260,6 +284,20 @@ export default function CategoryPage() {
   const category = data?.category;
   const products = data?.products;
   const isRankCategory = category?.slug === "rank";
+  const seo =
+    categorySeoBySlug[
+      (category?.slug ?? params.slug ?? "accounts") as keyof typeof categorySeoBySlug
+    ];
+
+  useSeo({
+    title: seo?.title ?? `${category?.name ?? "Category"} | Razlo Store`,
+    description:
+      seo?.description ??
+      category?.description ??
+      "Browse Brawl Stars products and services from Razlo Store.",
+    canonicalPath: params.slug ? `/category/${params.slug}` : undefined,
+    image: "/favicon.png",
+  });
 
   useEffect(() => {
     if (params.slug !== "rank") {

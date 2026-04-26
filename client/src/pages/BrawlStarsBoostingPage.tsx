@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useSeo } from "@/lib/seo";
 import brawlStarsLogo from "@/images/brawlstars_logo.png";
 import trophieImg from "@/images/trophie.png";
 import rankImg from "@/images/rank.png";
@@ -47,6 +48,14 @@ const processSteps = [
 ];
 
 export default function BrawlStarsBoostingPage() {
+  useSeo({
+    title: "Brawl Stars Boosting Services | Razlo Store",
+    description:
+      "Buy Brawl Stars rank boosting and trophy boosting services from Razlo Store with fast delivery and support.",
+    canonicalPath: "/brawl-stars-boosting",
+    image: "/favicon.png",
+  });
+
   return (
     <section dir="rtl" className="relative overflow-hidden bg-[#f3f4f7] text-slate-950">
       <div className="absolute inset-x-0 top-0 h-24 bg-[#181923]" />

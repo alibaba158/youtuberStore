@@ -3,10 +3,11 @@ import { useMutation } from "convex/react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import { api } from "../../convex/_generated/api";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { initGoogleAnalytics, trackPageView } from "./lib/analytics";
 import Home from "./pages/Home";
 import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
@@ -24,6 +25,20 @@ import AdminOrdersPage from "./pages/AdminOrdersPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import PublicChatWidget from "./components/PublicChatWidget";
+
+function GoogleAnalytics() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    initGoogleAnalytics();
+  }, []);
+
+  useEffect(() => {
+    trackPageView(`${location}${window.location.search}${window.location.hash}`);
+  }, [location]);
+
+  return null;
+}
 
 function Router() {
   return (
@@ -60,6 +75,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster position="top-center" richColors />
+          <GoogleAnalytics />
           <div className="min-h-screen flex flex-col bg-background" dir="rtl">
             <Navbar />
             <main className="flex-1">

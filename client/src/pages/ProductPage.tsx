@@ -26,6 +26,7 @@ import mythicSkinImage from "@/images/mythic-skin.png";
 import rareSkinImage from "@/images/rare-skin.png";
 import superRareSkinImage from "@/images/super-rare-skin.png";
 import { addGuestCartItem } from "@/lib/guestCart";
+import { absoluteUrl, useSeo } from "@/lib/seo";
 import { api } from "../../../convex/_generated/api";
 
 const skinStats = [
@@ -69,6 +70,44 @@ export default function ProductPage() {
     ].filter((url): url is string => Boolean(url));
     return Array.from(new Set(images)).slice(0, 6);
   }, [product]);
+
+  const productDescription =
+    product?.description ||
+    (product
+      ? `Buy ${product.name} from Razlo Store with fast delivery and support.`
+      : "Buy Brawl Stars accounts, rank boosting, trophy boosting, and services from Razlo Store.");
+
+  useSeo({
+    title: product
+      ? `${product.name} | Razlo Store`
+      : "Brawl Stars Product | Razlo Store",
+    description: productDescription,
+    canonicalPath: params.id ? `/product/${params.id}` : undefined,
+    image: galleryImages[0] ?? "/favicon.png",
+    structuredData: product
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: productDescription,
+          image: galleryImages.map((image) => absoluteUrl(image)),
+          brand: {
+            "@type": "Brand",
+            name: "Razlo Store",
+          },
+          offers: {
+            "@type": "Offer",
+            url: absoluteUrl(`/product/${product._id}`),
+            priceCurrency: "ILS",
+            price: product.price,
+            availability:
+              product.stock > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+          },
+        }
+      : undefined,
+  });
 
   const handleAddToCart = async () => {
     if (!product || product.stock === 0) return;
