@@ -359,6 +359,9 @@ export default function ProductPage() {
                     </p>
                   </div>
                 ) : null}
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-right text-xs font-bold leading-6 text-amber-900">
+                  אין החזר כספי על מוצרים דיגיטליים לאחר רכישה. יש לוודא את פרטי המוצר לפני התשלום.
+                </div>
                 <Button
                   size="lg"
                   className="h-12 gap-2 text-base font-black"

@@ -324,6 +324,9 @@ export default function CartPage() {
                     </p>
                   </div>
                 ) : null}
+                <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-right text-xs font-bold leading-6 text-amber-900">
+                  אין החזר כספי על מוצרים דיגיטליים לאחר רכישה. יש לוודא את פרטי ההזמנה לפני התשלום.
+                </div>
                 <Button
                   size="lg"
                   className="w-full gap-2 text-base font-semibold"

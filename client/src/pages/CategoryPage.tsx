@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { Link, useParams } from "wouter";
-import { ArrowRight, Package, ShoppingCart } from "lucide-react";
+import { ArrowRight, Check, Package, ShoppingCart, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -17,35 +17,39 @@ type Product = Doc<"products">;
 const rankGroups = [
   {
     key: "mythic",
-    title: "Mythic",
+    title: "מיטיק",
+    eyebrow: "Mythic",
     image: "/rank-mythic.png",
     match: ["mythic", "מיטיק"],
-    panelClass: "from-rose-500/24 to-fuchsia-500/12",
-    borderClass: "border-rose-300/40",
+    frameClass: "from-[#ff5270]/35 via-[#a54070]/22 to-[#3d294d]/65",
+    accentClass: "bg-[#ff5270]",
   },
   {
     key: "diamond",
-    title: "Diamond",
+    title: "דיימונד",
+    eyebrow: "Diamond",
     image: "/rank-diamond.png",
     match: ["diamond", "דיימונד"],
-    panelClass: "from-sky-400/22 to-cyan-400/12",
-    borderClass: "border-sky-300/40",
+    frameClass: "from-[#62d8ff]/35 via-[#3b8db9]/20 to-[#243c5c]/65",
+    accentClass: "bg-[#5fd6ff]",
   },
   {
     key: "legendary",
-    title: "Legendary",
+    title: "לג׳נדרי",
+    eyebrow: "Legendary",
     image: "/rank-legendery.png",
-    match: ["legendary", "legendery", "לגנדרי", "לג'נדרי"],
-    panelClass: "from-amber-400/24 to-stone-400/12",
-    borderClass: "border-amber-300/40",
+    match: ["legendary", "legendery", "לג׳נדרי", "לגנדרי"],
+    frameClass: "from-[#ffb11f]/35 via-[#b68539]/20 to-[#4a4036]/65",
+    accentClass: "bg-[#ffb11f]",
   },
   {
     key: "master",
-    title: "Master",
+    title: "מאסטר",
+    eyebrow: "Master",
     image: "/rank-master.png",
     match: ["master", "מאסטר"],
-    panelClass: "from-emerald-400/24 to-teal-400/12",
-    borderClass: "border-emerald-300/40",
+    frameClass: "from-[#31d77a]/32 via-[#23866b]/20 to-[#163f43]/65",
+    accentClass: "bg-[#31d77a]",
   },
 ] as const;
 
@@ -67,6 +71,27 @@ const emptyStateBySlug = {
     description: "כאן יופיעו מוצרי חברויות כשתוסיף מלאי.",
   },
 } as const;
+
+const rankNameMap: Record<string, string> = {
+  Mythic: "מיטיק",
+  Diamond: "דיימונד",
+  Legendary: "לג׳נדרי",
+  Legendery: "לג׳נדרי",
+  Master: "מאסטר",
+  Pro: "פרו",
+};
+
+function displayRankOptionName(name: string) {
+  const match = name.match(/^(.+?)\s+([123])\s+to\s+(.+)$/i);
+  if (!match) {
+    return name;
+  }
+
+  const [, fromRank, level, toRank] = match;
+  const from = rankNameMap[fromRank] ?? fromRank;
+  const to = rankNameMap[toRank] ?? toRank;
+  return `${from} ${level} ל${to}`;
+}
 
 function rankGroupForProduct(product: Product) {
   const searchable = `${product.name} ${product.description ?? ""} ${
@@ -115,18 +140,19 @@ function RankOptionCard({
       type="button"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.04 }}
+      transition={{ duration: 0.35, delay: index * 0.035 }}
       disabled={disabled}
       onClick={() => void handleAddToCart()}
-      className="group flex w-full items-stretch overflow-hidden rounded-2xl border border-white/70 bg-white/90 text-right shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
+      className="group grid w-full grid-cols-[1fr_104px] overflow-hidden rounded-[22px] border border-white/70 bg-white/[0.92] text-right shadow-[0_14px_35px_rgba(0,0,0,0.16)] transition hover:-translate-y-1 hover:border-white hover:bg-white disabled:cursor-not-allowed disabled:opacity-55 sm:grid-cols-[1fr_118px]"
     >
-      <span className="flex flex-1 items-center justify-center px-4 py-4 text-2xl font-black leading-tight text-black md:text-3xl">
-        {product.name}
+      <span className="flex min-h-[86px] items-center justify-center px-4 py-3 text-2xl font-black leading-tight text-black sm:text-3xl">
+        {displayRankOptionName(product.name)}
       </span>
-      <span className="flex w-32 shrink-0 items-center justify-center bg-[#a9afd8] px-4 py-4 text-4xl font-black text-black md:w-36 md:text-5xl">
+      <span className="flex min-h-[86px] items-center justify-center bg-[#a9afd8] px-3 py-3 text-3xl font-black tabular-nums text-black sm:text-4xl">
         {Number(product.price).toLocaleString("he-IL")}
       </span>
-      <span className="sr-only">
+      <span className="col-span-2 flex items-center justify-center gap-2 border-t border-black/5 bg-black/[0.03] px-4 py-2 text-xs font-black text-foreground opacity-80 transition group-hover:bg-accent group-hover:text-accent-foreground">
+        <ShoppingCart className="h-4 w-4" />
         {disabled ? "אזל מהמלאי" : "הוסף לעגלה"}
       </span>
     </motion.button>
@@ -142,64 +168,88 @@ function RankOptionsPage({ products }: { products: Product[] }) {
   }));
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-[#192243] via-[#293666] to-[#111827] p-4 shadow-2xl md:p-7">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(244,86,165,0.24),_transparent_36%)]" />
-      <div className="relative rounded-3xl bg-white/12 p-4 backdrop-blur-sm md:p-6">
-        <h2 className="mb-7 text-center text-4xl font-black text-white drop-shadow-[0_3px_0_rgba(0,0,0,0.55)] md:text-6xl">
-          מחירון ראנקד
-        </h2>
+    <section className="relative overflow-hidden rounded-[34px] border border-white/60 bg-[#111827] p-3 shadow-2xl md:p-6">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(97,218,255,0.28),transparent_32%),radial-gradient(circle_at_82%_12%,rgba(255,82,112,0.22),transparent_30%),linear-gradient(135deg,rgba(51,65,120,0.72),rgba(17,24,39,0.96))]" />
+      <div className="absolute inset-x-0 top-0 h-28 bg-white/10 blur-2xl" />
 
-        <div className="grid gap-4 xl:grid-cols-4">
+      <div className="relative rounded-[28px] border border-white/15 bg-white/10 p-4 backdrop-blur-md md:p-7">
+        <div className="mx-auto mb-7 max-w-3xl text-center">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-black text-white">
+            <Sparkles className="h-4 w-4 text-accent" />
+            בחר את הבוסט שמתאים לך
+          </div>
+          <h2 className="text-4xl font-black leading-tight text-white drop-shadow-[0_3px_0_rgba(0,0,0,0.45)] md:text-6xl">
+            מחירון ראנקד
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-white/78">
+            כל לחיצה מוסיפה את האפשרות לעגלה. אחרי התשלום נבקש בצ׳אט את תג
+            השחקן ואת הפרטים המדויקים לביצוע הבוסט.
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-4">
           {grouped.map((group, groupIndex) => (
             <section
               key={group.key}
-              className={`min-h-[560px] rounded-3xl border ${group.borderClass} bg-gradient-to-b ${group.panelClass} p-4 backdrop-blur-md`}
+              className={`relative overflow-hidden rounded-[30px] border border-white/18 bg-gradient-to-b ${group.frameClass} p-4 shadow-xl shadow-black/20`}
             >
-              <div className="mb-5 flex min-h-24 items-center justify-center">
-                <img
-                  src={group.image}
-                  alt={group.title}
-                  className="max-h-24 max-w-full object-contain drop-shadow-xl"
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                    event.currentTarget.nextElementSibling?.classList.remove(
-                      "hidden",
-                    );
-                  }}
-                />
-                <div className="hidden rounded-2xl border border-white/30 bg-white/70 p-5 text-muted-foreground">
-                  <Package className="h-10 w-10" />
-                </div>
-              </div>
-
-              <h3 className="mb-5 text-center text-2xl font-black text-white drop-shadow">
-                {group.title}
-              </h3>
-
-              <div className="space-y-5">
-                {group.products.length > 0 ? (
-                  group.products.map((product, index) => (
-                    <RankOptionCard
-                      key={product._id}
-                      product={product}
-                      index={groupIndex * 4 + index}
-                    />
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-white/30 bg-white/75 p-5 text-center text-base font-black text-foreground">
-                    טוען אפשרויות...
+              <div className="absolute inset-0 bg-black/10" />
+              <div className="relative">
+                <div className="mb-4 flex min-h-24 items-center justify-center">
+                  <img
+                    src={group.image}
+                    alt={group.eyebrow}
+                    className="max-h-24 max-w-full object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.38)]"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                      event.currentTarget.nextElementSibling?.classList.remove(
+                        "hidden",
+                      );
+                    }}
+                  />
+                  <div className="hidden rounded-2xl border border-white/25 bg-white/70 p-5 text-muted-foreground">
+                    <Package className="h-10 w-10" />
                   </div>
-                )}
+                </div>
+
+                <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-white/15 bg-black/[0.18] px-4 py-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-white/60">
+                      {group.eyebrow}
+                    </p>
+                    <h3 className="text-2xl font-black text-white">
+                      {group.title}
+                    </h3>
+                  </div>
+                  <span className={`h-3 w-3 rounded-full ${group.accentClass}`} />
+                </div>
+
+                <div className="space-y-4">
+                  {group.products.length > 0 ? (
+                    group.products.map((product, index) => (
+                      <RankOptionCard
+                        key={product._id}
+                        product={product}
+                        index={groupIndex * 4 + index}
+                      />
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-white/30 bg-white/82 p-5 text-center text-base font-black text-foreground">
+                      טוען אפשרויות...
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
           ))}
         </div>
 
-        <div className="mx-auto mt-5 w-fit rounded-2xl bg-[#a9afd8] px-8 py-3 text-center text-2xl font-black text-black">
+        <div className="mx-auto mt-6 flex w-fit items-center gap-2 rounded-2xl bg-[#a9afd8] px-6 py-3 text-center text-lg font-black text-black shadow-lg md:text-2xl">
+          <Check className="h-5 w-5" />
           כל הזכויות שמורות למדורג*
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -212,6 +262,7 @@ export default function CategoryPage() {
   const ensureRankBoostProducts = useMutation(api.store.ensureRankBoostProducts);
   const category = data?.category;
   const products = data?.products;
+  const isRankCategory = category?.slug === "rank";
 
   useEffect(() => {
     if (params.slug !== "rank") {
@@ -257,7 +308,7 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="border-b border-border bg-white">
+      <div className={isRankCategory ? "bg-[#f8f4f8]" : "border-b border-border bg-white"}>
         <div className="container py-8">
           <Link href="/">
             <span className="mb-4 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -265,52 +316,58 @@ export default function CategoryPage() {
               חזרה לדף הבית
             </span>
           </Link>
-          <h1 className="text-2xl font-black text-foreground md:text-3xl">
-            {category.name}
-          </h1>
-          {category.description ? (
-            <p className="mt-2 max-w-xl text-muted-foreground">
-              {category.description}
-            </p>
+          {!isRankCategory ? (
+            <>
+              <h1 className="text-2xl font-black text-foreground md:text-3xl">
+                {category.name}
+              </h1>
+              {category.description ? (
+                <p className="mt-2 max-w-xl text-muted-foreground">
+                  {category.description}
+                </p>
+              ) : null}
+            </>
           ) : null}
         </div>
       </div>
 
-      <div className="container py-10">
-        {products === undefined ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <ProductCardSkeleton key={index} />
-            ))}
-          </div>
-        ) : category.slug === "rank" ? (
-          <RankOptionsPage products={products} />
-        ) : products.length === 0 ? (
-          <div className="py-20 text-center">
-            <img
-              src={noProductsImg}
-              alt="אין מוצרים"
-              className="mx-auto mb-5 h-28 w-28 object-contain opacity-70"
-            />
-            <h3 className="mb-2 text-lg font-semibold text-foreground">
-              {emptyState.title}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {emptyState.description}
-            </p>
-          </div>
-        ) : (
-          <>
-            <p className="mb-6 text-sm text-muted-foreground">
-              {products.length} מוצרים
-            </p>
+      <div className={isRankCategory ? "bg-[#f8f4f8] pb-12" : "container py-10"}>
+        <div className={isRankCategory ? "container" : undefined}>
+          {products === undefined ? (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {products.map((product, index) => (
-                <ProductCard key={product._id} product={product} index={index} />
+              {Array.from({ length: 8 }).map((_, index) => (
+                <ProductCardSkeleton key={index} />
               ))}
             </div>
-          </>
-        )}
+          ) : isRankCategory ? (
+            <RankOptionsPage products={products} />
+          ) : products.length === 0 ? (
+            <div className="py-20 text-center">
+              <img
+                src={noProductsImg}
+                alt="אין מוצרים"
+                className="mx-auto mb-5 h-28 w-28 object-contain opacity-70"
+              />
+              <h3 className="mb-2 text-lg font-semibold text-foreground">
+                {emptyState.title}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {emptyState.description}
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="mb-6 text-sm text-muted-foreground">
+                {products.length} מוצרים
+              </p>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {products.map((product, index) => (
+                  <ProductCard key={product._id} product={product} index={index} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,5 @@
 import { Link } from "wouter";
-import {
-  ArrowLeft,
-  UserRound,
-} from "lucide-react";
+import { ArrowLeft, UserRound } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
@@ -28,20 +25,20 @@ const categoryIconBySlug = {
 
 const categoryMeta = {
   friends: {
-    label: "Brawl Stars Friends",
-    summary: "חברויות משחקני טופ בBrawl Stars.",
+    label: "חברויות",
+    summary: "חברויות ומשתמשים ל-Brawl Stars במקום אחד.",
   },
   accounts: {
-    label: "Accounts",
-    summary: "חשבונות Brawl Stars מכל הסוגים.",
+    label: "חשבונות",
+    summary: "חשבונות Brawl Stars זמינים לקנייה מהירה.",
   },
   rank: {
-    label: "Boost Rank",
-    summary: "מקדמים אותך במדורג בBrawl Stars.",
+    label: "בוסט ראנק",
+    summary: "בחר את הראנק הנוכחי ואת היעד, והוסף לעגלה.",
   },
   trophies: {
-    label: "Boost Trophies",
-    summary: "מעלים אותך גביעים בBrawl Stars.",
+    label: "בוסט גביעים",
+    summary: "אפשרויות לקידום גביעים ב-Brawl Stars.",
   },
 } as const;
 
@@ -74,9 +71,9 @@ function CategoryCard({
       transition={{ duration: 0.45, delay: index * 0.06 }}
     >
       <Link href={`/category/${category.slug}`} className="group block h-full">
-        <div className="group flex h-full flex-col overflow-hidden rounded-3xl border border-accent/25 bg-gradient-to-b from-foreground to-foreground/92 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-accent/30 hover:shadow-2xl hover:shadow-accent/8">
+        <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-accent/25 bg-gradient-to-b from-foreground to-foreground/95 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-accent/40 hover:shadow-2xl hover:shadow-accent/10">
           <div className="relative flex aspect-[1.05] items-center justify-center overflow-hidden px-6 pt-6">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(164,255,62,0.18),_transparent_48%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(164,255,62,0.16),_transparent_48%)]" />
             {displayImage ? (
               <img
                 src={displayImage}
@@ -89,15 +86,17 @@ function CategoryCard({
           </div>
 
           <div className="flex flex-1 flex-col gap-3 p-5 text-right">
-            <div className="inline-flex w-fit self-end rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-accent">
-              {meta?.label ?? "Category"}
+            <div className="inline-flex w-fit self-end rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-accent">
+              {meta?.label ?? "קטגוריה"}
             </div>
             <div>
               <h3 className="text-lg font-black text-white transition-colors group-hover:text-accent/80">
                 {category.name}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/72">
-                {meta?.summary ?? category.description ?? "מוצרים זמינים בקטגוריה הזאת."}
+                {meta?.summary ??
+                  category.description ??
+                  "מוצרים זמינים בקטגוריה הזאת."}
               </p>
             </div>
             <div className="mt-auto pt-2 text-sm font-semibold text-accent">
@@ -123,17 +122,14 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground/95 to-foreground/85 text-white">
-        <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
-
-        <div className="container relative py-20 md:py-24">
+        <div className="container relative py-16 md:py-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="mx-auto max-w-4xl text-center"
           >
-            <div className="mb-8 flex justify-center">
+            <div className="mb-7 flex justify-center">
               <img
                 src={brawlStarsLogo}
                 alt="Razlo Store"
@@ -144,20 +140,16 @@ export default function Home() {
             <h1 className="mb-4 text-5xl font-black leading-tight md:text-6xl">
               Razlo Store
             </h1>
-            {/* <p className="mx-auto mb-3 max-w-2xl text-xl font-bold text-accent md:text-2xl">
-              Brawl Stars במקום אחד
-            </p> */}
             <p className="mx-auto mb-8 max-w-2xl text-base leading-8 text-white/80 md:text-lg">
-              ברוכים הבאים ל Razlo Store
-המקום שבא לספק לכם את כל מה שצריך ב Brawl Stars במחירים שבאמת מתאימים
-מגביעים משתמשים פרנדים בוטים ועוד כל מה שאתם צריכים במקום אחד
+              ברוכים הבאים ל-Razlo Store, המקום לקניית שירותים ומוצרים ל-Brawl
+              Stars בצורה פשוטה, מהירה וברורה.
             </p>
 
             <div className="mx-auto mb-10 max-w-xl rounded-3xl border border-accent/25 bg-white/5 px-6 py-5 text-right shadow-lg backdrop-blur-sm">
-              <p className="text-base font-bold text-white">מה יש באתר</p>
+              <p className="text-base font-bold text-white">מה אפשר למצוא באתר</p>
               <p className="mt-2 text-sm leading-7 text-white/75">
-                חשבונות Brawl Stars, קטגוריית גביעים, קטגוריית
-                ראנק וקטגוריית חברויות.
+                חשבונות, בוסט ראנק, בוסט גביעים וחברויות. בחר קטגוריה,
+                הוסף לעגלה, וסיים תשלום בצורה מאובטחת.
               </p>
             </div>
 
@@ -191,9 +183,7 @@ export default function Home() {
       <section id="categories" className="py-12 md:py-16">
         <div className="container">
           <div className="mb-12 text-center">
-            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">
-              Categories
-            </p>
+            <p className="mb-2 text-sm font-bold text-accent">קטגוריות</p>
             <h2 className="text-3xl font-black text-foreground md:text-4xl">
               מה אפשר לקנות כאן
             </h2>
@@ -220,8 +210,14 @@ export default function Home() {
             </div>
           ) : (
             <div className="py-20 text-center">
-              <img src={noProductsImg} alt="אין קטגוריות" className="mx-auto mb-5 h-28 w-28 object-contain opacity-70" />
-              <p className="text-sm text-muted-foreground">עדיין אין קטגוריות.</p>
+              <img
+                src={noProductsImg}
+                alt="אין קטגוריות"
+                className="mx-auto mb-5 h-28 w-28 object-contain opacity-70"
+              />
+              <p className="text-sm text-muted-foreground">
+                עדיין אין קטגוריות.
+              </p>
             </div>
           )}
         </div>
@@ -231,9 +227,7 @@ export default function Home() {
         <section className="bg-gradient-to-b from-muted/40 to-transparent py-20">
           <div className="container">
             <div className="mb-10">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">
-                Featured
-              </p>
+              <p className="mb-2 text-sm font-bold text-accent">מומלצים</p>
               <h2 className="text-3xl font-black text-foreground md:text-4xl">
                 מוצרים מומלצים
               </h2>
@@ -259,9 +253,7 @@ export default function Home() {
       <section id="products" className="py-20">
         <div className="container">
           <div className="mb-10">
-            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-accent">
-              Products
-            </p>
+            <p className="mb-2 text-sm font-bold text-accent">מוצרים</p>
             <h2 className="text-3xl font-black text-foreground md:text-4xl">
               כל המוצרים
             </h2>
@@ -281,8 +273,14 @@ export default function Home() {
             </div>
           ) : (
             <div className="py-20 text-center">
-              <img src={noProductsImg} alt="אין מוצרים" className="mx-auto mb-5 h-28 w-28 object-contain opacity-70" />
-              <p className="text-sm text-muted-foreground">עדיין אין מוצרים.</p>
+              <img
+                src={noProductsImg}
+                alt="אין מוצרים"
+                className="mx-auto mb-5 h-28 w-28 object-contain opacity-70"
+              />
+              <p className="text-sm text-muted-foreground">
+                עדיין אין מוצרים.
+              </p>
             </div>
           )}
         </div>

@@ -211,6 +211,14 @@ export default function Navbar() {
                           </span>
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/orders">
+                          <span className="flex w-full cursor-pointer items-center gap-2">
+                            <ReceiptText className="h-4 w-4" />
+                            רכישות אחרונות
+                          </span>
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-border/60" />
                     </>
                   ) : null}

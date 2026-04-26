@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, AlertTriangle, Plus, Pencil, Trash2, Package, Tag, BarChart3, Headphones } from "lucide-react";
+import { ArrowRight, AlertTriangle, Plus, Pencil, Trash2, Package, Tag, BarChart3, Headphones, ReceiptText } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
@@ -431,7 +431,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-muted/20">
       <div className="container py-8">
         <div className="mb-8"><Link href="/"><span className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowRight className="h-4 w-4" />חזרה לחנות</span></Link></div>
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"><div><h1 className="text-2xl font-black text-foreground md:text-3xl">פאנל ניהול</h1><p className="mt-1 text-muted-foreground">ניהול קטלוג המוצרים, המלאי ופניות התמיכה של החנות.</p></div><Button asChild className="gap-2"><Link href="/admin/support"><Headphones className="h-4 w-4" />לייב צ׳אט</Link></Button></div>
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"><div><h1 className="text-2xl font-black text-foreground md:text-3xl">פאנל ניהול</h1><p className="mt-1 text-muted-foreground">ניהול קטלוג המוצרים, המלאי ופניות התמיכה של החנות.</p></div><div className="flex flex-wrap gap-2"><Button asChild variant="outline" className="gap-2"><Link href="/admin/orders"><ReceiptText className="h-4 w-4" />רכישות אחרונות</Link></Button><Button asChild className="gap-2"><Link href="/admin/support"><Headphones className="h-4 w-4" />לייב צ׳אט</Link></Button></div></div>
         <Tabs defaultValue="stats" dir="rtl">
           <TabsList className="mb-6">
             <TabsTrigger value="stats" className="gap-2"><BarChart3 className="h-4 w-4" />סקירה</TabsTrigger>

@@ -57,9 +57,9 @@ const defaultCategories = [
     sortOrder: 1,
   },
   {
-    name: "ראנק",
+    name: "מדורג",
     slug: "rank",
-    description: "חשבונות לפי ראנק. יתווספו בהמשך.",
+    description: "קידום ראנק מהיר ובטוח על ידי שחקנים מנוסים.",
     imageUrl: undefined,
     sortOrder: 2,
   },
@@ -462,17 +462,21 @@ export const homePageData = query({
   handler: async (ctx) => {
     const categories = await ctx.db.query("categories").collect();
     const products = await ctx.db.query("products").collect();
+    const rankCategory = categories.find((category) => category.slug === "rank");
     const activeProducts = products
       .filter((product) => product.isActive)
       .sort((a, b) => b.createdAt - a.createdAt);
+    const storefrontProducts = activeProducts.filter(
+      (product) => product.categoryId !== rankCategory?._id,
+    );
 
     return {
       categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
-      featured: activeProducts
+      featured: storefrontProducts
         .filter((product) => product.isFeatured)
         .map((product) => serializeProduct(product))
         .sort((a, b) => b.updatedAt - a.updatedAt),
-      allProducts: activeProducts.map((product) => serializeProduct(product)),
+      allProducts: storefrontProducts.map((product) => serializeProduct(product)),
     };
   },
 });
@@ -731,15 +735,25 @@ export const ensureDefaultCategories = mutation({
   args: {},
   handler: async (ctx) => {
     const categories = await ctx.db.query("categories").collect();
-    if (categories.length > 0) {
-      return false;
-    }
+    let changed = false;
 
     for (const category of defaultCategories) {
-      await ctx.db.insert("categories", sanitizeCategoryInput(category));
+      const sanitized = sanitizeCategoryInput(category);
+      const existing = categories.find(
+        (candidate) => candidate.slug === sanitized.slug,
+      );
+
+      if (existing) {
+        await ctx.db.patch(existing._id, sanitized);
+        changed = true;
+        continue;
+      }
+
+      await ctx.db.insert("categories", sanitized);
+      changed = true;
     }
 
-    return true;
+    return changed;
   },
 });
 
@@ -763,6 +777,15 @@ export const ensureRankBoostProducts = mutation({
         }),
       );
       rankCategory = await ctx.db.get(categoryId);
+    } else {
+      await ctx.db.patch(
+        rankCategory._id,
+        sanitizeCategoryPatch({
+          name: "מדורג",
+          description: "קידום ראנק מהיר ובטוח על ידי שחקנים מנוסים.",
+          sortOrder: 2,
+        }),
+      );
     }
 
     if (!rankCategory) {
@@ -773,36 +796,48 @@ export const ensureRankBoostProducts = mutation({
       .query("products")
       .withIndex("by_categoryId", (q) => q.eq("categoryId", rankCategory._id))
       .collect();
-    const existingNames = new Set(
-      existingProducts.map((product) => product.name.toLowerCase()),
+    const existingByName = new Map(
+      existingProducts.map((product) => [product.name.toLowerCase(), product]),
     );
     const now = Date.now();
     let created = 0;
+    let updated = 0;
 
     for (const option of defaultRankBoostProducts) {
-      if (existingNames.has(option.name.toLowerCase())) {
+      const sanitizedProduct = sanitizeProductInput({
+        name: option.name,
+        description: "אפשרות בוסט ראנק מהירה ל-Brawl Stars.",
+        deliveryContent:
+          "אחרי התשלום פתח צ׳אט באתר ושלח את תג השחקן שלך ואת פרטי הראנק/בראולר לבוסט.",
+        price: option.price,
+        categoryId: rankCategory._id,
+        stock: 99,
+        isActive: true,
+        isFeatured: false,
+      });
+      const existing = existingByName.get(option.name.toLowerCase());
+
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          description: sanitizedProduct.description,
+          deliveryContent: sanitizedProduct.deliveryContent,
+          categoryId: rankCategory._id,
+          isFeatured: false,
+          updatedAt: now,
+        });
+        updated += 1;
         continue;
       }
 
       await ctx.db.insert("products", {
-        ...sanitizeProductInput({
-          name: option.name,
-          description: option.description,
-          deliveryContent:
-            "After payment, open live chat and send your player tag plus the brawler/rank details for this boost.",
-          price: option.price,
-          categoryId: rankCategory._id,
-          stock: 99,
-          isActive: true,
-          isFeatured: false,
-        }),
+        ...sanitizedProduct,
         createdAt: now + created,
         updatedAt: now,
       });
       created += 1;
     }
 
-    return { created };
+    return { created, updated };
   },
 });
 

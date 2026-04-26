@@ -20,6 +20,10 @@ function receiptNumber(id: string) {
   return `RZ-${id.slice(-8).toUpperCase()}`;
 }
 
+function formatPrice(value: string | number) {
+  return `₪${Number(value).toFixed(2)}`;
+}
+
 export default function ThankYouPage() {
   const params = useParams<{ id: string }>();
   const searchString = useSearch();
@@ -49,21 +53,21 @@ export default function ThankYouPage() {
       });
 
       if (result.status === "paid") {
-        toast.success("Payment confirmed");
+        toast.success("התשלום אושר");
         return;
       }
 
       if (result.status === "awaiting_payment") {
-        setConfirmationError("Stripe has not confirmed this payment yet.");
+        setConfirmationError("Stripe עדיין לא אישר את התשלום הזה.");
         return;
       }
 
       if (result.status === "configuration_required") {
-        throw new Error("Stripe is not fully configured on the server.");
+        throw new Error("Stripe עדיין לא מוגדר במלואו בשרת.");
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Could not confirm payment.";
+        error instanceof Error ? error.message : "לא הצלחנו לאשר את התשלום.";
       setConfirmationError(message);
       toast.error(message);
     } finally {
@@ -103,15 +107,17 @@ export default function ThankYouPage() {
   if (!order) {
     return (
       <div className="container py-20 text-center">
-        <h1 className="text-3xl font-black text-foreground">Order not found</h1>
+        <h1 className="text-3xl font-black text-foreground">
+          ההזמנה לא נמצאה
+        </h1>
         <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-muted-foreground">
-          We could not find this order. If you paid, contact support with your
-          Stripe payment details.
+          לא הצלחנו למצוא את ההזמנה הזאת. אם שילמת, פנה לתמיכה עם פרטי התשלום
+          מ-Stripe.
         </p>
         <Link href="/">
           <Button className="mt-6 gap-2">
             <Home className="h-4 w-4" />
-            Back to store
+            חזרה לחנות
           </Button>
         </Link>
       </div>
@@ -127,11 +133,11 @@ export default function ThankYouPage() {
           <Link href="/">
             <span className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
-              Continue shopping
+              המשך קנייה
             </span>
           </Link>
           <div className="rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent">
-            {isPaid ? "Payment approved" : "Confirming payment"}
+            {isPaid ? "התשלום אושר" : "מאשרים את התשלום"}
           </div>
         </div>
 
@@ -147,11 +153,9 @@ export default function ThankYouPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-wider text-accent">
-                    Razlo Store
-                  </p>
+                  <p className="text-sm font-bold text-accent">Razlo Store</p>
                   <p className="text-sm text-muted-foreground">
-                    Order {String(order._id).slice(-8)}
+                    הזמנה {String(order._id).slice(-8)}
                   </p>
                 </div>
               </div>
@@ -160,35 +164,35 @@ export default function ThankYouPage() {
                 {isPaid ? (
                   <>
                     <CheckCircle2 className="h-4 w-4" />
-                    Payment went through
+                    התשלום עבר בהצלחה
                   </>
                 ) : (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    Confirming payment
+                    מאשרים את התשלום
                   </>
                 )}
               </div>
 
               <h1 className="max-w-3xl text-3xl font-black leading-tight text-foreground md:text-5xl">
-                Thanks for buying from Razlo Store.
+                תודה שקנית מ-Razlo Store.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
                 {isPaid
-                  ? "Your order is confirmed. The receipt was sent to your email, and your product details are unlocked below."
-                  : "We are checking Stripe now. Keep this page open for a moment while the payment confirmation reaches the store."}
+                  ? "ההזמנה אושרה. הקבלה נשלחה לאימייל שלך, ופרטי המוצר זמינים כאן למטה."
+                  : "אנחנו בודקים את התשלום מול Stripe. השאר את הדף פתוח לרגע עד שהאישור יגיע לחנות."}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link href={`/receipt/${order._id}`}>
                   <Button size="lg" className="gap-2 font-bold" disabled={!isPaid}>
                     <ReceiptText className="h-5 w-5" />
-                    View receipt
+                    צפייה בקבלה
                   </Button>
                 </Link>
                 <Link href="/account">
                   <Button size="lg" variant="outline" className="gap-2">
-                    My account
+                    החשבון שלי
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -198,9 +202,9 @@ export default function ThankYouPage() {
             <div className="rounded-3xl border border-accent/25 bg-accent/5 p-5">
               <div className="mb-5 flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total paid</p>
+                  <p className="text-sm text-muted-foreground">סה״כ שולם</p>
                   <p className="text-3xl font-black text-foreground">
-                    ₪{Number(order.subtotal).toFixed(2)}
+                    {formatPrice(order.subtotal)}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-accent/10 p-3 text-accent">
@@ -230,7 +234,7 @@ export default function ThankYouPage() {
                         {item.name}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {item.quantity} x ₪{Number(item.price).toFixed(2)}
+                        {item.quantity} x {formatPrice(item.price)}
                       </p>
                     </div>
                   </div>
@@ -248,17 +252,17 @@ export default function ThankYouPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-black text-foreground">
-                  Your order
+                  ההזמנה שלך
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Receipt {receiptNumber(String(order._id))}
+                  קבלה {receiptNumber(String(order._id))}
                 </p>
               </div>
             </div>
 
             {!isPaid ? (
               <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5 text-sm leading-7 text-blue-900">
-                {confirmationError ? confirmationError : "Confirming payment with Stripe..."}
+                {confirmationError ?? "מאשרים את התשלום מול Stripe..."}
                 {confirmationError ? (
                   <Button
                     type="button"
@@ -269,7 +273,7 @@ export default function ThankYouPage() {
                     onClick={() => void verifyReturnedPayment()}
                   >
                     <RefreshCw className="h-4 w-4" />
-                    Check again
+                    בדוק שוב
                   </Button>
                 ) : null}
               </div>
@@ -299,11 +303,11 @@ export default function ThankYouPage() {
                               {item.name}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              {item.quantity} x ₪{Number(item.price).toFixed(2)}
+                              {item.quantity} x {formatPrice(item.price)}
                             </p>
                           </div>
                           <p className="text-xl font-black text-foreground">
-                            ₪{(Number(item.price) * item.quantity).toFixed(2)}
+                            {formatPrice(Number(item.price) * item.quantity)}
                           </p>
                         </div>
 
@@ -314,7 +318,7 @@ export default function ThankYouPage() {
                             </pre>
                           ) : (
                             <span className="text-muted-foreground">
-                              Delivery details were not added for this product yet.
+                              עדיין לא נוספו פרטי מסירה למוצר הזה.
                             </span>
                           )}
                         </div>
@@ -331,11 +335,11 @@ export default function ThankYouPage() {
               <div className="mb-4 flex items-center gap-3">
                 <Mail className="h-5 w-5 text-accent" />
                 <h2 className="text-lg font-black text-foreground">
-                  Email receipt
+                  קבלה באימייל
                 </h2>
               </div>
               <p className="text-sm leading-7 text-muted-foreground">
-                We send the styled receipt to{" "}
+                אנחנו שולחים את הקבלה המעוצבת אל{" "}
                 <span className="font-bold text-foreground">
                   {order.customerEmail}
                 </span>
@@ -343,11 +347,11 @@ export default function ThankYouPage() {
               </p>
               {order.receiptEmailSentAt ? (
                 <p className="mt-3 rounded-xl bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-700">
-                  Email sent
+                  האימייל נשלח
                 </p>
               ) : (
                 <p className="mt-3 rounded-xl bg-accent/10 px-3 py-2 text-sm font-semibold text-accent">
-                  Email is being prepared
+                  האימייל בהכנה
                 </p>
               )}
             </div>
@@ -356,12 +360,11 @@ export default function ThankYouPage() {
               <div className="mb-4 flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-accent" />
                 <h2 className="text-lg font-black text-foreground">
-                  Payment protected
+                  תשלום מאובטח
                 </h2>
               </div>
               <p className="text-sm leading-7 text-muted-foreground">
-                Product details only unlock after Stripe confirms the paid
-                session with the server.
+                פרטי המוצר נפתחים רק אחרי ש-Stripe מאשר מול השרת שהתשלום שולם.
               </p>
             </div>
           </aside>

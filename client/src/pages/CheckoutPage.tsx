@@ -13,6 +13,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "../../../convex/_generated/api";
 
+function formatPrice(value: string | number) {
+  return `₪${Number(value).toFixed(2)}`;
+}
+
 export default function CheckoutPage() {
   const params = useParams<{ id: string }>();
   const searchString = useSearch();
@@ -24,7 +28,9 @@ export default function CheckoutPage() {
   const confirmCheckoutSession = useAction(api.stripe.confirmCheckoutSession);
   const [submitting, setSubmitting] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
+    null,
+  );
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
   const confirmedSessionRef = useRef<string | null>(null);
 
@@ -64,11 +70,13 @@ export default function CheckoutPage() {
       }
 
       if (result.status === "configuration_required") {
-        throw new Error("Stripe עדיין לא מוגדר עד הסוף בשרת");
+        throw new Error("Stripe עדיין לא מוגדר עד הסוף בשרת.");
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "לא הצלחנו לאמת את התשלום מול Stripe";
+        error instanceof Error
+          ? error.message
+          : "לא הצלחנו לאמת את התשלום מול Stripe.";
       setConfirmationError(message);
       setConfirmationMessage(null);
       toast.error(message);
@@ -190,7 +198,7 @@ export default function CheckoutPage() {
                   פרטי התשלום
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  כרגע התשלום מתבצע דרך Stripe Checkout
+                  התשלום מתבצע דרך Stripe Checkout
                 </p>
               </div>
             </div>
@@ -203,25 +211,31 @@ export default function CheckoutPage() {
                     ההזמנה משתחררת רק אחרי אישור תשלום מ-Stripe.
                   </p>
                   <p className="text-muted-foreground">
-                    גם אם הלקוח חוזר לדף הזה, המוצרים ייפתחו רק אחרי ש-Stripe
-                    שולח אישור תשלום חתום לשרת.
+                    פרטי המוצר ייפתחו רק אחרי ש-Stripe שולח אישור תשלום חתום
+                    לשרת.
                   </p>
                 </div>
               </div>
             </div>
 
+            <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm font-bold leading-7 text-amber-900">
+              אין החזר כספי על מוצרים דיגיטליים לאחר רכישה. המשך לתשלום רק
+              אחרי שבדקת שכל פרטי ההזמנה נכונים.
+            </div>
+
             {!order.paymentConfigured ? (
               <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-900">
-                Stripe is not fully configured yet. Add `STRIPE_SECRET_KEY`,
-                `STRIPE_WEBHOOK_SECRET` and `APP_URL` on the server before enabling
-                checkout.
+                Stripe עדיין לא מוגדר במלואו. צריך להגדיר בשרת את
+                `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` ו-`APP_URL` לפני
+                שמפעילים תשלום.
               </div>
             ) : null}
 
             {checkoutStatus === "success" && !isPaid ? (
               <div className="mb-6 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5 text-sm text-blue-900">
                 <p className="font-semibold">
-                  {confirmationMessage ?? "חזרת מ-Stripe. אנחנו מאמתים עכשיו את התשלום מול Stripe ומעדכנים את ההזמנה."}
+                  {confirmationMessage ??
+                    "חזרת מ-Stripe. אנחנו מאמתים עכשיו את התשלום ומעדכנים את ההזמנה."}
                 </p>
                 {confirmationError ? (
                   <div className="mt-3 space-y-3">
@@ -248,7 +262,8 @@ export default function CheckoutPage() {
 
             {isUnavailable ? (
               <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-900">
-                ההזמנה הזו כבר לא זמינה לתשלום. ייתכן שהמוצר נמחק, הוסר מהחנות או נגמר מהמלאי.
+                ההזמנה הזאת כבר לא זמינה לתשלום. ייתכן שהמוצר הוסר או נגמר
+                מהמלאי.
               </div>
             ) : null}
 
@@ -276,11 +291,11 @@ export default function CheckoutPage() {
                             {item.name}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {item.quantity} x ₪{Number(item.price).toFixed(2)}
+                            {item.quantity} x {formatPrice(item.price)}
                           </p>
                         </div>
                         <span className="font-bold text-foreground">
-                          ₪{(Number(item.price) * item.quantity).toFixed(2)}
+                          {formatPrice(Number(item.price) * item.quantity)}
                         </span>
                       </div>
                       <div className="rounded-xl border border-dashed border-border p-4 text-sm leading-7 text-foreground">
@@ -319,7 +334,8 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                   <p className="text-sm leading-7 text-muted-foreground">
-                    בלחיצה על הכפתור תועבר לעמוד התשלום של Stripe להשלמת ההזמנה.
+                    בלחיצה על הכפתור תועבר לעמוד התשלום של Stripe להשלמת
+                    ההזמנה.
                   </p>
                 </div>
 
@@ -331,7 +347,11 @@ export default function CheckoutPage() {
                   onClick={() => void handlePay()}
                 >
                   <ExternalLink className="h-5 w-5" />
-                  {submitting ? "מעביר לתשלום..." : confirming ? "מאמת תשלום..." : "המשך לתשלום ב-Stripe"}
+                  {submitting
+                    ? "מעביר לתשלום..."
+                    : confirming
+                      ? "מאמת תשלום..."
+                      : "המשך לתשלום ב-Stripe"}
                 </Button>
               </div>
             )}
@@ -359,11 +379,11 @@ export default function CheckoutPage() {
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {item.quantity} x ₪{Number(item.price).toFixed(2)}
+                      {item.quantity} x {formatPrice(item.price)}
                     </p>
                   </div>
                   <span className="shrink-0 font-bold text-foreground">
-                    ₪{(Number(item.price) * item.quantity).toFixed(2)}
+                    {formatPrice(Number(item.price) * item.quantity)}
                   </span>
                 </div>
               ))}
@@ -372,10 +392,10 @@ export default function CheckoutPage() {
             <div className="mt-6 rounded-2xl border border-accent/30 bg-accent/5 p-5">
               <div className="flex items-center justify-between">
                 <span className="text-base font-semibold text-foreground">
-                  סה"כ לתשלום
+                  סה״כ לתשלום
                 </span>
                 <span className="text-2xl font-black text-foreground">
-                  ₪{Number(order.subtotal).toFixed(2)}
+                  {formatPrice(order.subtotal)}
                 </span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">

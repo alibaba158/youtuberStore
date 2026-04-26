@@ -14,41 +14,41 @@ import brawlStarsLogo from "@/images/brawlstars_logo.png";
 import trophieImg from "@/images/trophie.png";
 import rankImg from "@/images/rank.png";
 
-const boostTabs = ["Rank Boost", "Trophy Boost", "Prestige Icon", "Brawlers Rank"];
+const boostTabs = ["בוסט ראנק", "בוסט גביעים", "אייקון Prestige", "ראנק בראולרים"];
 
 const trustItems = [
-  "Verified sellers",
-  "Fast delivery",
-  "Secure payment",
-  "Live support",
+  "מוכרים מאומתים",
+  "מסירה מהירה",
+  "תשלום מאובטח",
+  "תמיכה בצ׳אט",
 ];
 
 const processSteps = [
   {
-    title: "Select a service",
-    text: "Choose the account or boost category that fits what you need.",
+    title: "בחר שירות",
+    text: "בחר את החשבון או קטגוריית הבוסט שמתאימים למה שאתה צריך.",
     icon: Zap,
   },
   {
-    title: "Choose an offer",
-    text: "Compare available products and pick the safest match.",
+    title: "בחר הצעה",
+    text: "השווה בין המוצרים הזמינים ובחר את האפשרות שמתאימה לך.",
     icon: CheckCircle2,
   },
   {
-    title: "Complete payment",
-    text: "Checkout is handled through a protected payment flow.",
+    title: "סיים תשלום",
+    text: "התשלום מתבצע דרך תהליך תשלום מאובטח.",
     icon: CreditCard,
   },
   {
-    title: "Rank up",
-    text: "Receive the account details or service confirmation.",
+    title: "קבל את השירות",
+    text: "קבל את פרטי החשבון או אישור השירות אחרי התשלום.",
     icon: Trophy,
   },
 ];
 
 export default function BrawlStarsBoostingPage() {
   return (
-    <section dir="ltr" className="relative overflow-hidden bg-[#f3f4f7] text-slate-950">
+    <section dir="rtl" className="relative overflow-hidden bg-[#f3f4f7] text-slate-950">
       <div className="absolute inset-x-0 top-0 h-24 bg-[#181923]" />
       <div className="absolute inset-x-0 top-24 h-8 bg-accent/80" />
       <div className="absolute inset-0 top-32 bg-[linear-gradient(110deg,rgba(255,255,255,0.92),rgba(255,255,255,0.7)),url('/src/images/brawlstars_logo.png')] bg-[length:420px] bg-[center_top_3rem] bg-no-repeat" />
@@ -67,9 +67,9 @@ export default function BrawlStarsBoostingPage() {
             <span className="text-lg font-black">Razlo Store</span>
           </Link>
           <div className="hidden items-center gap-6 text-sm font-semibold text-white/70 md:flex">
-            <span>Accounts</span>
-            <span>Boosting</span>
-            <span>Support</span>
+            <span>חשבונות</span>
+            <span>בוסטים</span>
+            <span>תמיכה</span>
           </div>
         </motion.div>
 
@@ -84,9 +84,9 @@ export default function BrawlStarsBoostingPage() {
             <span>Brawl Stars Boosting</span>
           </div>
           <div className="flex flex-wrap gap-4 text-sm font-semibold text-white/65">
-            <span>Accounts</span>
-            <span>Gems</span>
-            <span className="border-b-2 border-accent pb-3 text-white">Boosting</span>
+            <span>חשבונות</span>
+            <span>יהלומים</span>
+            <span className="border-b-2 border-accent pb-3 text-white">בוסטים</span>
           </div>
         </motion.div>
 
@@ -99,17 +99,17 @@ export default function BrawlStarsBoostingPage() {
             <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <h1 className="max-w-2xl text-3xl font-black leading-tight md:text-5xl">
-                  Get Brawl Stars deals from trusted sellers in minutes
+                  קנה שירותי Brawl Stars ממוכרים אמינים בדקות
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                  Buy accounts, trophy accounts, rank accounts and friends from one focused store.
+                  חשבונות, גביעים, ראנקים וחברויות במקום אחד ברור ונוח.
                 </p>
               </div>
               <div className="flex items-center gap-3 rounded-xl bg-white/80 px-4 py-3 shadow-sm">
                 <Star className="h-8 w-8 fill-accent text-accent" />
                 <div className="text-sm">
-                  <p className="font-black">Positive feedback</p>
-                  <p className="text-slate-500">Fast local support</p>
+                  <p className="font-black">תגובות חיוביות</p>
+                  <p className="text-slate-500">תמיכה מהירה בעברית</p>
                 </div>
               </div>
             </div>
@@ -132,8 +132,8 @@ export default function BrawlStarsBoostingPage() {
 
             <div className="grid gap-5 md:grid-cols-2">
               {[
-                ["Current Rank", "Bronze I", rankImg, "Current RP", "0"],
-                ["Desired Rank", "Pro", trophieImg, "Desired RP", "300"],
+                ["ראנק נוכחי", "Bronze I", rankImg, "נקודות נוכחיות", "0"],
+                ["ראנק יעד", "Pro", trophieImg, "נקודות יעד", "300"],
               ].map(([label, value, image, secondLabel, secondValue]) => (
                 <div key={label} className="overflow-hidden rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
                   <div className="flex items-center gap-4 border-b border-slate-100 p-6">
@@ -158,9 +158,9 @@ export default function BrawlStarsBoostingPage() {
             </div>
 
             <div className="mt-8 rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm backdrop-blur">
-              <h2 className="text-2xl font-black">Why trust Razlo Store?</h2>
+              <h2 className="text-2xl font-black">למה לבחור ב-Razlo Store?</h2>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                Every order is handled with clear delivery, protected checkout and support after purchase.
+                כל הזמנה מקבלת מסירה ברורה, תשלום מאובטח ותמיכה אחרי הקנייה.
               </p>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {trustItems.map((item) => (
@@ -180,7 +180,7 @@ export default function BrawlStarsBoostingPage() {
             className="h-fit rounded-2xl border border-accent/50 bg-white shadow-xl shadow-slate-950/10 lg:sticky lg:top-6"
           >
             <div className="rounded-t-2xl bg-gradient-to-l from-accent to-sky-400 p-6">
-              <p className="text-sm font-black uppercase tracking-wide">Customize order</p>
+              <p className="text-sm font-black">התאמת הזמנה</p>
             </div>
             <div className="space-y-6 p-6">
               <div className="grid grid-cols-2 rounded-full border border-slate-200 bg-slate-100 p-1">
@@ -191,7 +191,7 @@ export default function BrawlStarsBoostingPage() {
                   Duo
                 </button>
               </div>
-              {["Stream", "Solo queue", "Offline mode", "Specific brawlers"].map((item) => (
+              {["שידור", "תור Solo", "מצב אופליין", "בראולרים מסוימים"].map((item) => (
                 <div key={item} className="flex items-center justify-between gap-4">
                   <span className="text-sm font-semibold">{item}</span>
                   <span className="h-6 w-11 rounded-full bg-slate-200 p-0.5">
@@ -203,12 +203,12 @@ export default function BrawlStarsBoostingPage() {
                 size="lg"
                 className="group w-full gap-2 bg-slate-950 font-black text-white hover:bg-slate-800"
               >
-                Get offers now
+                קבל הצעות עכשיו
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
               <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-500">
                 <ShieldCheck className="h-4 w-4" />
-                Protected checkout
+                תשלום מאובטח
               </div>
             </div>
           </motion.aside>
@@ -220,13 +220,13 @@ export default function BrawlStarsBoostingPage() {
           transition={{ duration: 0.55, delay: 0.3 }}
           className="mt-20 bg-white/55 px-4 py-14 backdrop-blur md:px-8"
         >
-          <h2 className="text-center text-3xl font-black">Effortless rank-up process</h2>
+          <h2 className="text-center text-3xl font-black">תהליך קנייה פשוט</h2>
           <div className="mt-10 grid gap-8 md:grid-cols-4">
             {processSteps.map((step, index) => {
               const Icon = step.icon;
               return (
-                <div key={step.title} className="text-center md:text-left">
-                  <Icon className="mx-auto mb-5 h-12 w-12 text-accent md:mx-0" />
+                <div key={step.title} className="text-center md:text-right">
+                  <Icon className="mx-auto mb-5 h-12 w-12 text-accent md:mx-0 md:mr-0" />
                   <h3 className="text-lg font-black">
                     {index + 1}. {step.title}
                   </h3>

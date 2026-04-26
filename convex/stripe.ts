@@ -188,6 +188,13 @@ export const confirmCheckoutSession = action({
     } catch (error) {
       console.error("Receipt email failed", error);
     }
+    try {
+      await ctx.runAction(internal.emails.sendAdminPurchaseNotification, {
+        orderId: args.orderId,
+      });
+    } catch (error) {
+      console.error("Admin purchase notification email failed", error);
+    }
 
     return {
       status: "paid" as const,

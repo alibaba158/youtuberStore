@@ -64,6 +64,14 @@ async function requireViewer(ctx: any) {
   return viewer;
 }
 
+async function requireAdmin(ctx: any) {
+  const viewer = await requireViewer(ctx);
+  if (viewer.user.role !== "admin") {
+    throw new Error("Admin access required");
+  }
+  return viewer;
+}
+
 function isBitConfigured() {
   return Boolean(
     process.env.BIT_CLIENT_ID &&
@@ -114,6 +122,7 @@ function serializeOrder(order: any, opts?: { includeSensitiveBitState?: boolean 
     stockReservedAt: order.stockReservedAt,
     paidAt: order.paidAt,
     receiptEmailSentAt: order.receiptEmailSentAt,
+    adminPurchaseEmailSentAt: order.adminPurchaseEmailSentAt,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     deliveryUnlocked,
@@ -393,6 +402,86 @@ export const markReceiptEmailFailed = internalMutation({
   },
 });
 
+export const claimOrderForAdminPurchaseEmail = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
+      return null;
+    }
+    if (order.adminPurchaseEmailSentAt) {
+      return null;
+    }
+
+    const now = Date.now();
+    const sendStartedAt = order.adminPurchaseEmailSendStartedAt;
+    if (sendStartedAt && now - sendStartedAt < 10 * 60 * 1000) {
+      return null;
+    }
+
+    await ctx.db.patch(args.orderId, {
+      adminPurchaseEmailSendStartedAt: now,
+      adminPurchaseEmailError: undefined,
+      updatedAt: now,
+    });
+
+    return true;
+  },
+});
+
+export const orderForAdminPurchaseEmail = internalQuery({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
+      return null;
+    }
+
+    return serializeOrder(order);
+  },
+});
+
+export const markAdminPurchaseEmailSent = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    await ctx.db.patch(args.orderId, {
+      adminPurchaseEmailSentAt: now,
+      adminPurchaseEmailError: undefined,
+      updatedAt: now,
+    });
+    return true;
+  },
+});
+
+export const markAdminPurchaseEmailFailed = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+    error: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.orderId, {
+      adminPurchaseEmailSendStartedAt: undefined,
+      adminPurchaseEmailError: normalizeRequiredText(
+        args.error,
+        "Admin purchase email error",
+        1_000,
+      ),
+      updatedAt: Date.now(),
+    });
+    return true;
+  },
+});
+
 export const myOrders = query({
   args: {},
   handler: async (ctx) => {
@@ -405,6 +494,23 @@ export const myOrders = query({
     return orders
       .filter((order) => order.orderStatus !== "canceled")
       .sort((a, b) => b.createdAt - a.createdAt)
+      .map((order) => serializeOrder(order));
+  },
+});
+
+export const adminRecentOrders = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const orders = await ctx.db.query("orders").collect();
+
+    return orders
+      .filter(
+        (order) =>
+          order.orderStatus === "paid" && order.paymentStatus === "paid",
+      )
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 100)
       .map((order) => serializeOrder(order));
   },
 });
