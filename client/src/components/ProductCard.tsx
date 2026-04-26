@@ -61,7 +61,13 @@ export default function ProductCard({
       transition={{ duration: 0.5, delay: index * 0.06 }}
     >
       <Link href={`/product/${product._id}`} className="group">
-        <div className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-accent/20 hover:shadow-xl hover:shadow-accent/5">
+        <div className={`group relative cursor-pointer overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${
+          product.isMysteryBox
+            ? "border-pink-400 shadow-pink-200 ring-2 ring-pink-400/70"
+            : product.isSpecialOffer
+            ? "border-red-400 shadow-red-200 ring-2 ring-red-400/60"
+            : "border-border/70 hover:border-accent/20 hover:shadow-accent/5"
+        }`}>
           <div className="relative aspect-square overflow-hidden bg-muted">
             {product.imageUrl ? (
               <div className="flex h-full w-full items-center justify-center p-3">
@@ -81,6 +87,23 @@ export default function ProductCard({
               <Badge className="absolute right-3 top-3 border-0 bg-accent/95 px-3 py-1 text-xs font-bold text-accent-foreground shadow-lg backdrop-blur-sm">
                 ✨ מומלץ
               </Badge>
+            ) : null}
+            {product.isMysteryBox ? (
+              <motion.span
+                animate={{ scale: [1, 1.15, 1], rotate: [0, -5, 5, 0] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute left-2 top-2 z-10 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 text-center text-[11px] font-black leading-tight text-yellow-900 shadow-[0_0_20px_6px_rgba(234,179,8,0.7)] ring-2 ring-white"
+              >
+                🎁<br />תיבת<br />מסתורין
+              </motion.span>
+            ) : product.isSpecialOffer ? (
+              <motion.span
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute left-2 top-2 z-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 text-center text-[11px] font-black leading-tight text-yellow-900 shadow-[0_0_16px_4px_rgba(234,179,8,0.6)] ring-2 ring-white"
+              >
+                🔥<br />מיוחד!
+              </motion.span>
             ) : null}
           </div>
 

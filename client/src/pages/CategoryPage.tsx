@@ -46,6 +46,12 @@ const rankGroups = [
     eyebrow: "Master",
     image: "/rank-master.png",
   },
+  {
+    key: "pro",
+    title: "פרו",
+    eyebrow: "Pro",
+    image: "/rank-pro.png",
+  },
 ] as const;
 
 const rankFlow = ["Diamond", "Mythic", "Legendary", "Master", "Pro"];
@@ -65,6 +71,7 @@ const rankKeyByEnglish: Record<string, (typeof rankGroups)[number]["key"]> = {
   legendary: "legendary",
   legendery: "legendary",
   master: "master",
+  pro: "pro",
 };
 
 const emptyStateBySlug = {
@@ -119,10 +126,6 @@ function displayRankOptionName(name: string) {
 
   const [, fromRank, level, toRank, targetLevel] = match;
   const from = rankNameMap[fromRank] ?? fromRank;
-  if (fromRank.toLowerCase() === "master") {
-    return `${from} ${level} - ${rankNameMap.Pro}`;
-  }
-
   if (level === "1" || level === "2") {
     return `${from} ${level} - ${from} ${Number(level) + 1}`;
   }
@@ -137,9 +140,20 @@ function rankLevel(product: Product) {
 }
 
 function rankGroupForProduct(product: Product) {
-  const startingRank = product.name.match(/^([A-Za-z]+)\s+[123]\s+to\s+/)?.[1];
-  if (!startingRank) {
+  const match = product.name.match(
+    /^([A-Za-z]+)\s+([123])\s+to\s+([A-Za-z]+)(?:\s+[123])?/i
+  );
+  if (!match) {
     return rankGroups[0];
+  }
+
+  const [, startingRank, level, targetRank] = match;
+  if (
+    startingRank.toLowerCase() === "master" &&
+    level === "3" &&
+    targetRank.toLowerCase() === "pro"
+  ) {
+    return rankGroups.find(group => group.key === "pro") ?? rankGroups[0];
   }
 
   const key = rankKeyByEnglish[startingRank.toLowerCase()];
@@ -241,7 +255,7 @@ function RankOptionsPage({ products }: { products: Product[] }) {
         </div>
       </div>
 
-      <div className="grid gap-5 p-4 md:p-6 lg:grid-cols-2 2xl:grid-cols-4">
+      <div className="grid gap-5 p-4 md:p-6 lg:grid-cols-2 2xl:grid-cols-5">
         {grouped.map((group, groupIndex) => (
           <section
             key={group.key}

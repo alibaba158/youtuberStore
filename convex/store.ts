@@ -39,6 +39,9 @@ const productInput = {
   stock: v.number(),
   isActive: v.boolean(),
   isFeatured: v.boolean(),
+  isSpecialOffer: v.optional(v.boolean()),
+  isMysteryBox: v.optional(v.boolean()),
+  mysteryBoxOrder: v.optional(v.number()),
 };
 
 const defaultCategories = [
@@ -128,15 +131,15 @@ const defaultRankBoostProducts = [
     price: "120",
   },
   {
-    name: "Master 1 to Pro",
-    legacyName: "Master 1 to Master 2",
-    description: "Rank boost option from Master 1 to Pro.",
+    name: "Master 1 to Master 2",
+    legacyName: "Master 1 to Pro",
+    description: "Rank boost option from Master 1 to Master 2.",
     price: "1700",
   },
   {
-    name: "Master 2 to Pro",
-    legacyName: "Master 2 to Master 3",
-    description: "Rank boost option from Master 2 to Pro.",
+    name: "Master 2 to Master 3",
+    legacyName: "Master 2 to Pro",
+    description: "Rank boost option from Master 2 to Master 3.",
     price: "1400",
   },
   {
@@ -307,6 +310,9 @@ function sanitizeProductInput(args: {
   stock: number;
   isActive: boolean;
   isFeatured: boolean;
+  isSpecialOffer?: boolean;
+  isMysteryBox?: boolean;
+  mysteryBoxOrder?: number;
 }) {
   const imageUrls = (args.imageUrls ?? [])
     .map(url => normalizeSafeImageUrl(url))
@@ -351,6 +357,9 @@ function sanitizeProductInput(args: {
     stock: normalizeStock(args.stock),
     isActive: args.isActive,
     isFeatured: args.isFeatured,
+    isSpecialOffer: args.isSpecialOffer,
+    isMysteryBox: args.isMysteryBox,
+    mysteryBoxOrder: args.mysteryBoxOrder,
   };
 }
 
@@ -371,6 +380,9 @@ function sanitizeProductPatch(args: {
   stock?: number;
   isActive?: boolean;
   isFeatured?: boolean;
+  isSpecialOffer?: boolean;
+  isMysteryBox?: boolean;
+  mysteryBoxOrder?: number;
 }) {
   const imageUrls =
     args.imageUrls === undefined
@@ -418,6 +430,9 @@ function sanitizeProductPatch(args: {
     stock: args.stock === undefined ? undefined : normalizeStock(args.stock),
     isActive: args.isActive,
     isFeatured: args.isFeatured,
+    isSpecialOffer: args.isSpecialOffer,
+    isMysteryBox: args.isMysteryBox,
+    mysteryBoxOrder: args.mysteryBoxOrder,
   };
 }
 
@@ -582,7 +597,15 @@ export const categoryPageData = query({
       products: products
         .filter(product => adminView || product.isActive)
         .map(product => serializeProduct(product, adminView))
-        .sort((a, b) => b.createdAt - a.createdAt),
+        .sort((a, b) => {
+          const aBox = a?.isMysteryBox ? 1 : 0;
+          const bBox = b?.isMysteryBox ? 1 : 0;
+          if (aBox !== bBox) return bBox - aBox;
+          if (a?.isMysteryBox && b?.isMysteryBox) {
+            return (a.mysteryBoxOrder ?? 0) - (b.mysteryBoxOrder ?? 0);
+          }
+          return b.createdAt - a.createdAt;
+        }),
     };
   },
 });
@@ -997,6 +1020,9 @@ export const updateProduct = mutation({
       stock: v.optional(v.number()),
       isActive: v.optional(v.boolean()),
       isFeatured: v.optional(v.boolean()),
+      isSpecialOffer: v.optional(v.boolean()),
+      isMysteryBox: v.optional(v.boolean()),
+      mysteryBoxOrder: v.optional(v.number()),
     }),
   },
   handler: async (ctx, args) => {

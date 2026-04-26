@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, AlertTriangle, Plus, Pencil, Trash2, Package, Tag, BarChart3, Headphones, ReceiptText } from "lucide-react";
+import { ArrowRight, AlertTriangle, Plus, Pencil, Trash2, Package, Tag, BarChart3, Headphones, ReceiptText, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
@@ -30,6 +30,17 @@ type ProductForm = {
   stock: string;
   isActive: boolean;
   isFeatured: boolean;
+  isSpecialOffer: boolean;
+};
+
+type MysteryBoxForm = {
+  name: string;
+  description: string;
+  deliveryContent: string;
+  price: string;
+  imageUrl: string;
+  stock: string;
+  mysteryBoxOrder: string;
 };
 
 type CategoryForm = {
@@ -40,7 +51,8 @@ type CategoryForm = {
   sortOrder: string;
 };
 
-const emptyProduct: ProductForm = { name: "", description: "", deliveryContent: "", price: "", imageUrl: "", imageUrls: "", trophyCount: "", rareSkinCount: "", superRareSkinCount: "", epicSkinCount: "", mythicSkinCount: "", legendarySkinCount: "", categoryId: "", stock: "0", isActive: true, isFeatured: false };
+const emptyMysteryBox: MysteryBoxForm = { name: "תיבת מסתורין", description: "", deliveryContent: "", price: "", imageUrl: "", stock: "1", mysteryBoxOrder: "0" };
+const emptyProduct: ProductForm = { name: "", description: "", deliveryContent: "", price: "", imageUrl: "", imageUrls: "", trophyCount: "", rareSkinCount: "", superRareSkinCount: "", epicSkinCount: "", mythicSkinCount: "", legendarySkinCount: "", categoryId: "", stock: "0", isActive: true, isFeatured: false, isSpecialOffer: false };
 const emptyCategory: CategoryForm = { name: "", slug: "", description: "", imageUrl: "", sortOrder: "0" };
 const MAX_IMAGE_DIMENSION = 1600;
 const MAX_IMAGE_DATA_URL_LENGTH = 1_850_000;
@@ -244,6 +256,18 @@ function ProductEditor({
                 </select>
               </div>
             </div>
+            <div className="flex items-center justify-end gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3">
+              <Label className="cursor-pointer text-sm font-bold">מבצע מיוחד</Label>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={value.isSpecialOffer}
+                onClick={() => onChange({ ...value, isSpecialOffer: !value.isSpecialOffer })}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${value.isSpecialOffer ? "bg-accent" : "bg-input"}`}
+              >
+                <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition duration-200 ${value.isSpecialOffer ? "-translate-x-5" : "translate-x-0"}`} />
+              </button>
+            </div>
           </section>
 
           <section className="space-y-3">
@@ -300,6 +324,87 @@ function ProductEditor({
           </section>
         </div>
         <DialogFooter className="flex-row border-t border-border bg-card px-6 py-4 sm:justify-start"><Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button><Button onClick={onSubmit}>שמור מוצר</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MysteryBoxEditor({
+  open,
+  onOpenChange,
+  value,
+  onChange,
+  onSubmit,
+  title,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  value: MysteryBoxForm;
+  onChange: (value: MysteryBoxForm) => void;
+  onSubmit: () => void;
+  title: string;
+}) {
+  const handleImageSelect = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const imageUrl = await readFileAsDataUrl(file);
+      onChange({ ...value, imageUrl });
+      toast.success("התמונה נוספה");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "לא הצלחנו להוסיף תמונה");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent dir="rtl" className="max-w-lg overflow-hidden border-2 border-pink-400 p-0 shadow-[0_0_30px_6px_rgba(236,72,153,0.25)]">
+        <DialogHeader className="border-b border-pink-200 bg-gradient-to-l from-yellow-50 to-pink-50 px-6 pb-4 pr-14 pt-6 text-right">
+          <DialogTitle className="flex items-center gap-2 text-xl font-black leading-7">
+            🎁 {title}
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground">תיבת מסתורין מופיעה ראשונה בקטגוריית חשבונות עם מסגרת ורודה ותג מיוחד</p>
+        </DialogHeader>
+        <div className="space-y-5 px-6 py-5">
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">שם התיבה</Label>
+            <Input className="text-right" value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} placeholder="תיבת מסתורין" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label className="block text-right font-bold">מחיר</Label>
+              <Input className="text-right" type="number" min="0" step="0.01" value={value.price} onChange={(e) => onChange({ ...value, price: e.target.value })} placeholder="0.00" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="block text-right font-bold">מלאי</Label>
+              <Input className="text-right" type="number" min="0" value={value.stock} onChange={(e) => onChange({ ...value, stock: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="block text-right font-bold">סדר הצגה</Label>
+              <Input className="text-right" type="number" min="0" value={value.mysteryBoxOrder} onChange={(e) => onChange({ ...value, mysteryBoxOrder: e.target.value })} placeholder="0 = ראשון" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">תמונה</Label>
+            <Input dir="ltr" value={value.imageUrl} onChange={(e) => onChange({ ...value, imageUrl: e.target.value })} placeholder="קישור לתמונה" />
+            <label className="flex h-10 cursor-pointer items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-bold transition-colors hover:bg-muted">
+              העלאת תמונה
+              <Input className="sr-only" type="file" accept="image/*" onChange={(e) => void handleImageSelect(e.target.files?.[0])} />
+            </label>
+            {value.imageUrl ? <img src={value.imageUrl} alt="תצוגה מקדימה" className="h-32 w-full rounded-md border border-border bg-muted object-contain" /> : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">תיאור (מה הלקוח רואה)</Label>
+            <Textarea rows={3} value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} placeholder="תיאור מה יש בתיבה (אפשר להשאיר מסתורי 😉)" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="block text-right font-bold">תוכן אחרי רכישה</Label>
+            <Textarea rows={3} value={value.deliveryContent} onChange={(e) => onChange({ ...value, deliveryContent: e.target.value })} placeholder="מה יימסר ללקוח אחרי התשלום" />
+          </div>
+        </div>
+        <DialogFooter className="flex-row border-t border-pink-200 bg-gradient-to-l from-yellow-50 to-pink-50 px-6 py-4 sm:justify-start">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
+          <Button className="bg-pink-500 hover:bg-pink-600" onClick={onSubmit}>שמור תיבת מסתורין 🎁</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -389,6 +494,9 @@ export default function AdminPage() {
   const [newCategoryOpen, setNewCategoryOpen] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [categoryForm, setCategoryForm] = useState<CategoryForm>(emptyCategory);
+  const [newMysteryBoxOpen, setNewMysteryBoxOpen] = useState(false);
+  const [editMysteryBoxId, setEditMysteryBoxId] = useState<string | null>(null);
+  const [mysteryBoxForm, setMysteryBoxForm] = useState<MysteryBoxForm>(emptyMysteryBox);
 
   if (loading) {
     return <div className="container py-12"><div className="mb-8 h-8 w-48 rounded skeleton" /><div className="h-64 rounded-xl skeleton" /></div>;
@@ -418,6 +526,51 @@ export default function AdminPage() {
     await updateProduct({ id: editProductId as never, data: { ...form, categoryId: form.categoryId ? form.categoryId as never : undefined, stock: parseInt(form.stock || "0", 10) || 0 } });
     toast.success("המוצר עודכן");
     setEditProductId(null);
+  };
+
+  const accountsCategory = categories.find((c) => c.slug === "accounts");
+
+  const saveNewMysteryBox = async () => {
+    const imageUrl = mysteryBoxForm.imageUrl.trim();
+    const preparedImageUrl = imageUrl.startsWith("data:image/") ? await prepareImageDataUrlForSave(imageUrl) : imageUrl;
+    await createProduct({
+      name: mysteryBoxForm.name || "תיבת מסתורין",
+      description: mysteryBoxForm.description || undefined,
+      deliveryContent: mysteryBoxForm.deliveryContent || undefined,
+      price: mysteryBoxForm.price,
+      imageUrl: preparedImageUrl || undefined,
+      categoryId: accountsCategory?._id as never ?? undefined,
+      stock: parseInt(mysteryBoxForm.stock || "1", 10) || 1,
+      isActive: true,
+      isFeatured: false,
+      isMysteryBox: true,
+      mysteryBoxOrder: parseInt(mysteryBoxForm.mysteryBoxOrder || "0", 10) || 0,
+    });
+    toast.success("תיבת המסתורין נוצרה 🎁");
+    setMysteryBoxForm(emptyMysteryBox);
+    setNewMysteryBoxOpen(false);
+  };
+
+  const saveEditedMysteryBox = async () => {
+    if (!editMysteryBoxId) return;
+    const imageUrl = mysteryBoxForm.imageUrl.trim();
+    const preparedImageUrl = imageUrl.startsWith("data:image/") ? await prepareImageDataUrlForSave(imageUrl) : imageUrl;
+    await updateProduct({
+      id: editMysteryBoxId as never,
+      data: {
+        name: mysteryBoxForm.name || "תיבת מסתורין",
+        description: mysteryBoxForm.description || undefined,
+        deliveryContent: mysteryBoxForm.deliveryContent || undefined,
+        price: mysteryBoxForm.price,
+        imageUrl: preparedImageUrl || undefined,
+        categoryId: accountsCategory?._id as never ?? undefined,
+        stock: parseInt(mysteryBoxForm.stock || "1", 10) || 1,
+        isMysteryBox: true,
+        mysteryBoxOrder: parseInt(mysteryBoxForm.mysteryBoxOrder || "0", 10) || 0,
+      },
+    });
+    toast.success("תיבת המסתורין עודכנה 🎁");
+    setEditMysteryBoxId(null);
   };
 
   const saveNewCategory = async () => {
@@ -454,6 +607,7 @@ export default function AdminPage() {
           <TabsList className="mb-6">
             <TabsTrigger value="stats" className="gap-2"><BarChart3 className="h-4 w-4" />סקירה</TabsTrigger>
             <TabsTrigger value="products" className="gap-2"><Package className="h-4 w-4" />מוצרים</TabsTrigger>
+            <TabsTrigger value="mysterybox" className="gap-2"><Gift className="h-4 w-4" />תיבות מסתורין</TabsTrigger>
             <TabsTrigger value="categories" className="gap-2"><Tag className="h-4 w-4" />קטגוריות</TabsTrigger>
           </TabsList>
 
@@ -476,11 +630,44 @@ export default function AdminPage() {
                 <motion.div key={product._id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
                   <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{product.name}</p><p className="text-sm text-muted-foreground">₪{parseFloat(product.price).toFixed(2)} · מלאי {product.stock}</p></div>
                   <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditProductId(product._id); setProductForm({ name: product.name, description: product.description ?? "", deliveryContent: product.deliveryContent ?? "", price: product.price, imageUrl: product.imageUrl ?? "", imageUrls: (product.imageUrls ?? []).join("\n"), trophyCount: product.trophyCount === undefined ? "" : String(product.trophyCount), rareSkinCount: product.rareSkinCount === undefined ? "" : String(product.rareSkinCount), superRareSkinCount: product.superRareSkinCount === undefined ? "" : String(product.superRareSkinCount), epicSkinCount: product.epicSkinCount === undefined ? "" : String(product.epicSkinCount), mythicSkinCount: product.mythicSkinCount === undefined ? "" : String(product.mythicSkinCount), legendarySkinCount: product.legendarySkinCount === undefined ? "" : String(product.legendarySkinCount), categoryId: product.categoryId ?? "", stock: String(product.stock), isActive: product.isActive, isFeatured: product.isFeatured }); }}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditProductId(product._id); setProductForm({ name: product.name, description: product.description ?? "", deliveryContent: product.deliveryContent ?? "", price: product.price, imageUrl: product.imageUrl ?? "", imageUrls: (product.imageUrls ?? []).join("\n"), trophyCount: product.trophyCount === undefined ? "" : String(product.trophyCount), rareSkinCount: product.rareSkinCount === undefined ? "" : String(product.rareSkinCount), superRareSkinCount: product.superRareSkinCount === undefined ? "" : String(product.superRareSkinCount), epicSkinCount: product.epicSkinCount === undefined ? "" : String(product.epicSkinCount), mythicSkinCount: product.mythicSkinCount === undefined ? "" : String(product.mythicSkinCount), legendarySkinCount: product.legendarySkinCount === undefined ? "" : String(product.legendarySkinCount), categoryId: product.categoryId ?? "", stock: String(product.stock), isActive: product.isActive, isFeatured: product.isFeatured, isSpecialOffer: product.isSpecialOffer ?? false }); }}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => void handleDeleteProduct(product._id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="mysterybox">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">תיבות מסתורין 🎁</h2>
+                <p className="text-sm text-muted-foreground">מופיעות ראשונות בקטגוריית חשבונות עם מסגרת ורודה</p>
+              </div>
+              <Button className="gap-2 bg-pink-500 hover:bg-pink-600" onClick={() => { setMysteryBoxForm(emptyMysteryBox); setNewMysteryBoxOpen(true); }}>
+                <Plus className="h-4 w-4" />הוסף תיבת מסתורין
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {products.filter((p) => p.isMysteryBox).sort((a, b) => (a.mysteryBoxOrder ?? 0) - (b.mysteryBoxOrder ?? 0)).map((product) => (
+                <motion.div key={product._id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 rounded-xl border-2 border-pink-300 bg-gradient-to-l from-yellow-50 to-pink-50 p-4 shadow-sm">
+                  <span className="text-2xl">🎁</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">₪{parseFloat(product.price).toFixed(2)} · מלאי {product.stock} · סדר: {product.mysteryBoxOrder ?? 0}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditMysteryBoxId(product._id); setMysteryBoxForm({ name: product.name, description: product.description ?? "", deliveryContent: product.deliveryContent ?? "", price: product.price, imageUrl: product.imageUrl ?? "", stock: String(product.stock), mysteryBoxOrder: String(product.mysteryBoxOrder ?? 0) }); }}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => void handleDeleteProduct(product._id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                </motion.div>
+              ))}
+              {products.filter((p) => p.isMysteryBox).length === 0 ? (
+                <div className="rounded-xl border-2 border-dashed border-pink-200 bg-pink-50/50 p-10 text-center">
+                  <p className="text-2xl">🎁</p>
+                  <p className="mt-2 text-sm font-bold text-muted-foreground">אין תיבות מסתורין עדיין</p>
+                </div>
+              ) : null}
             </div>
           </TabsContent>
 
@@ -503,6 +690,8 @@ export default function AdminPage() {
 
       <ProductEditor open={newProductOpen} onOpenChange={setNewProductOpen} value={productForm} onChange={setProductForm} onSubmit={() => void saveNewProduct()} categories={categories} title="הוספת מוצר" />
       <ProductEditor open={Boolean(editProductId)} onOpenChange={(open) => !open && setEditProductId(null)} value={productForm} onChange={setProductForm} onSubmit={() => void saveEditedProduct()} categories={categories} title="עריכת מוצר" />
+      <MysteryBoxEditor open={newMysteryBoxOpen} onOpenChange={setNewMysteryBoxOpen} value={mysteryBoxForm} onChange={setMysteryBoxForm} onSubmit={() => void saveNewMysteryBox()} title="הוספת תיבת מסתורין" />
+      <MysteryBoxEditor open={Boolean(editMysteryBoxId)} onOpenChange={(open) => !open && setEditMysteryBoxId(null)} value={mysteryBoxForm} onChange={setMysteryBoxForm} onSubmit={() => void saveEditedMysteryBox()} title="עריכת תיבת מסתורין" />
       <CategoryEditor open={newCategoryOpen} onOpenChange={setNewCategoryOpen} value={categoryForm} onChange={setCategoryForm} onSubmit={() => void saveNewCategory()} title="הוספת קטגוריה" />
       <CategoryEditor open={Boolean(editCategoryId)} onOpenChange={(open) => !open && setEditCategoryId(null)} value={categoryForm} onChange={setCategoryForm} onSubmit={() => void saveEditedCategory()} title="עריכת קטגוריה" />
     </div>

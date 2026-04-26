@@ -16,7 +16,7 @@ export const themes: Record<ThemeType, ThemeConfig> = {
     name: "default",
     label: "ורוד וסגול",
     primary: "oklch(0.50 0.20 330)",
-    accent: "oklch(0.70 0.25 340)",
+    accent: "oklch(0.62 0.18 340)",
     background: "oklch(0.98 0.004 330)",
     foreground: "oklch(0.18 0.01 330)",
     muted: "oklch(0.95 0.006 330)",
