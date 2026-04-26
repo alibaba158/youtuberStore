@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { Link, useParams } from "wouter";
-import { ArrowRight, Package, ShoppingCart, Sparkles } from "lucide-react";
+import { ArrowRight, Package, ShoppingCart, Sparkles, X, ZoomIn } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -184,6 +184,10 @@ function RankOptionCard({
 }
 
 function RankOptionsPage({ products }: { products: Product[] }) {
+  const [previewImage, setPreviewImage] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
   const grouped = rankGroups.map((group) => ({
     ...group,
     products: products
@@ -228,11 +232,20 @@ function RankOptionsPage({ products }: { products: Product[] }) {
             className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm"
           >
             <div className="border-b border-border bg-muted/35 p-5">
-              <div className="mb-4 flex min-h-20 items-center justify-center">
+              <button
+                type="button"
+                className="group/image relative mb-4 flex min-h-32 w-full cursor-zoom-in items-center justify-center rounded-2xl border border-border bg-card p-3 transition hover:border-accent/50"
+                onClick={() =>
+                  setPreviewImage({ src: group.image, alt: group.eyebrow })
+                }
+                aria-label={`Open ${group.eyebrow} image preview`}
+              >
                 <img
                   src={group.image}
                   alt={group.eyebrow}
-                  className="max-h-20 max-w-full object-contain drop-shadow-lg"
+                  loading="eager"
+                  decoding="async"
+                  className="h-auto max-h-32 w-auto max-w-full object-contain drop-shadow-lg"
                   onError={(event) => {
                     event.currentTarget.style.display = "none";
                     event.currentTarget.nextElementSibling?.classList.remove(
@@ -243,7 +256,10 @@ function RankOptionsPage({ products }: { products: Product[] }) {
                 <div className="hidden rounded-2xl border border-border bg-card p-5 text-muted-foreground">
                   <Package className="h-10 w-10" />
                 </div>
-              </div>
+                <span className="absolute rounded-full bg-foreground/80 p-2 text-white opacity-0 transition group-hover/image:opacity-100">
+                  <ZoomIn className="h-4 w-4" />
+                </span>
+              </button>
               <p className="text-center text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 {group.eyebrow}
               </p>
@@ -270,6 +286,30 @@ function RankOptionsPage({ products }: { products: Product[] }) {
           </section>
         ))}
       </div>
+
+      {previewImage ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/[0.82] p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            className="absolute left-4 top-4 rounded-full border border-white/20 bg-white/10 p-3 text-white transition hover:bg-white/20"
+            onClick={() => setPreviewImage(null)}
+            aria-label="Close image preview"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={previewImage.src}
+            alt={previewImage.alt}
+            className="h-auto max-h-[88vh] w-auto max-w-[94vw] object-contain"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
