@@ -184,6 +184,103 @@ function buildReceiptHtml(order: any, receiptUrl?: string) {
     </div>`;
 }
 
+function buildCustomerDeliveryText(order: any, receiptUrl?: string) {
+  const lines = [
+    "Razlo Store product details",
+    "",
+    `Order: ${String(order._id)}`,
+    `Customer: ${order.customerName}`,
+    `Email: ${order.customerEmail}`,
+    "",
+    "Product details:",
+  ];
+
+  for (const item of order.items) {
+    lines.push(
+      "",
+      `${item.name} x${item.quantity}`,
+      item.deliveryContent || "No product details were added yet.",
+    );
+  }
+
+  if (receiptUrl) {
+    lines.push("", `Receipt: ${receiptUrl}`);
+  }
+
+  return lines.join("\n");
+}
+
+function buildCustomerDeliveryHtml(order: any, receiptUrl?: string) {
+  const itemCards = order.items
+    .map(
+      (item: any) => `
+        <div style="margin:0 0 16px;padding:16px;border:1px solid #f2d9e7;border-radius:18px;background:#ffffff;">
+          <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="width:72px;vertical-align:top;">
+                ${
+                  item.imageUrl
+                    ? `<img src="${htmlEscape(
+                        item.imageUrl,
+                      )}" alt="${htmlEscape(
+                        item.name,
+                      )}" width="58" height="58" style="display:block;width:58px;height:58px;object-fit:contain;border-radius:14px;background:#f7edf3;padding:6px;border:1px solid #f2d9e7;" />`
+                    : `<div style="width:58px;height:58px;border-radius:14px;background:#f7edf3;border:1px solid #f2d9e7;"></div>`
+                }
+              </td>
+              <td style="vertical-align:top;">
+                <div style="font-size:17px;font-weight:900;color:#24111c;">${htmlEscape(
+                  item.name,
+                )}</div>
+                <div style="margin-top:4px;font-size:13px;color:#7b6170;">Quantity: ${htmlEscape(
+                  item.quantity,
+                )}</div>
+              </td>
+            </tr>
+          </table>
+          <div style="margin-top:14px;padding:14px;border-radius:14px;background:#fbf7fa;border:1px dashed #f2b6d7;color:#24111c;font-size:14px;line-height:1.7;white-space:pre-wrap;">${htmlEscape(
+            item.deliveryContent || "No product details were added yet.",
+          )}</div>
+        </div>`,
+    )
+    .join("");
+
+  const receiptLink = receiptUrl
+    ? `<p style="margin:22px 0 0;"><a href="${htmlEscape(
+        receiptUrl,
+      )}" style="display:inline-block;background:#f456a5;color:#24111c;text-decoration:none;font-weight:900;border-radius:16px;padding:13px 18px;">Open receipt</a></p>`
+    : "";
+
+  return `
+    <div style="margin:0;padding:0;background:#fbf7fa;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;background:#fbf7fa;">
+        <tr>
+          <td style="padding:28px 14px;">
+            <div style="width:100%;max-width:720px;margin:0 auto;font-family:Arial,sans-serif;color:#24111c;">
+              <div style="border-radius:28px 28px 0 0;background:#24111c;padding:32px 28px;color:#ffffff;background-image:radial-gradient(circle at top right, rgba(244,86,165,0.42), transparent 34%), radial-gradient(circle at bottom left, rgba(164,255,62,0.16), transparent 32%);">
+                <div style="display:inline-block;margin:0 0 18px;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.16);font-size:13px;font-weight:800;color:#f8d7e8;">Product details</div>
+                <h1 style="margin:0;font-size:32px;line-height:1.12;font-weight:900;">Your Razlo Store order details</h1>
+                <p style="margin:14px 0 0;color:rgba(255,255,255,0.74);font-size:15px;line-height:1.7;">The admin team has sent the product information for your paid order.</p>
+              </div>
+              <div style="background:#fbf7fa;border:1px solid #f2d9e7;border-top:0;border-radius:0 0 28px 28px;padding:24px 28px 30px;box-shadow:0 18px 45px rgba(36,17,28,0.08);">
+                <div style="padding:16px;border:1px solid #f2d9e7;border-radius:18px;background:#ffffff;margin-bottom:20px;">
+                  <p style="margin:0;font-size:14px;color:#7b6170;"><strong style="color:#24111c;">Order:</strong> ${htmlEscape(
+                    String(order._id),
+                  )}</p>
+                  <p style="margin:7px 0 0;font-size:14px;color:#7b6170;"><strong style="color:#24111c;">Customer:</strong> ${htmlEscape(
+                    order.customerName,
+                  )}</p>
+                </div>
+                ${itemCards}
+                ${receiptLink}
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>`;
+}
+
 const PURCHASE_NOTIFICATION_RECIPIENTS = [
   "xtremeytkids@gmail.com",
   "almondtor123@gmail.com",
@@ -421,6 +518,74 @@ export const sendAdminPurchaseNotification = internalAction({
           ? error.message
           : "Admin purchase notification email failed";
       await ctx.runMutation(internal.orders.markAdminPurchaseEmailFailed, {
+        orderId: args.orderId,
+        error: message,
+      });
+      throw error;
+    }
+  },
+});
+
+export const sendCustomerDeliveryEmail = internalAction({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const claimed = await ctx.runMutation(
+      internal.orders.claimOrderForCustomerDeliveryEmail,
+      { orderId: args.orderId },
+    );
+    if (!claimed) {
+      return { status: "skipped" as const };
+    }
+
+    try {
+      const order = await ctx.runQuery(
+        internal.orders.orderForCustomerDeliveryEmail,
+        {
+          orderId: args.orderId,
+        },
+      );
+      if (!order?.customerEmail) {
+        throw new Error("Order does not have a customer email");
+      }
+
+      const user = getGmailUser();
+      const pass = getGmailPassword();
+      if (!user || !pass) {
+        throw new Error(
+          "Missing Gmail credentials. Set GMAIL_USER and GMAIL_APP_PASSWORD in Convex environment variables.",
+        );
+      }
+
+      const receiptUrl = getAppUrl()
+        ? `${getAppUrl()}/receipt/${String(order._id)}`
+        : undefined;
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user,
+          pass,
+        },
+      });
+
+      await transporter.sendMail({
+        from: process.env.GMAIL_FROM?.trim() || `Razlo Store <${user}>`,
+        to: order.customerEmail,
+        subject: `Your Razlo Store product details ${receiptNumber(String(order._id))}`,
+        text: buildCustomerDeliveryText(order, receiptUrl),
+        html: buildCustomerDeliveryHtml(order, receiptUrl),
+      });
+
+      await ctx.runMutation(internal.orders.markCustomerDeliveryEmailSent, {
+        orderId: args.orderId,
+      });
+
+      return { status: "sent" as const };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Customer delivery email failed";
+      await ctx.runMutation(internal.orders.markCustomerDeliveryEmailFailed, {
         orderId: args.orderId,
         error: message,
       });

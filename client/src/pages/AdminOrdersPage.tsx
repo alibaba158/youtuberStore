@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -7,13 +7,15 @@ import {
   Mail,
   Package,
   ReceiptText,
+  Send,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { api } from "../../../convex/_generated/api";
 
 function formatDate(value?: number) {
-  if (!value) return "לא שולם עדיין";
+  if (!value) return "עדיין לא";
   return new Intl.DateTimeFormat("he-IL", {
     day: "2-digit",
     month: "2-digit",
@@ -23,10 +25,15 @@ function formatDate(value?: number) {
   }).format(new Date(value));
 }
 
+function formatPrice(value: string | number) {
+  return `₪${Number(value).toFixed(2)}`;
+}
+
 function statusLabel(status: string) {
   if (status === "paid") return "שולם";
   if (status === "awaiting_payment") return "ממתין לתשלום";
   if (status === "failed") return "נכשל";
+  if (status === "canceled") return "בוטל";
   return status;
 }
 
@@ -36,6 +43,22 @@ export default function AdminOrdersPage() {
     api.orders.adminRecentOrders,
     user?.role === "admin" ? {} : "skip",
   );
+  const sendCustomerDeliveryEmail = useMutation(
+    api.orders.sendCustomerDeliveryEmail,
+  );
+
+  const handleSendDetails = async (orderId: string) => {
+    try {
+      await sendCustomerDeliveryEmail({ orderId: orderId as never });
+      toast.success("אימייל פרטי המוצר נשלח לתור השליחה");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "לא הצלחנו לשלוח את פרטי המוצר",
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -71,7 +94,8 @@ export default function AdminOrdersPage() {
           <div>
             <h1 className="text-3xl font-black">רכישות אחרונות</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              כאן אפשר לראות מי קנה מה, מתי, ואת האימייל שלו כדי לשלוח לו את פרטי המוצר.
+              הקבלה נשלחת אוטומטית אחרי תשלום. מכאן האדמין יכול לשלוח ללקוח
+              אימייל נוסף עם כל פרטי המוצר.
             </p>
           </div>
           <div className="rounded-full border border-border bg-card px-4 py-2 text-sm font-bold text-foreground">
@@ -90,7 +114,7 @@ export default function AdminOrdersPage() {
             <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground/40" />
             <h2 className="text-xl font-black">אין רכישות להצגה</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              רכישות חדשות יופיעו כאן אחרי שלקוחות יצרו הזמנה.
+              רכישות חדשות יופיעו כאן אחרי שלקוחות ישלמו.
             </p>
           </div>
         ) : (
@@ -136,26 +160,64 @@ export default function AdminOrdersPage() {
                         >
                           <p className="font-bold text-foreground">{item.name}</p>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            כמות {item.quantity} · ₪{Number(item.price).toFixed(2)}
+                            כמות {item.quantity} · {formatPrice(item.price)}
                           </p>
+                          {item.deliveryContent ? (
+                            <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                              {item.deliveryContent}
+                            </p>
+                          ) : null}
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="shrink-0 rounded-xl border border-border bg-background p-4 text-sm lg:w-56">
+                  <div className="shrink-0 rounded-xl border border-border bg-background p-4 text-sm lg:w-64">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">סכום</span>
-                      <span className="font-black">₪{Number(order.subtotal).toFixed(2)}</span>
+                      <span className="font-black">
+                        {formatPrice(order.subtotal)}
+                      </span>
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">נוצר</span>
-                      <span className="font-semibold">{formatDate(order.createdAt)}</span>
+                      <span className="font-semibold">
+                        {formatDate(order.createdAt)}
+                      </span>
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">שולם</span>
-                      <span className="font-semibold">{formatDate(order.paidAt)}</span>
+                      <span className="font-semibold">
+                        {formatDate(order.paidAt)}
+                      </span>
                     </div>
+                    <div className="mt-3 flex items-center justify-between gap-4">
+                      <span className="text-muted-foreground">קבלה</span>
+                      <span className="font-semibold">
+                        {order.receiptEmailSentAt ? "נשלחה" : "בהכנה"}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-4">
+                      <span className="text-muted-foreground">פרטי מוצר</span>
+                      <span className="font-semibold">
+                        {order.customerDeliveryEmailSentAt ? "נשלחו" : "לא נשלחו"}
+                      </span>
+                    </div>
+                    {order.customerDeliveryEmailError ? (
+                      <p className="mt-3 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
+                        {order.customerDeliveryEmailError}
+                      </p>
+                    ) : null}
+                    <Button
+                      type="button"
+                      className="mt-4 w-full gap-2"
+                      onClick={() => void handleSendDetails(order._id)}
+                    >
+                      <Send className="h-4 w-4" />
+                      {order.customerDeliveryEmailSentAt
+                        ? "שלח שוב פרטי מוצר"
+                        : "שלח פרטי מוצר"}
+                    </Button>
                   </div>
                 </div>
               </section>

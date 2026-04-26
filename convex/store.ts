@@ -548,21 +548,25 @@ export const adminPageData = query({
     }
     const categories = await ctx.db.query("categories").collect();
     const products = await ctx.db.query("products").collect();
+    const rankCategory = categories.find((category) => category.slug === "rank");
+    const adminCategories = categories.filter((category) => category.slug !== "rank");
+    const adminProducts = products.filter(
+      (product) => product.categoryId !== rankCategory?._id,
+    );
+    const activeAdminProducts = adminProducts.filter((product) => product.isActive);
 
     return {
-      categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
-      products: products
-        .filter((product) => product.isActive)
-        .sort((a, b) => b.createdAt - a.createdAt),
+      categories: adminCategories.sort((a, b) => a.sortOrder - b.sortOrder),
+      products: activeAdminProducts.sort((a, b) => b.createdAt - a.createdAt),
       stats: {
-        totalProducts: products.length,
-        activeProducts: products.filter((product) => product.isActive).length,
-        outOfStock: products.filter((product) => product.stock === 0).length,
-        lowStock: products.filter(
+        totalProducts: adminProducts.length,
+        activeProducts: activeAdminProducts.length,
+        outOfStock: adminProducts.filter((product) => product.stock === 0).length,
+        lowStock: adminProducts.filter(
           (product) => product.stock > 0 && product.stock <= 5,
         ).length,
-        totalCategories: categories.length,
-        lowStockProducts: products.filter((product) => product.stock <= 5),
+        totalCategories: adminCategories.length,
+        lowStockProducts: adminProducts.filter((product) => product.stock <= 5),
       },
     };
   },

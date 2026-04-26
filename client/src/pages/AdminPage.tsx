@@ -42,6 +42,9 @@ type CategoryForm = {
 
 const emptyProduct: ProductForm = { name: "", description: "", deliveryContent: "", price: "", imageUrl: "", imageUrls: "", trophyCount: "", rareSkinCount: "", superRareSkinCount: "", epicSkinCount: "", mythicSkinCount: "", legendarySkinCount: "", categoryId: "", stock: "0", isActive: true, isFeatured: false };
 const emptyCategory: CategoryForm = { name: "", slug: "", description: "", imageUrl: "", sortOrder: "0" };
+const MAX_IMAGE_DIMENSION = 1600;
+const MAX_IMAGE_DATA_URL_LENGTH = 1_850_000;
+const IMAGE_JPEG_QUALITY = 0.9;
 
 async function loadImage(source: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -54,7 +57,7 @@ async function loadImage(source: string) {
 
 async function compressImageDataUrl(source: string) {
   const image = await loadImage(source);
-  const maxSize = 700;
+  const maxSize = MAX_IMAGE_DIMENSION;
   const scale = Math.min(1, maxSize / Math.max(image.naturalWidth, image.naturalHeight));
   const width = Math.max(1, Math.round(image.naturalWidth * scale));
   const height = Math.max(1, Math.round(image.naturalHeight * scale));
@@ -70,14 +73,26 @@ async function compressImageDataUrl(source: string) {
 
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, width, height);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
   context.drawImage(image, 0, 0, width, height);
 
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
-  if (dataUrl.length > 900_000) {
+  const dataUrl = canvas.toDataURL("image/jpeg", IMAGE_JPEG_QUALITY);
+  if (dataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
     throw new Error("התמונה גדולה מדי. נסו קובץ קטן יותר.");
   }
 
   return dataUrl;
+}
+
+async function prepareImageDataUrlForSave(source: string) {
+  if (!source.startsWith("data:image/")) {
+    return source;
+  }
+
+  return source.length <= MAX_IMAGE_DATA_URL_LENGTH
+    ? source
+    : compressImageDataUrl(source);
 }
 
 async function readFileAsDataUrl(file: File) {
@@ -116,12 +131,15 @@ async function prepareProductFormForSave(form: ProductForm) {
   return {
     ...form,
     imageUrl: imageUrl.startsWith("data:image/")
-      ? await compressImageDataUrl(imageUrl)
+      ? await prepareImageDataUrlForSave(imageUrl)
       : imageUrl,
-    imageUrls: form.imageUrls
-      .split(/\r?\n/)
-      .map((url) => url.trim())
-      .filter(Boolean),
+    imageUrls: await Promise.all(
+      form.imageUrls
+        .split(/\r?\n/)
+        .map((url) => url.trim())
+        .filter(Boolean)
+        .map((url) => prepareImageDataUrlForSave(url)),
+    ),
     trophyCount: optionalCount(form.trophyCount),
     rareSkinCount: optionalCount(form.rareSkinCount),
     superRareSkinCount: optionalCount(form.superRareSkinCount),
@@ -136,7 +154,7 @@ async function prepareCategoryFormForSave(form: CategoryForm) {
   return {
     ...form,
     imageUrl: imageUrl.startsWith("data:image/")
-      ? await compressImageDataUrl(imageUrl)
+      ? await prepareImageDataUrlForSave(imageUrl)
       : imageUrl,
   };
 }

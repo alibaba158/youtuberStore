@@ -5,6 +5,7 @@ import {
   mutation,
   query,
 } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import {
   normalizeCartQuantity,
@@ -100,8 +101,13 @@ function sanitizeOrderItems(items: any[], deliveryUnlocked: boolean) {
   }));
 }
 
-function serializeOrder(order: any, opts?: { includeSensitiveBitState?: boolean }) {
-  const deliveryUnlocked = order.orderStatus === "paid";
+function serializeOrder(
+  order: any,
+  opts?: { includeSensitiveBitState?: boolean; includeDeliveryContent?: boolean },
+) {
+  const deliveryUnlocked =
+    Boolean(opts?.includeDeliveryContent) ||
+    (order.orderStatus === "paid" && Boolean(order.customerDeliveryEmailSentAt));
   return {
     _id: order._id,
     _creationTime: order._creationTime,
@@ -123,6 +129,8 @@ function serializeOrder(order: any, opts?: { includeSensitiveBitState?: boolean 
     paidAt: order.paidAt,
     receiptEmailSentAt: order.receiptEmailSentAt,
     adminPurchaseEmailSentAt: order.adminPurchaseEmailSentAt,
+    customerDeliveryEmailSentAt: order.customerDeliveryEmailSentAt,
+    customerDeliveryEmailError: order.customerDeliveryEmailError,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     deliveryUnlocked,
@@ -482,6 +490,109 @@ export const markAdminPurchaseEmailFailed = internalMutation({
   },
 });
 
+export const claimOrderForCustomerDeliveryEmail = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
+      return null;
+    }
+
+    const now = Date.now();
+    const sendStartedAt = order.customerDeliveryEmailSendStartedAt;
+    if (sendStartedAt && now - sendStartedAt < 10 * 60 * 1000) {
+      return null;
+    }
+
+    await ctx.db.patch(args.orderId, {
+      customerDeliveryEmailSendStartedAt: now,
+      customerDeliveryEmailError: undefined,
+      updatedAt: now,
+    });
+
+    return true;
+  },
+});
+
+export const orderForCustomerDeliveryEmail = internalQuery({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
+      return null;
+    }
+
+    return serializeOrder(order, { includeDeliveryContent: true });
+  },
+});
+
+export const markCustomerDeliveryEmailSent = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    await ctx.db.patch(args.orderId, {
+      customerDeliveryEmailSentAt: now,
+      customerDeliveryEmailError: undefined,
+      updatedAt: now,
+    });
+    return true;
+  },
+});
+
+export const markCustomerDeliveryEmailFailed = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+    error: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.orderId, {
+      customerDeliveryEmailSendStartedAt: undefined,
+      customerDeliveryEmailError: normalizeRequiredText(
+        args.error,
+        "Customer delivery email error",
+        1_000,
+      ),
+      updatedAt: Date.now(),
+    });
+    return true;
+  },
+});
+
+export const sendCustomerDeliveryEmail = mutation({
+  args: {
+    orderId: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await requireViewer(ctx);
+    if (viewer.user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.orderStatus !== "paid" || order.paymentStatus !== "paid") {
+      throw new Error("Only paid orders can receive product details");
+    }
+
+    await ctx.scheduler.runAfter(0, internal.emails.sendCustomerDeliveryEmail, {
+      orderId: args.orderId,
+    });
+
+    return true;
+  },
+});
+
 export const myOrders = query({
   args: {},
   handler: async (ctx) => {
@@ -494,7 +605,7 @@ export const myOrders = query({
     return orders
       .filter((order) => order.orderStatus !== "canceled")
       .sort((a, b) => b.createdAt - a.createdAt)
-      .map((order) => serializeOrder(order));
+      .map((order) => serializeOrder(order, { includeDeliveryContent: true }));
   },
 });
 
