@@ -119,6 +119,10 @@ function displayRankOptionName(name: string) {
 
   const [, fromRank, level, toRank, targetLevel] = match;
   const from = rankNameMap[fromRank] ?? fromRank;
+  if (level === "1" || level === "2") {
+    return `${from} ${level} - ${from} ${Number(level) + 1}`;
+  }
+
   const to = rankNameMap[toRank] ?? toRank;
   return `${from} ${level} - ${to}${targetLevel ? ` ${targetLevel}` : ""}`;
 }
