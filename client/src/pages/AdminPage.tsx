@@ -228,11 +228,11 @@ function ProductEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="max-h-[calc(100vh-2rem)] max-w-2xl overflow-hidden p-0">
+      <DialogContent dir="rtl" className="flex max-h-[calc(100vh-2rem)] max-w-2xl flex-col overflow-hidden p-0">
         <DialogHeader className="border-b border-border px-6 pb-4 pr-14 pt-6 text-right">
           <DialogTitle className="text-xl font-black leading-7">{title}</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[calc(100vh-11rem)] space-y-7 overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-6 py-5">
           <section className="space-y-3">
             <h3 className="text-sm font-black text-foreground">פרטים בסיסיים</h3>
             <div className="space-y-1.5">
@@ -357,14 +357,14 @@ function MysteryBoxEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="max-w-lg overflow-hidden border-2 border-pink-400 p-0 shadow-[0_0_30px_6px_rgba(236,72,153,0.25)]">
+      <DialogContent dir="rtl" className="flex max-h-[calc(100vh-2rem)] max-w-lg flex-col overflow-hidden border-2 border-pink-400 p-0 shadow-[0_0_30px_6px_rgba(236,72,153,0.25)]">
         <DialogHeader className="border-b border-pink-200 bg-gradient-to-l from-yellow-50 to-pink-50 px-6 pb-4 pr-14 pt-6 text-right">
           <DialogTitle className="flex items-center gap-2 text-xl font-black leading-7">
             🎁 {title}
           </DialogTitle>
           <p className="text-xs text-muted-foreground">תיבת מסתורין מופיעה ראשונה בקטגוריית חשבונות עם מסגרת ורודה ותג מיוחד</p>
         </DialogHeader>
-        <div className="space-y-5 px-6 py-5">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
           <div className="space-y-1.5">
             <Label className="block text-right font-bold">שם התיבה</Label>
             <Input className="text-right" value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} placeholder="תיבת מסתורין" />
@@ -438,11 +438,11 @@ function CategoryEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="max-w-md overflow-hidden p-0">
+      <DialogContent dir="rtl" className="flex max-h-[calc(100vh-2rem)] max-w-md flex-col overflow-hidden p-0">
         <DialogHeader className="border-b border-border px-6 pb-4 pr-14 pt-6 text-right">
           <DialogTitle className="text-xl font-black leading-7">{title}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 px-6 py-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           <div className="space-y-1.5">
             <Label className="block text-right font-bold">שם קטגוריה</Label>
             <Input className="text-right" value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") })} />

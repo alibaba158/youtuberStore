@@ -556,7 +556,15 @@ export const orderForCustomerDeliveryEmail = internalQuery({
       return null;
     }
 
-    return serializeOrder(order, { includeDeliveryContent: true });
+    const serialized = serializeOrder(order, { includeDeliveryContent: true });
+
+    // Always include the raw adminFulfillmentItems from the DB document
+    // so the email template can resolve admin-written content even if
+    // the serialization layers didn't merge it into items[].deliveryContent.
+    return {
+      ...serialized,
+      adminFulfillmentItems: order.adminFulfillmentItems ?? [],
+    };
   },
 });
 
@@ -620,6 +628,8 @@ export const sendCustomerDeliveryEmail = mutation({
       throw new Error("Only paid orders can receive product details");
     }
 
+    const now = Date.now();
+
     if (args.items?.length) {
       const normalizedItems = args.items.map((item) => ({
         productId: item.productId,
@@ -638,12 +648,21 @@ export const sendCustomerDeliveryEmail = mutation({
           fulfillmentByProductId.get(String(item.productId)) ??
           item.deliveryContent,
       }));
-      const now = Date.now();
 
       await ctx.db.patch(args.orderId, {
         items: updatedOrderItems,
         adminFulfillmentItems: normalizedItems,
         adminFulfillmentPreparedAt: now,
+        // Reset the claim timer so the email action won't be blocked by
+        // a previous send attempt within the 10-minute dedup window.
+        customerDeliveryEmailSendStartedAt: undefined,
+        updatedAt: now,
+      });
+    } else {
+      // Even when no items are provided, reset the claim timer so
+      // re-sending an existing fulfillment works immediately.
+      await ctx.db.patch(args.orderId, {
+        customerDeliveryEmailSendStartedAt: undefined,
         updatedAt: now,
       });
     }

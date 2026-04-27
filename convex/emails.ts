@@ -512,15 +512,21 @@ function buildCustomerDeliveryHtml(order: any, receiptUrl?: string) {
 }
 
 function resolveOrderDeliveryContent(order: any, item: any) {
+  // Always check adminFulfillmentItems first since that's what the admin
+  // explicitly typed per-order; item.deliveryContent is the product default.
+  const fulfillmentMatch = (order.adminFulfillmentItems ?? []).find(
+    (entry: any) => String(entry.productId) === String(item.productId),
+  );
+
+  if (fulfillmentMatch?.content) {
+    return fulfillmentMatch.content;
+  }
+
   if (item.deliveryContent) {
     return item.deliveryContent;
   }
 
-  const match = (order.adminFulfillmentItems ?? []).find(
-    (entry: any) => String(entry.productId) === String(item.productId),
-  );
-
-  return match?.content || "לא נוספו פרטי מוצר עדיין.";
+  return "לא נוספו פרטי מוצר עדיין.";
 }
 
 function buildResolvedCustomerDeliveryText(order: any, receiptUrl?: string) {
@@ -996,15 +1002,30 @@ export const sendCustomerDeliveryEmail = internalAction({
         throw new Error("Order does not have a customer email");
       }
 
+      // Ensure adminFulfillmentItems is populated on the order object
+      // so resolveOrderDeliveryContent can always find the admin content.
+      const enrichedOrder = {
+        ...order,
+        adminFulfillmentItems: order.adminFulfillmentItems ?? [],
+      };
+
       const receiptUrl = getAppUrl()
         ? `${getAppUrl()}/receipt/${String(order._id)}`
         : undefined;
 
+      console.log(
+        `[delivery-email] orderId=${String(args.orderId)}`,
+        `items=${enrichedOrder.items.length}`,
+        `fulfillmentItems=${enrichedOrder.adminFulfillmentItems.length}`,
+        `deliveryContents=${JSON.stringify(enrichedOrder.items.map((i: any) => ({ pid: i.productId, dc: i.deliveryContent?.slice(0, 40) })))}`,
+        `adminContents=${JSON.stringify(enrichedOrder.adminFulfillmentItems.map((i: any) => ({ pid: i.productId, c: i.content?.slice(0, 40) })))}`,
+      );
+
       await sendEmail({
         to: order.customerEmail,
         subject: `פרטי המוצר שלך בRazlo Store ${receiptNumber(String(order._id))}`,
-        text: buildResolvedCustomerDeliveryText(order, receiptUrl),
-        html: buildResolvedCustomerDeliveryHtml(order, receiptUrl),
+        text: buildResolvedCustomerDeliveryText(enrichedOrder, receiptUrl),
+        html: buildResolvedCustomerDeliveryHtml(enrichedOrder, receiptUrl),
       });
 
       await ctx.runMutation(internal.orders.markCustomerDeliveryEmailSent, {

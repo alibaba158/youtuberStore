@@ -22,6 +22,31 @@ function normalizeUnicode(value: string) {
   return value.normalize("NFKC").replace(/\s+/g, " ").trim();
 }
 
+function normalizeMultiline(value: string) {
+  return value
+    .normalize("NFKC")
+    .split("\n")
+    .map((line) => line.replace(/[^\S\n]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export function normalizeMultilineText(
+  value: string,
+  fieldName: string,
+  maxLength: number,
+) {
+  const normalized = normalizeMultiline(value);
+  if (!normalized) {
+    fail(`${fieldName} is required`);
+  }
+  if (normalized.length > maxLength) {
+    fail(`${fieldName} is too long`);
+  }
+  return normalized;
+}
+
 export function normalizeRequiredText(
   value: string,
   fieldName: string,

@@ -7,7 +7,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: http:; connect-src 'self' https://*.convex.cloud https://*.convex.site wss: ws: http://localhost:* http://127.0.0.1:*; object-src 'none'; base-uri 'self'; form-action 'self'"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: http:; connect-src 'self' https://*.convex.cloud https://*.convex.site https://www.google-analytics.com https://region1.google-analytics.com wss: ws: http://localhost:* http://127.0.0.1:*; object-src 'none'; base-uri 'self'; form-action 'self'"
     />
     <meta
       name="description"
@@ -31,6 +31,15 @@
       href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&family=Fredoka:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TELTR4L407"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-TELTR4L407");
+    </script>
   </head>
   <body>
     <div id="root"></div>
